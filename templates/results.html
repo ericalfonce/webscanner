@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>Scan Results</h2>
+        <p class="subtitle">
+            Target: {{ target }}
+        </p>
+
+        {% if results %}
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>URL</th>
+                    <th>Vulnerability</th>
+                    <th>Details</th>
+                    <th>Severity</th>
+                </tr>
+
+                {% for r in results %}
+                <tr>
+                    <td>{{ r.url }}</td>
+                    <td>{{ r.type }}</td>
+                    <td>{{ r.detail }}</td>
+                    <td>
+                        <span class="badge {{ r.severity | lower }}">
+                            {{ r.severity }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+            <p>No vulnerabilities detected.</p>
+        {% endif %}
+
+        <a href="/" class="footer-link">← New Scan</a>
+    </div>
+</div>
+
+</body>
+</html>

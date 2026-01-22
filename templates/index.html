@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web Vulnerability Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>Web Vulnerability Scanner</h1>
+        <p class="subtitle">
+            Automated security scanning for authorized web applications
+        </p>
+
+        <form method="POST">
+            <input type="text" name="url" placeholder="http://example.com" required>
+            <button type="submit">Start Scan</button>
+        </form>
+
+        <p class="warning">
+            ⚠ Use this tool only on systems you own or have explicit permission to test.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    margin: 0;
+    background-color: #0f172a;
+    color: #e5e7eb;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 40px 20px;
+}
+
+.card {
+    background-color: #020617;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+h1, h2 {
+    color: #f8fafc;
+    margin-bottom: 20px;
+}
+
+.subtitle {
+    color: #94a3b8;
+    margin-bottom: 30px;
+}
+
+form {
+    display: flex;
+    gap: 15px;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 14px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    background-color: #020617;
+    color: #f8fafc;
+    border: 1px solid #334155;
+}
+
+input::placeholder {
+    color: #64748b;
+}
+
+button {
+    padding: 14px 24px;
+    background-color: #2563eb;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+.warning {
+    margin-top: 20px;
+    color: #fca5a5;
+    font-size: 14px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+
+th, td {
+    padding: 14px;
+    text-align: left;
+}
+
+th {
+    background-color: #020617;
+    color: #93c5fd;
+    border-bottom: 2px solid #334155;
+}
+
+tr {
+    border-bottom: 1px solid #1e293b;
+}
+
+tr:hover {
+    background-color: #020617;
+}
+
+.badge {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.low {
+    background-color: #064e3b;
+    color: #6ee7b7;
+}
+
+.medium {
+    background-color: #78350f;
+    color: #fde68a;
+}
+
+.high {
+    background-color: #7f1d1d;
+    color: #fecaca;
+}
+
+.footer-link {
+    margin-top: 25px;
+    display: inline-block;
+    color: #93c5fd;
+    text-decoration: none;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
+}
