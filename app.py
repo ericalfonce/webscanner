@@ -26,6 +26,17 @@ def scan():
 @app.route("/landing")
 def landing():
     return render_template("landing.html")
+@app.route("/pricing/basic")
+def pricing_basic():
+    return render_template("basic.html")
+
+@app.route("/pricing/pro")
+def pricing_pro():
+    return render_template("pro.html")
+
+@app.route("/pricing/enterprise")
+def pricing_enterprise():
+    return render_template("enterprise.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
