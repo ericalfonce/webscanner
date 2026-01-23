@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CyberShield | Scan</title>
+    <title>Web Vulnerability Scanner</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -15,6 +15,7 @@
         </p>
 
         <form method="POST" action="/scan" onsubmit="showLoader()">
+
             <input type="text" name="url" placeholder="http://example.com" required>
             <button type="submit">Start Scan</button>
         </form>

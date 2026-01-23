@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CyberShield | Professional Web Vulnerability Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<header class="prod-nav">
+    <div class="prod-logo">CyberShield</div>
+    <nav class="prod-menu">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it Works</a>
+        <a href="#benefits">Benefits</a>
+        <a href="/scan" class="prod-btn">Launch Scanner</a>
+    </nav>
+</header>
+
+<!-- Hero Section -->
+<section class="prod-hero animate fade-in">
+    <div class="prod-content">
+        <h1>Professional Web Vulnerability Scanner</h1>
+        <p>
+            CyberShield helps you find, understand, and fix web security issues before attackers do.
+            Fast. Automated. Reliable.
+        </p>
+        <a href="/scan" class="prod-primary-btn">Start Scanning</a>
+        <a href="#features" class="prod-secondary-btn">Learn More</a>
+    </div>
+    
+    <!-- Floating Orbs Container -->
+    <div class="prod-hero-orbs">
+        <div class="prod-orb orb-1"></div>
+        <div class="prod-orb orb-2"></div>
+        <div class="prod-orb orb-3"></div>
+        <div class="prod-orb orb-4"></div>
+    </div>
+</section>
+
+
+<!-- Features Section -->
+<section id="features" class="prod-section">
+    <h2>What CyberShield Detects</h2>
+    <div class="prod-grid">
+        <div class="prod-card animate fade-up">
+            <i class="fas fa-shield-alt prod-icon"></i>
+            <h3>Security Header Checks</h3>
+            <p>Ensure your application uses best‑practice headers to prevent common attacks.</p>
+        </div>
+        <div class="prod-card animate fade-up">
+            <i class="fas fa-bug prod-icon"></i>
+            <h3>XSS Detection</h3>
+            <p>Reflected and basic cross‑site scripting detection to catch client‑side vulnerabilities.</p>
+        </div>
+        <div class="prod-card animate fade-up">
+            <i class="fas fa-database prod-icon"></i>
+            <h3>SQL Injection Tests</h3>
+            <p>Automated checks for SQL injection and other input injection risks.</p>
+        </div>
+        <div class="prod-card animate fade-up">
+            <i class="fas fa-robot prod-icon"></i>
+            <h3>Automated Crawling</h3>
+            <p>Automatically explores your URLs and input points for thorough coverage.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section id="how-it-works" class="prod-section prod-alt-section">
+    <h2>How it Works</h2>
+    <div class="prod-grid">
+        <div class="prod-step animate-step">
+            <h4><i class="fas fa-link"></i> Enter Target URL</h4>
+            <p>Provide the web application URL you want to scan.</p>
+        </div>
+        <div class="prod-step animate-step">
+            <h4><i class="fas fa-cogs"></i> Automated Scanning</h4>
+            <p>CyberShield crawls and tests key attack points across the app.</p>
+        </div>
+        <div class="prod-step animate-step">
+            <h4><i class="fas fa-clipboard-check"></i> Results and Recommendations</h4>
+            <p>Clear results with severity and actionable guidance.</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- Benefits / CTA -->
+<section id="benefits" class="prod-section animate fade-up">
+    <h2>Why Choose CyberShield</h2>
+    <p class="prod-highlight">
+        Reduce risk and improve security posture with an automated tool built for developers and security teams.
+    </p>
+    <a href="/scan" class="prod-primary-btn large-btn">Launch a Scan Now</a>
+</section>
+
+<!-- Footer -->
+<footer class="prod-footer">
+    <p>© 2026 CyberShield. All rights reserved.</p>
+</footer>
+
+<!-- Scroll Animation Script -->
+<!-- Scroll Animation, Smooth Scroll & Active Nav Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    // ===== Scroll Animations for Elements =====
+    const animateElements = document.querySelectorAll('.animate, .animate-step');
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if(entry.isIntersecting){
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+
+    animateElements.forEach(el => observer.observe(el));
+
+    // ===== Smooth Scrolling for Internal Links =====
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetEl = document.querySelector(this.getAttribute('href'));
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // ===== Highlight Active Section in Nav =====
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.prod-menu a');
+
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - 100;
+            if(window.scrollY >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if(link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    });
+
+});
+</script>
+
+
+
+</body>
+</html>
