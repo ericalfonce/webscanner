@@ -1,50 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Scan Results</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8">
+<title>SafeWeb SOC | Security Intelligence</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2>Scan Results</h2>
-        <p class="subtitle">
-            Target: {{ target }}
-        </p>
+<!-- =====================================================
+   SCORE CALCULATION
+   ===================================================== -->
+{% set high = 0 %}
+{% set medium = 0 %}
+{% set low = 0 %}
 
-        {% if results %}
-        <div class="table-container">
-            <table>
-                <tr>
-                    <th>URL</th>
-                    <th>Vulnerability</th>
-                    <th>Details</th>
-                    <th>Severity</th>
-                </tr>
+{% for r in results %}
+    {% if r.severity == "High" %}
+        {% set high = high + 1 %}
+    {% elif r.severity == "Medium" %}
+        {% set medium = medium + 1 %}
+    {% else %}
+        {% set low = low + 1 %}
+    {% endif %}
+{% endfor %}
 
-                {% for r in results %}
-                <tr>
-                    <td>{{ r.url }}</td>
-                    <td>{{ r.type }}</td>
-                    <td>{{ r.detail }}</td>
-                    <td>
-                        <span class="badge {{ r.severity | lower }}">
-                            {{ r.severity }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% else %}
-            <p>No vulnerabilities detected.</p>
-        {% endif %}
+{% set total = results|length %}
+{% if total == 0 %}
+    {% set score = 100 %}
+{% else %}
+    {% set score = 100 - (high*25 + medium*10 + low*3) %}
+{% endif %}
+{% if score < 0 %}{% set score = 0 %}{% endif %}
 
-        <a href="/" class="footer-link">← New Scan</a>
-    </div>
+
+<!-- =====================================================
+   SIDEBAR
+   ===================================================== -->
+<aside class="soc-sidebar">
+    <div class="soc-logo">SAFEWEB SOC</div>
+
+    <nav class="soc-menu">
+        <a class="active">Security Overview</a>
+        <a href="/threats">Threat Monitoring</a>
+        <a href="/intelligence">Scan Intelligence</a>
+        <a href="/analytics">Risk Analytics</a>
+        <a href="/incidents">Incident Response</a>
+        <a href="/compliance">Compliance</a>
+        <a href="/scan">New Scan</a>
+    </nav>
+</aside>
+
+
+<!-- =====================================================
+   MAIN AREA
+   ===================================================== -->
+<div class="soc-main">
+
+<header class="soc-topbar glass">
+    <div class="scan-target">Target: {{ target }}</div>
+    <div class="live-alert">● LIVE SECURITY MONITOR ACTIVE</div>
+</header>
+
+
+<section class="soc-grid">
+
+<!-- ================= SCORE ================= -->
+<div class="panel monitor glass">
+<h3>Security Score</h3>
+<div class="score-ring" data-score="{{ score }}">
+<span>{{ score }}%</span>
 </div>
+</div>
+
+<!-- ================= RISK CHART ================= -->
+<div class="panel glass">
+<h3>Risk Distribution</h3>
+<canvas id="riskChart"></canvas>
+</div>
+
+<!-- ================= THREAT MONITOR ================= -->
+<div class="panel glass">
+<h3>Threat Monitoring</h3>
+<div class="pulse-indicator"></div>
+<p>Attack surface actively monitored</p>
+</div>
+
+<!-- ================= COMPLIANCE ================= -->
+<div class="panel glass">
+<h3>OWASP Alignment</h3>
+<div class="progress">
+<div class="bar" style="width: {{ score }}%"></div>
+</div>
+<p>{{ score }}% compliance</p>
+</div>
+
+
+<!-- =====================================================
+   SECURITY RECOMMENDATIONS
+   ===================================================== -->
+<<div class="panel full glass">
+
+<h3>Security Remediation Intelligence</h3>
+
+{% if total == 0 %}
+<p class="clean">No remediation required.</p>
+
+{% else %}
+<div class="recommendations">
+
+{% for r in results %}
+<div class="rec-item
+{% if r.severity|lower=='high' %}rec-high
+{% elif r.severity|lower=='medium' %}rec-medium
+{% else %}rec-low{% endif %}">
+
+<h4>{{ r.type }}</h4>
+<p class="impact">{{ r.detail }}</p>
+
+<div class="fix">
+
+{% if "header" in r.type|lower %}
+<ul>
+<li>Enable Strict-Transport-Security</li>
+<li>Implement Content-Security-Policy</li>
+<li>Add X-Frame-Options & X-Content-Type-Options</li>
+<li>Configure secure cookies</li>
+</ul>
+
+{% elif "sql" in r.type|lower %}
+<ul>
+<li>Use parameterized queries / prepared statements</li>
+<li>Implement ORM protections</li>
+<li>Sanitize all user input</li>
+<li>Deploy database firewall rules</li>
+</ul>
+
+{% elif "xss" in r.type|lower %}
+<ul>
+<li>Encode output before rendering</li>
+<li>Implement CSP headers</li>
+<li>Validate all input</li>
+<li>Use modern templating frameworks</li>
+</ul>
+
+{% elif "crawl" in r.type|lower %}
+<ul>
+<li>Restrict sensitive endpoints</li>
+<li>Disable directory listing</li>
+<li>Implement robots and access control</li>
+</ul>
+
+{% else %}
+<ul>
+<li>Review configuration</li>
+<li>Follow OWASP remediation guidance</li>
+<li>Apply security hardening</li>
+</ul>
+{% endif %}
+
+</div>
+</div>
+{% endfor %}
+
+</div>
+{% endif %}
+</div>
+
+
+<!-- =====================================================
+   VULNERABILITY TABLE
+   ===================================================== -->
+<div class="panel full glass">
+<h3>Detected Vulnerabilities</h3>
+
+{% if total == 0 %}
+<p class="clean">System secure. No issues detected.</p>
+{% else %}
+
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Description</th>
+<th>Severity</th>
+<th>Recommended Fix</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in results %}
+<tr>
+
+<td>{{ r.type }}</td>
+<td>{{ r.detail }}</td>
+
+<td>
+<span class="
+{% if r.severity=='High' %}sev-high
+{% elif r.severity=='Medium' %}sev-medium
+{% else %}sev-low{% endif %}
+">
+{{ r.severity }}
+</span>
+</td>
+
+<td>
+{% if "header" in r.type|lower %}
+Configure secure HTTP headers.
+{% elif "sql" in r.type|lower %}
+Use parameterized queries and sanitize input.
+{% elif "xss" in r.type|lower %}
+Encode output and validate user input.
+{% else %}
+Apply secure configuration best practices.
+{% endif %}
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endif %}
+</div>
+
+
+<!-- =====================================================
+   CONTACT CYBERSECURITY EXPERT
+   ===================================================== -->
+<div class="panel full glass">
+<h3>Consult a Cybersecurity Expert</h3>
+
+<p>
+Need professional help fixing vulnerabilities or securing your infrastructure?
+Our certified security specialists provide remediation, penetration testing,
+and incident response support.
+</p>
+
+<div class="contact-grid">
+
+<div>
+<p><strong>Phone:</strong> +255 748 348 996</p>
+<p><strong>Email:</strong> security@safeweb.co</p>
+<p><strong>Support:</strong> 24/7 response team</p>
+</div>
+
+<form method="POST" action="/contact-expert">
+
+<input type="text" name="name" placeholder="Full name" required>
+<input type="email" name="email" placeholder="Business email" required>
+<input type="text" name="organization" placeholder="Company">
+
+<select name="category" required>
+<option value="">Support type</option>
+<option>Vulnerability remediation</option>
+<option>Penetration testing</option>
+<option>Incident response</option>
+<option>Security consulting</option>
+</select>
+
+<textarea name="message"
+placeholder="Describe your security issue..."
+required></textarea>
+
+<input type="hidden" name="target" value="{{ target }}">
+<input type="hidden" name="score" value="{{ score }}">
+
+<button class="btn-primary">Request Expert Assistance</button>
+
+</form>
+</div>
+
+</div>
+
+</section>
+</div>
+
+
+<!-- =====================================================
+   CHART + SCORE RING SCRIPT
+   ===================================================== -->
+<script>
+const riskData = {{ [high, medium, low] | tojson }};
+const ctx = document.getElementById('riskChart');
+
+if(ctx){
+new Chart(ctx,{
+type:'doughnut',
+data:{
+labels:['High','Medium','Low'],
+datasets:[{data:riskData,borderWidth:0}]
+},
+options:{
+plugins:{legend:{labels:{color:"#fff"}}}
+}
+});
+}
+
+document.querySelectorAll('.score-ring').forEach(el=>{
+const score = Number(el.dataset.score)||0;
+el.style.background =
+`conic-gradient(#22c55e ${score*3.6}deg,#1e293b 0deg)`;
+});
+</script>
 
 </body>
 </html>

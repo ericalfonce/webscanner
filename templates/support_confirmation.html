@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Support Request Submitted</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+<div class="logo">CyberShield</div>
+</header>
+
+<section class="container">
+
+<div class="card center">
+
+<h2>Support Request Received</h2>
+
+<p>Your security consultation request has been submitted successfully.</p>
+
+<div class="ticket-box">
+Ticket ID: <strong>{{ ticket_id }}</strong>
+</div>
+
+<p>
+Priority: <strong>{{ priority|upper }}</strong><br>
+Target: <strong>{{ target }}</strong><br>
+Security Score: <strong>{{ score }}%</strong>
+</p>
+
+<div class="sla">
+{{ sla_message }}
+</div>
+
+<br>
+<a href="/scan" class="btn-primary">Return to Scanner</a>
+
+</div>
+
+</section>
+
+</body>
+</html>

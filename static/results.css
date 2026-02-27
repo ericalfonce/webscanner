@@ -1,0 +1,442 @@
+/* ===================================================
+   SAFEWEB SOC DASHBOARD — ENTERPRISE GLASS UI
+   =================================================== */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Segoe UI,Arial,sans-serif;
+color:#e5e7eb;
+background:
+radial-gradient(circle at 20% 30%,rgba(37,99,235,.15),transparent 40%),
+radial-gradient(circle at 80% 70%,rgba(59,130,246,.12),transparent 40%),
+#020617;
+min-height:100vh;
+overflow-x:hidden;
+animation:bgPulse 14s ease-in-out infinite alternate;
+}
+
+/* subtle living background */
+@keyframes bgPulse{
+from{filter:brightness(1)}
+to{filter:brightness(1.12)}
+}
+
+/* ===================================================
+   LAYOUT
+   =================================================== */
+
+.soc-layout{
+display:flex;
+min-height:100vh;
+}
+
+/* ===================================================
+   SIDEBAR
+   =================================================== */
+
+.soc-sidebar{
+width:240px;
+position:fixed;
+top:0;
+bottom:0;
+padding:24px 18px;
+background:rgba(2,6,23,.85);
+backdrop-filter:blur(20px);
+border-right:1px solid #1e293b;
+}
+
+.soc-logo{
+font-size:18px;
+font-weight:700;
+margin-bottom:30px;
+letter-spacing:.5px;
+}
+
+.soc-menu{
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+.soc-menu a{
+text-decoration:none;
+color:#94a3b8;
+padding:10px 12px;
+border-radius:8px;
+transition:.25s;
+}
+
+.soc-menu a:hover,
+.soc-menu .active{
+background:#1e293b;
+color:#fff;
+}
+
+/* ===================================================
+   MAIN AREA
+   =================================================== */
+
+.soc-main{
+flex:1;
+margin-left:240px;
+}
+
+/* ===================================================
+   GLASS EFFECT
+   =================================================== */
+
+.glass{
+background:rgba(30,41,59,.35);
+backdrop-filter:blur(16px);
+border:1px solid rgba(255,255,255,.06);
+box-shadow:
+0 0 30px rgba(0,0,0,.45),
+inset 0 0 20px rgba(255,255,255,.02);
+}
+
+/* ===================================================
+   TOPBAR
+   =================================================== */
+
+.soc-topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px 24px;
+border-bottom:1px solid #1e293b;
+}
+
+.scan-target{
+font-weight:600;
+}
+
+.live-alert{
+color:#22c55e;
+font-weight:600;
+animation:blink 1.4s infinite;
+}
+
+@keyframes blink{
+0%,100%{opacity:1}
+50%{opacity:.4}
+}
+
+/* ===================================================
+   GRID
+   =================================================== */
+
+.soc-grid{
+padding:24px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:16px;
+align-items:stretch;
+}
+
+/* ===================================================
+   PANELS
+   =================================================== */
+
+.panel{
+border-radius:14px;
+padding:16px;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+min-height:170px;
+position:relative;
+overflow:hidden;
+transition:.25s ease;
+}
+
+.panel:hover{
+transform:translateY(-4px);
+box-shadow:
+0 0 35px rgba(37,99,235,.2),
+0 18px 40px rgba(0,0,0,.6);
+}
+
+/* light sweep animation */
+.panel::after{
+content:'';
+position:absolute;
+top:-50%;
+left:-50%;
+width:200%;
+height:200%;
+background:linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,.05),
+transparent
+);
+transform:rotate(25deg);
+animation:lightSweep 7s linear infinite;
+}
+
+@keyframes lightSweep{
+from{transform:translateX(-100%) rotate(25deg)}
+to{transform:translateX(100%) rotate(25deg)}
+}
+
+.panel.full{
+grid-column:1/-1;
+min-height:auto;
+}
+
+.panel h3{
+font-size:15px;
+margin-bottom:8px;
+font-weight:600;
+}
+
+/* ===================================================
+   SCORE RING
+   =================================================== */
+
+.monitor{
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+}
+
+.score-ring{
+width:120px;
+height:120px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:22px;
+font-weight:600;
+background:#1e293b;
+}
+
+/* ===================================================
+   COMPLIANCE BAR
+   =================================================== */
+
+.progress{
+height:10px;
+background:#020617;
+border-radius:6px;
+overflow:hidden;
+margin-top:8px;
+}
+
+.bar{
+height:100%;
+background:linear-gradient(90deg,#22c55e,#2563eb);
+}
+
+/* ===================================================
+   THREAT PULSE
+   =================================================== */
+
+.pulse-indicator{
+width:14px;
+height:14px;
+background:#22c55e;
+border-radius:50%;
+margin:12px auto;
+box-shadow:0 0 0 rgba(34,197,94,.7);
+animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}
+70%{box-shadow:0 0 0 14px rgba(34,197,94,0)}
+100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+
+/* ===================================================
+   TABLE
+   =================================================== */
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+font-size:14px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #1e293b;
+text-align:left;
+}
+
+th{
+color:#94a3b8;
+font-weight:600;
+}
+
+.sev-high{color:#ef4444;font-weight:600}
+.sev-medium{color:#f59e0b;font-weight:600}
+.sev-low{color:#22c55e;font-weight:600}
+
+.clean{
+color:#22c55e;
+font-weight:600;
+}
+
+/* ===================================================
+   RECOMMENDATIONS
+   =================================================== */
+
+.recommendations ul{
+margin:8px 0 0 18px;
+line-height:1.6;
+}
+
+.rec{
+margin-top:10px;
+padding:12px;
+border-radius:10px;
+background:#020617;
+border-left:4px solid;
+}
+
+.high-rec{ border-color:#ef4444 }
+.medium-rec{ border-color:#f59e0b }
+.low-rec{ border-color:#22c55e }
+
+/* ===================================================
+   BUTTONS
+   =================================================== */
+
+.btn-primary{
+background:#2563eb;
+border:none;
+color:#fff;
+padding:10px 18px;
+border-radius:8px;
+cursor:pointer;
+transition:.25s;
+}
+
+.btn-primary:hover{
+background:#1d4ed8;
+}
+
+/* ===================================================
+   RESPONSIVE
+   =================================================== */
+
+@media(max-width:1000px){
+
+.soc-sidebar{
+display:none;
+}
+
+.soc-main{
+margin-left:0;
+}
+
+.soc-grid{
+grid-template-columns:1fr;
+}
+
+.soc-topbar{
+flex-direction:column;
+align-items:flex-start;
+gap:8px;
+}
+
+}
+/* ================= CONTACT FORM ================= */
+
+.contact-grid{
+display:grid;
+grid-template-columns:1fr 1.3fr;
+gap:30px;
+margin-top:20px;
+}
+
+.contact-grid form{
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+
+.contact-grid input,
+.contact-grid textarea,
+.contact-grid select{
+background:rgba(2,6,23,.7);
+border:1px solid rgba(255,255,255,.08);
+padding:12px;
+border-radius:10px;
+color:#fff;
+font-size:14px;
+outline:none;
+transition:.25s;
+}
+
+.contact-grid textarea{
+min-height:120px;
+resize:vertical;
+}
+
+.contact-grid input:focus,
+.contact-grid textarea:focus,
+.contact-grid select:focus{
+border-color:#2563eb;
+box-shadow:0 0 0 1px #2563eb;
+}
+
+.contact-grid button{
+margin-top:10px;
+}
+
+/* ================= SECURITY RECOMMENDATIONS ================= */
+
+.recommendations{
+display:flex;
+flex-direction:column;
+gap:18px;
+}
+
+.rec{
+padding:18px;
+border-radius:14px;
+border:1px solid rgba(255,255,255,.06);
+background:rgba(30,41,59,.35);
+backdrop-filter:blur(10px);
+}
+
+.rec ul{
+margin-top:10px;
+padding-left:18px;
+}
+
+.rec li{
+margin:6px 0;
+color:#cbd5f5;
+}
+
+/* severity colors */
+.high-rec{
+border-left:4px solid #ef4444;
+}
+
+.medium-rec{
+border-left:4px solid #f59e0b;
+}
+
+.low-rec{
+border-left:4px solid #22c55e;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:900px){
+.contact-grid{
+grid-template-columns:1fr;
+}
+}

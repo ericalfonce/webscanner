@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CyberShield Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+<h1>Security Operations Center</h1>
+
+<div class="stats">
+
+<div class="card">
+<h3>Total Scans</h3>
+<p>128</p>
+</div>
+
+<div class="card">
+<h3>Critical Issues</h3>
+<p class="danger">9</p>
+</div>
+
+<div class="card">
+<h3>Average Score</h3>
+<p>82%</p>
+</div>
+
+</div>
+
+<canvas id="trendChart"></canvas>
+
+</div>
+
+<script>
+new Chart(document.getElementById('trendChart'),{
+type:'line',
+data:{
+labels:['Jan','Feb','Mar','Apr','May'],
+datasets:[{
+label:'Security Score',
+data:[65,70,75,80,82],
+tension:.4
+}]
+}
+})
+</script>
+
+</body>
+</html>

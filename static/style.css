@@ -914,3 +914,591 @@ tr:hover {
     text-align: center;
     width: 100%;
 }
+.contact-form {
+    max-width: 500px;
+    margin: 30px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.contact-form input,
+.contact-form textarea {
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
+    background: #020617;
+    color: #fff;
+}
+
+.contact-form button {
+    margin-top: 10px;
+}
+.sidebar{
+width:220px;
+position:fixed;
+top:0;
+bottom:0;
+background:#020617;
+padding:20px;
+border-right:1px solid #1e293b;
+}
+
+.sidebar a{
+display:block;
+padding:10px;
+margin:8px 0;
+color:white;
+text-decoration:none;
+}
+.hero-stats{
+display:flex;
+gap:40px;
+margin-top:30px;
+}
+
+.hero-stats div{
+text-align:center;
+}
+
+.trust-bar{
+text-align:center;
+padding:30px;
+background:#020617;
+border-top:1px solid #1e293b;
+border-bottom:1px solid #1e293b;
+}
+
+.trust-logos span{
+margin:0 20px;
+opacity:.7;
+}
+
+.enterprise-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:30px;
+}
+
+.enterprise-item{
+background:#020617;
+padding:25px;
+border:1px solid #1e293b;
+border-radius:12px;
+}
+
+.testimonial{
+text-align:center;
+padding:80px 20px;
+font-size:20px;
+opacity:.9;
+}
+
+.final-cta{
+text-align:center;
+padding:80px 20px;
+background:#020617;
+}
+
+.footer-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:30px;
+max-width:900px;
+margin:auto;
+}
+
+.featured{
+border:2px solid #2563eb;
+transform:scale(1.05);
+}
+/* =========================================================
+   SAFEWEB GLASSMORPHISM VISUAL UPGRADE
+   ========================================================= */
+
+/* Smooth rendering */
+body{
+    background:
+        radial-gradient(circle at 20% 20%, rgba(37,99,235,0.12), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(59,130,246,0.08), transparent 40%),
+        #020617;
+}
+
+/* ---------- NAVBAR GLASS ---------- */
+.prod-nav{
+    background: rgba(2,6,23,0.55);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(148,163,184,0.15);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+/* subtle glow on logo */
+.prod-logo{
+    background: linear-gradient(90deg,#60a5fa,#2563eb);
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+/* ---------- HERO GLASS DEPTH ---------- */
+.prod-hero{
+    background:
+        radial-gradient(circle at 30% 10%, rgba(59,130,246,0.15), transparent 40%),
+        radial-gradient(circle at 80% 90%, rgba(37,99,235,0.12), transparent 40%),
+        #020617;
+}
+
+/* glass content panel effect */
+
+
+/* premium headline glow */
+.prod-content h1{
+    font-size: 52px;
+    line-height: 1.1;
+    background: linear-gradient(90deg,#ffffff,#93c5fd);
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+/* ---------- BUTTON PREMIUM ---------- */
+.prod-primary-btn{
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    box-shadow:
+        0 10px 25px rgba(37,99,235,0.35),
+        inset 0 0 12px rgba(255,255,255,0.08);
+}
+
+.prod-primary-btn:hover{
+    transform: translateY(-3px);
+    box-shadow:
+        0 20px 45px rgba(37,99,235,0.55),
+        inset 0 0 18px rgba(255,255,255,0.1);
+}
+
+/* ---------- GLASS CARDS ---------- */
+.prod-card{
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(148,163,184,0.15);
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.5),
+        inset 0 0 25px rgba(255,255,255,0.02);
+}
+
+/* hover light sweep */
+.prod-card::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:-100%;
+    width:100%;
+    height:100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.08),
+        transparent
+    );
+    transition:0.6s;
+}
+
+.prod-card:hover::before{
+    left:100%;
+}
+
+/* stronger floating feel */
+.prod-card:hover{
+    transform: translateY(-8px) scale(1.02);
+}
+
+/* ---------- ICON GLOW ---------- */
+.prod-icon{
+    text-shadow: 0 0 20px rgba(37,99,235,0.6);
+}
+
+/* ---------- SECTION SURFACE ---------- */
+.prod-section{
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.02),
+            rgba(255,255,255,0.01)
+        );
+}
+
+/* ---------- GLASS PRICING CARDS ---------- */
+.prod-card .price{
+    text-shadow: 0 0 20px rgba(37,99,235,0.5);
+}
+
+/* ---------- FLOATING ORB REAL LIGHT ---------- */
+.prod-orb{
+    filter: blur(1px);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent 40%),
+        radial-gradient(circle, rgba(37,99,235,0.9), rgba(2,6,23,0.2));
+}
+
+/* light reflection when orb crosses glass */
+.prod-hero::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(
+            120deg,
+            transparent,
+            rgba(255,255,255,0.04),
+            transparent
+        );
+    pointer-events:none;
+}
+
+/* ---------- FOOTER GLASS ---------- */
+.prod-footer{
+    background: rgba(2,6,23,0.7);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(148,163,184,0.1);
+}
+
+/* ---------- SMOOTH SCROLL FEEL ---------- */
+html{
+    scroll-behavior:smooth;
+}
+/* =====================================================
+   LEVEL 2 CYBER HERO ENVIRONMENT
+   ===================================================== */
+
+.prod-hero{
+    position:relative;
+    overflow:hidden;
+    background:#020617;
+}
+
+/* glowing atmosphere layers */
+.prod-hero::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(37,99,235,0.25), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(59,130,246,0.18), transparent 40%);
+    animation: heroBreath 8s ease-in-out infinite;
+}
+
+@keyframes heroBreath{
+    0%,100%{opacity:.6}
+    50%{opacity:1}
+}
+
+/* CYBER GRID FLOOR */
+.prod-hero::after{
+    content:'';
+    position:absolute;
+    bottom:-200px;
+    left:-50%;
+    width:200%;
+    height:400px;
+    background-image:
+        linear-gradient(rgba(37,99,235,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,0.2) 1px, transparent 1px);
+    background-size:60px 60px;
+    transform: perspective(600px) rotateX(70deg);
+    animation: gridMove 15s linear infinite;
+}
+
+@keyframes gridMove{
+    from{ background-position:0 0 }
+    to{ background-position:0 60px }
+}
+.cyber-particles{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background-image:
+        radial-gradient(2px 2px at 20% 30%, #60a5fa, transparent),
+        radial-gradient(2px 2px at 70% 60%, #3b82f6, transparent),
+        radial-gradient(2px 2px at 40% 80%, #2563eb, transparent);
+    animation: particlesMove 20s linear infinite;
+    opacity:.4;
+}
+
+@keyframes particlesMove{
+    from{ transform:translateY(0) }
+    to{ transform:translateY(-200px) }
+}
+.prod-hero .scan-light{
+    position:absolute;
+    inset:0;
+    background: linear-gradient(
+        120deg,
+        transparent 40%,
+        rgba(59,130,246,0.15),
+        transparent 60%
+    );
+    animation: scanSweep 6s linear infinite;
+    pointer-events:none;
+}
+
+@keyframes scanSweep{
+    from{ transform:translateX(-100%) }
+    to{ transform:translateX(100%) }
+}
+.shield3d{
+    position:absolute;
+    right:12%;
+    top:45%;
+    font-size:120px;
+    color:#60a5fa;
+    opacity:.25;
+    animation: shieldFloat 6s ease-in-out infinite;
+    filter: drop-shadow(0 0 40px rgba(37,99,235,.6));
+}
+
+@keyframes shieldFloat{
+    0%,100%{ transform:translateY(0) rotateY(0deg)}
+    50%{ transform:translateY(-25px) rotateY(20deg)}
+}
+.prod-content{
+    position:relative;
+    z-index:5;
+    max-width:650px;
+}
+
+.prod-content h1{
+    font-size:60px;
+    line-height:1.05;
+    background:linear-gradient(90deg,#fff,#93c5fd);
+    -webkit-background-clip:text;
+    color:transparent;
+    text-shadow:0 0 40px rgba(37,99,235,.35);
+}
+
+.prod-content p{
+    font-size:20px;
+    color:#cbd5f5;
+    opacity:.9;
+}
+.radar-scan{
+    position:absolute;
+    width:600px;
+    height:600px;
+    border-radius:50%;
+    border:1px solid rgba(37,99,235,.25);
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    animation: radarRotate 8s linear infinite;
+    pointer-events:none;
+}
+
+.radar-scan::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background:conic-gradient(
+        transparent 0deg,
+        rgba(59,130,246,.25) 20deg,
+        transparent 60deg
+    );
+}
+
+@keyframes radarRotate{
+    from{ transform:translate(-50%,-50%) rotate(0deg); }
+    to{ transform:translate(-50%,-50%) rotate(360deg); }
+}
+.holo-rings span{
+    position:absolute;
+    top:50%;
+    left:50%;
+    border-radius:50%;
+    border:1px solid rgba(59,130,246,.3);
+    transform:translate(-50%,-50%);
+    animation: ringPulse 6s ease-in-out infinite;
+}
+
+.holo-rings span:nth-child(1){ width:300px;height:300px; }
+.holo-rings span:nth-child(2){ width:450px;height:450px; animation-delay:1s;}
+.holo-rings span:nth-child(3){ width:600px;height:600px; animation-delay:2s;}
+
+@keyframes ringPulse{
+    0%,100%{opacity:.4; transform:translate(-50%,-50%) scale(1)}
+    50%{opacity:1; transform:translate(-50%,-50%) scale(1.05)}
+}
+.dashboard-pulse{
+    position:absolute;
+    right:8%;
+    bottom:20%;
+    width:300px;
+    height:180px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#020617,#0f172a);
+    box-shadow:
+        0 0 40px rgba(37,99,235,.25),
+        inset 0 0 40px rgba(37,99,235,.15);
+    animation: dashboardGlow 4s ease-in-out infinite;
+}
+
+@keyframes dashboardGlow{
+    0%,100%{ box-shadow:0 0 40px rgba(37,99,235,.2)}
+    50%{ box-shadow:0 0 80px rgba(37,99,235,.5)}
+}
+.live-counter{
+    position:absolute;
+    bottom:12%;
+    left:8%;
+    background:rgba(2,6,23,.7);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(37,99,235,.3);
+    padding:18px 26px;
+    border-radius:14px;
+    box-shadow:0 0 30px rgba(37,99,235,.25);
+}
+
+.live-counter strong{
+    display:block;
+    font-size:32px;
+    color:#60a5fa;
+}
+
+.live-counter span{
+    font-size:13px;
+    color:#94a3b8;
+}
+.center-title{
+    text-align:center;
+    margin-bottom:40px;
+}
+
+.enterprise-benefits{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:30px;
+}
+
+.benefit{
+    padding:30px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.02);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(37,99,235,.2);
+    transition:.3s;
+}
+
+.benefit:hover{
+    transform:translateY(-6px);
+    box-shadow:0 0 40px rgba(37,99,235,.3);
+}
+
+.benefit i{
+    font-size:28px;
+    color:#60a5fa;
+    margin-bottom:12px;
+}
+
+.cta-block{
+    text-align:center;
+    margin-top:70px;
+}
+/* ===== GLASS ENTERPRISE NAVBAR ===== */
+
+.glass-nav{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    width:92%;
+    max-width:1200px;
+    padding:14px 26px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    border-radius:16px;
+    background:rgba(2,6,23,.55);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(59,130,246,.2);
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,.6),
+        inset 0 0 40px rgba(59,130,246,.08);
+
+    z-index:1000;
+    transition:all .35s ease;
+}
+.prod-logo{
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:.5px;
+    color:#fff;
+}
+.prod-menu{
+    display:flex;
+    gap:28px;
+}
+
+.prod-menu a{
+    position:relative;
+    color:#cbd5f5;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:500;
+    transition:.3s;
+}
+
+/* hover glow */
+.prod-menu a:hover{
+    color:#60a5fa;
+}
+
+/* animated underline */
+.prod-menu a::after{
+    content:'';
+    position:absolute;
+    bottom:-6px;
+    left:0;
+    width:0%;
+    height:2px;
+    background:linear-gradient(90deg,#2563eb,#60a5fa);
+    transition:.35s;
+}
+
+.prod-menu a:hover::after{
+    width:100%;
+}
+.nav-right{
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+/* sign in */
+.nav-login{
+    color:#cbd5f5;
+    text-decoration:none;
+    font-size:14px;
+    transition:.3s;
+}
+
+.nav-login:hover{
+    color:#60a5fa;
+}
+.nav-cta{
+    padding:10px 20px;
+    border-radius:10px;
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    font-weight:600;
+    text-decoration:none;
+
+    box-shadow:
+        0 6px 20px rgba(37,99,235,.35);
+
+    transition:.3s;
+}
+
+.nav-cta:hover{
+    transform:translateY(-2px);
+    box-shadow:
+        0 12px 30px rgba(37,99,235,.55);
+}

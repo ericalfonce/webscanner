@@ -2,21 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CyberShield | Professional Web Vulnerability Scanner</title>
+    <title>SafeWeb | Professional Web Vulnerability Scanner</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
 <!-- Navigation -->
-<header class="prod-nav">
-    <div class="prod-logo">CyberShield</div>
+<header class="prod-nav glass-nav">
+
+    <div class="nav-left">
+        <div class="prod-logo">SafeWeb</div>
+    </div>
+
     <nav class="prod-menu">
         <a href="#features">Features</a>
         <a href="#how-it-works">How it Works</a>
         <a href="#benefits">Benefits</a>
-        <a href="/scan" class="prod-btn">Launch Scanner</a>
+        <a href="#pricing">Pricing</a>
     </nav>
+
+    <div class="nav-right">
+        <a href="/login" class="nav-login">Sign in</a>
+        <a href="/scan" class="nav-cta">Launch Scanner</a>
+    </div>
+
 </header>
 
 <!-- Hero Section -->
@@ -24,7 +34,7 @@
     <div class="prod-content">
         <h1>Professional Web Vulnerability Scanner</h1>
         <p>
-            CyberShield helps you find, understand, and fix web security issues before attackers do.
+            SafeWeb helps you find, understand, and fix web security issues before attackers do.
             Fast. Automated. Reliable.
         </p>
         <a href="/scan" class="prod-primary-btn">Start Scanning</a>
@@ -34,16 +44,38 @@
     <!-- Floating Orbs Container -->
     <div class="prod-hero-orbs">
         <div class="prod-orb orb-1"></div>
-        <div class="prod-orb orb-2"></div>
+        
         <div class="prod-orb orb-3"></div>
         <div class="prod-orb orb-4"></div>
     </div>
+    <!-- ===== AI RADAR SCAN ===== -->
+<div class="radar-scan"></div>
+
+<!-- ===== HOLOGRAPHIC RINGS ===== -->
+<div class="holo-rings">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<!-- ===== NETWORK LINES ===== -->
+<canvas id="networkCanvas"></canvas>
+
+
+
+<!-- ===== DASHBOARD GLOW ===== -->
+
+    <div class="cyber-particles"></div>
+    <div class="scan-light"></div>
+    <div class="shield3d">
+    <i class="fas fa-shield-alt"></i>
+</div>
 </section>
 
 
 <!-- Features Section -->
 <section id="features" class="prod-section">
-    <h2>What CyberShield Detects</h2>
+    <h2>What SafeWeb Detects</h2>
     <div class="prod-grid">
         <div class="prod-card animate fade-up">
             <i class="fas fa-shield-alt prod-icon"></i>
@@ -89,12 +121,79 @@
 
 
 <!-- Benefits / CTA -->
-<section id="benefits" class="prod-section animate fade-up">
-    <h2>Why Choose CyberShield</h2>
-    <p class="prod-highlight">
-        Reduce risk and improve security posture with an automated tool built for developers and security teams.
-    </p>
-    <a href="/scan" class="prod-primary-btn large-btn">Launch a Scan Now</a>
+<section id="benefits" class="prod-section prod-alt-section">
+
+<h2 class="center-title">Why Security Teams Trust SafeWeb</h2>
+
+<div class="enterprise-benefits">
+
+<div class="benefit">
+<i class="fas fa-bolt"></i>
+<h3>Real-Time Threat Detection</h3>
+<p>
+Continuously monitor attack surfaces and identify vulnerabilities
+before they are exploited. SafeWeb scans faster than traditional
+security tools.
+</p>
+</div>
+
+<div class="benefit">
+<i class="fas fa-brain"></i>
+<h3>Intelligent Risk Prioritization</h3>
+<p>
+AI-assisted analysis ranks vulnerabilities by business impact,
+so teams fix what actually matters first.
+</p>
+</div>
+
+<div class="benefit">
+<i class="fas fa-chart-line"></i>
+<h3>Security Posture Analytics</h3>
+<p>
+Track risk trends, improvement metrics, and compliance readiness
+with visual security intelligence dashboards.
+</p>
+</div>
+
+<div class="benefit">
+<i class="fas fa-users-shield"></i>
+<h3>Built for Modern Teams</h3>
+<p>
+Designed for developers, DevOps engineers, and security analysts
+working in fast-moving cloud environments.
+</p>
+</div>
+
+<div class="benefit">
+<i class="fas fa-lock"></i>
+<h3>Enterprise-Grade Protection</h3>
+<p>
+Scalable scanning engine built for large infrastructures,
+microservices, and production workloads.
+</p>
+</div>
+
+<div class="benefit">
+<i class="fas fa-rocket"></i>
+<h3>Deploy in Minutes</h3>
+<p>
+No complex setup. Launch scans instantly and receive
+actionable remediation guidance in real time.
+</p>
+</div>
+
+</div>
+
+<div class="cta-block">
+<h3>Start Securing Your Applications Today</h3>
+<p>
+Join organizations that proactively defend their systems,
+reduce breach risk, and maintain continuous visibility
+into their security posture.
+</p>
+<a href="/scan" class="prod-primary-btn large-btn">Launch a Scan Now</a>
+</div>
+
 </section>
 <section id="pricing" class="prod-section animate">
     <h2 class="prod-highlight animate">Pricing Plans</h2>
@@ -134,12 +233,38 @@
 
 <!-- Footer -->
 <footer class="prod-footer">
-    <p>© 2026 CyberShield. All rights reserved.</p>
+    <p>© 2026 SafeWeb. All rights reserved.</p>
 </footer>
 
 <!-- Scroll Animation Script -->
 <!-- Scroll Animation, Smooth Scroll & Active Nav Script -->
 <script>
+    const nav=document.querySelector(".glass-nav");
+
+window.addEventListener("scroll",()=>{
+    if(window.scrollY>40){
+        nav.style.padding="10px 22px";
+        nav.style.backdropFilter="blur(24px)";
+        nav.style.boxShadow="0 15px 50px rgba(0,0,0,.8)";
+    }else{
+        nav.style.padding="14px 26px";
+        nav.style.backdropFilter="blur(18px)";
+        nav.style.boxShadow="0 10px 40px rgba(0,0,0,.6)";
+    }
+});
+    document.addEventListener("mousemove", e=>{
+    const x = (e.clientX / window.innerWidth - .5) * 20;
+    const y = (e.clientY / window.innerHeight - .5) * 20;
+
+    document.querySelectorAll(".prod-orb").forEach(el=>{
+        el.style.transform = `translate(${x}px, ${y}px)`;
+    });
+
+    const shield = document.querySelector(".shield3d");
+    if(shield){
+        shield.style.transform = `translate(${x}px, ${y}px)`;
+    }
+});
 document.addEventListener("DOMContentLoaded", function() {
 
     // ===== Scroll Animations for Elements =====
