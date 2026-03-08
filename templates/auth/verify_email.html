@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+<div class="auth-card">
+    <div class="auth-logo">MulikaScans</div>
+    <div class="auth-tagline">A product by IklwaLabs</div>
+
+    {% if success %}
+    <div class="auth-success">
+        <i class="fas fa-check-circle"></i>
+        <span>Email verified successfully!</span>
+    </div>
+    <h1 class="auth-title">You're all set</h1>
+    <p class="auth-sub">Your account is now active. Start scanning with your free plan.</p>
+    <a href="/login" class="auth-btn">
+        <i class="fas fa-sign-in-alt"></i> Sign In Now
+    </a>
+    {% else %}
+    <div class="auth-err">
+        <i class="fas fa-times-circle"></i>
+        <span>{{ error }}</span>
+    </div>
+    <h1 class="auth-title">Verification failed</h1>
+    <p class="auth-sub">The link may have expired or already been used.</p>
+    <div class="auth-link">
+        <a href="/login">Back to Sign In</a>
+    </div>
+    {% endif %}
+
+    <div class="iklwa-badge">
+        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Your Email | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+<div class="auth-card">
+    <div class="auth-logo">MulikaScans</div>
+    <div class="auth-tagline">A product by IklwaLabs</div>
+
+    <div class="auth-success">
+        <i class="fas fa-envelope-open-text"></i>
+        <span>Account created! Check your inbox.</span>
+    </div>
+
+    <h1 class="auth-title">Verify your email</h1>
+    <p class="auth-sub">
+        We sent a verification link to <strong style="color:#f8fafc;">{{ email }}</strong>.
+        Click the link in that email to activate your account.
+    </p>
+
+    <div class="auth-info">
+        <i class="fas fa-info-circle"></i>
+        Didn't receive it? Check your spam folder or request a new link below.
+    </div>
+
+    <form method="POST" action="/resend-verification">
+        <input type="hidden" name="email" value="{{ email }}">
+        <button class="auth-btn" type="submit">
+            <i class="fas fa-redo"></i> Resend Verification Email
+        </button>
+    </form>
+
+    <div class="auth-link">
+        <a href="/login">Back to Sign In</a>
+    </div>
+
+    <div class="iklwa-badge">
+        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    </div>
+</div>
+</body>
+</html>
