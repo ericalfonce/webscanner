@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan History | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a class="active"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+</aside>
+
+<div class="soc-main">
+<header class="soc-topbar glass">
+    <div class="scan-target">Scan History</div>
+    <div class="live-alert">&#9679; MulikaScans ACTIVE</div>
+</header>
+
+<section class="soc-grid">
+<div class="panel full glass">
+    <h3>All Scans</h3>
+    {% if scans.items %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th><th>Target</th><th>Type</th><th>Status</th>
+                <th>Vulnerabilities</th><th>Score</th><th>Duration</th><th>Date</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in scans.items %}
+        <tr>
+            <td style="color:#475569;font-size:12px;">{{ s.id }}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.target_url }}</td>
+            <td><span style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:11px;text-transform:uppercase;">{{ s.scan_type }}</span></td>
+            <td>
+                <span class="{% if s.status == 'completed' %}sev-low{% elif s.status == 'failed' %}sev-high{% else %}sev-medium{% endif %}"
+                      style="border-radius:4px;padding:3px 8px;font-size:12px;">{{ s.status }}</span>
+            </td>
+            <td>
+                {% if s.critical_count > 0 %}<span class="sev-high" style="border-radius:3px;padding:1px 6px;font-size:11px;margin-right:2px;">{{ s.critical_count }}C</span>{% endif %}
+                {% if s.high_count > 0 %}<span style="color:#f97316;font-size:11px;margin-right:2px;">{{ s.high_count }}H</span>{% endif %}
+                {{ s.total_vulnerabilities }} total
+            </td>
+            <td style="color:{% if s.security_score() >= 80 %}#22c55e{% elif s.security_score() >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                {{ s.security_score() }}%
+            </td>
+            <td style="color:#64748b;font-size:12px;">
+                {% if s.duration_seconds %}{{ "%.0f"|format(s.duration_seconds) }}s{% else %}—{% endif %}
+            </td>
+            <td style="color:#64748b;font-size:12px;">{{ s.created_at.strftime('%b %d, %Y %H:%M') if s.created_at else '—' }}</td>
+            <td><a href="/scans/{{ s.id }}" style="color:#22d3ee;font-size:12px;">View &#8594;</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;">
+        <span style="color:#64748b;">
+            Page {{ scans.page }} of {{ scans.pages }} ({{ scans.total }} scans)
+        </span>
+        <div style="display:flex;gap:8px;">
+            {% if scans.has_prev %}
+            <a href="/scans?page={{ scans.prev_num }}" style="color:#22d3ee;text-decoration:none;padding:6px 12px;border:1px solid #334155;border-radius:6px;">&#8592; Prev</a>
+            {% endif %}
+            {% if scans.has_next %}
+            <a href="/scans?page={{ scans.next_num }}" style="color:#22d3ee;text-decoration:none;padding:6px 12px;border:1px solid #334155;border-radius:6px;">Next &#8594;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p class="clean">No scans found. <a href="/scan" style="color:#22d3ee;">Run your first scan</a>.</p>
+    {% endif %}
+</div>
+</section>
+</div>
+
+</body>
+</html>

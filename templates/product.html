@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SafeWeb | Professional Web Vulnerability Scanner</title>
+    <title>MulikaScans | Professional Web Vulnerability Scanner</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -12,7 +12,7 @@
 <header class="prod-nav glass-nav">
 
     <div class="nav-left">
-        <div class="prod-logo">SafeWeb</div>
+        <div class="prod-logo">MulikaScans</div>
     </div>
 
     <nav class="prod-menu">
@@ -23,7 +23,7 @@
     </nav>
 
     <div class="nav-right">
-        <a href="/login" class="nav-login">Sign in</a>
+        {% if current_user %}<a href="/dashboard" class="nav-login">Dashboard</a>{% else %}<a href="/login" class="nav-login">Sign in</a>{% endif %}
         <a href="/scan" class="nav-cta">Launch Scanner</a>
     </div>
 
@@ -34,10 +34,10 @@
     <div class="prod-content">
         <h1>Professional Web Vulnerability Scanner</h1>
         <p>
-            SafeWeb helps you find, understand, and fix web security issues before attackers do.
+            MulikaScans helps you find, understand, and fix web security issues before attackers do.
             Fast. Automated. Reliable.
         </p>
-        <a href="/scan" class="prod-primary-btn">Start Scanning</a>
+        <a href="/register" class="prod-primary-btn">Get Started Free</a>
         <a href="#features" class="prod-secondary-btn">Learn More</a>
     </div>
     
@@ -75,7 +75,7 @@
 
 <!-- Features Section -->
 <section id="features" class="prod-section">
-    <h2>What SafeWeb Detects</h2>
+    <h2>What MulikaScans Detects</h2>
     <div class="prod-grid">
         <div class="prod-card animate fade-up">
             <i class="fas fa-shield-alt prod-icon"></i>
@@ -110,7 +110,7 @@
         </div>
         <div class="prod-step animate-step">
             <h4><i class="fas fa-cogs"></i> Automated Scanning</h4>
-            <p>CyberShield crawls and tests key attack points across the app.</p>
+            <p>MulikaScans crawls and tests key attack points across the app.</p>
         </div>
         <div class="prod-step animate-step">
             <h4><i class="fas fa-clipboard-check"></i> Results and Recommendations</h4>
@@ -123,7 +123,7 @@
 <!-- Benefits / CTA -->
 <section id="benefits" class="prod-section prod-alt-section">
 
-<h2 class="center-title">Why Security Teams Trust SafeWeb</h2>
+<h2 class="center-title">Why Security Teams Trust MulikaScans</h2>
 
 <div class="enterprise-benefits">
 
@@ -132,7 +132,7 @@
 <h3>Real-Time Threat Detection</h3>
 <p>
 Continuously monitor attack surfaces and identify vulnerabilities
-before they are exploited. SafeWeb scans faster than traditional
+before they are exploited. MulikaScans scans faster than traditional
 security tools.
 </p>
 </div>
@@ -191,7 +191,7 @@ Join organizations that proactively defend their systems,
 reduce breach risk, and maintain continuous visibility
 into their security posture.
 </p>
-<a href="/scan" class="prod-primary-btn large-btn">Launch a Scan Now</a>
+<a href="/register" class="prod-primary-btn large-btn">Get Started Free</a>
 </div>
 
 </section>
@@ -233,7 +233,7 @@ into their security posture.
 
 <!-- Footer -->
 <footer class="prod-footer">
-    <p>© 2026 SafeWeb. All rights reserved.</p>
+    <p>© 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener" style="color:#22d3ee;">IklwaLabs</a>. All rights reserved.</p>
 </footer>
 
 <!-- Scroll Animation Script -->

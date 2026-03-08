@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+<div class="auth-card">
+    <div class="auth-logo">MulikaScans</div>
+    <div class="auth-tagline">A product by IklwaLabs</div>
+
+    {% if error %}
+    <div class="auth-err">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <h1 class="auth-title">Billing &amp; Subscription</h1>
+    <p class="auth-sub">Manage your plan, update payment method, or cancel your subscription.</p>
+
+    <a href="/billing" class="auth-btn">
+        <i class="fas fa-credit-card"></i> Open Billing Portal
+    </a>
+    <div class="auth-link">
+        <a href="/dashboard">Back to Dashboard</a>
+    </div>
+
+    <div class="iklwa-badge">
+        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    </div>
+</div>
+</body>
+</html>
