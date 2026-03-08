@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+<div class="auth-card">
+    <div class="auth-logo">MulikaScans</div>
+    <div class="auth-tagline">A product by IklwaLabs</div>
+
+    <div class="auth-success">
+        <i class="fas fa-check-circle"></i>
+        <span>Subscription activated successfully!</span>
+    </div>
+
+    <h1 class="auth-title">Welcome to MulikaScans Pro</h1>
+    <p class="auth-sub">
+        Your plan has been activated. You can now access all your plan features from the dashboard.
+    </p>
+
+    <a href="/dashboard" class="auth-btn">
+        <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+    </a>
+
+    <div class="auth-link">
+        <a href="/billing">Manage Subscription</a>
+    </div>
+
+    <div class="iklwa-badge">
+        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    </div>
+</div>
+</body>
+</html>

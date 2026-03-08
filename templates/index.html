@@ -2,43 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SafeWeb | Scan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Scan | MulikaScans</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h1>Web Vulnerability Scanner</h1>
-        <p class="subtitle">
-            Automated security scanning for authorized web applications
-        </p>
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a class="active"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+</aside>
 
-        <form method="POST" action="/scan" onsubmit="showLoader()">
-            <input type="text" name="url" placeholder="http://example.com" required>
-            <button type="submit">Start Scan</button>
-        </form>
+<div class="soc-main">
 
-        <p class="warning">
-            ⚠ Use this tool only on systems you own or have explicit permission to test.
-        </p>
+<header class="soc-topbar glass">
+    <div class="scan-target">New Security Scan</div>
+    <div class="live-alert">&#9679; MulikaScans ACTIVE</div>
+</header>
+
+<section class="soc-grid">
+<div class="panel full glass">
+    <h3>Configure Your Scan</h3>
+
+    {% if error %}
+    <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:14px;">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        {% if upgrade %}
+        <a href="/pricing" style="color:#22d3ee;margin-left:8px;font-weight:600;">Upgrade Plan &#8594;</a>
+        {% endif %}
     </div>
+    {% endif %}
+
+    <form method="POST" action="/scan" onsubmit="showLoader()" style="max-width:640px;">
+        <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:8px;font-weight:500;">Target URL</label>
+            <input type="text" name="url" placeholder="https://example.com"
+                   required style="width:100%;padding:13px 16px;background:#020617;border:1px solid #334155;border-radius:8px;color:#f8fafc;font-size:15px;outline:none;box-sizing:border-box;">
+        </div>
+
+        <div style="margin-bottom:24px;">
+            <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:8px;font-weight:500;">Scan Type</label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+
+                <label class="scan-type-card">
+                    <input type="radio" name="scan_type" value="quick" checked style="display:none;">
+                    <div class="scan-type-inner">
+                        <i class="fas fa-bolt"></i>
+                        <strong>Quick Scan</strong>
+                        <span>Headers, SSL, root URL · ~30s</span>
+                        <em>Free &amp; up</em>
+                    </div>
+                </label>
+
+                {% if user and user.role in ('basic','pro','enterprise','admin') %}
+                <label class="scan-type-card">
+                    <input type="radio" name="scan_type" value="full" style="display:none;">
+                    <div class="scan-type-inner">
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>Full Scan</strong>
+                        <span>All checks, full crawl · 2–5 min</span>
+                        <em>Basic &amp; up</em>
+                    </div>
+                </label>
+                {% else %}
+                <div class="scan-type-card scan-type-locked" title="Upgrade to Basic or higher">
+                    <div class="scan-type-inner">
+                        <i class="fas fa-lock"></i>
+                        <strong>Full Scan</strong>
+                        <span>All checks, full crawl</span>
+                        <a href="/pricing" style="color:#22d3ee;font-size:11px;">Upgrade</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if user and user.role in ('pro','enterprise','admin') %}
+                <label class="scan-type-card">
+                    <input type="radio" name="scan_type" value="compliance" style="display:none;">
+                    <div class="scan-type-inner">
+                        <i class="fas fa-clipboard-check"></i>
+                        <strong>Compliance</strong>
+                        <span>OWASP + full · 5–10 min</span>
+                        <em>Pro &amp; up</em>
+                    </div>
+                </label>
+                {% else %}
+                <div class="scan-type-card scan-type-locked" title="Upgrade to Pro or higher">
+                    <div class="scan-type-inner">
+                        <i class="fas fa-lock"></i>
+                        <strong>Compliance</strong>
+                        <span>OWASP + full scan</span>
+                        <a href="/pricing" style="color:#22d3ee;font-size:11px;">Upgrade</a>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <p style="font-size:12px;color:#475569;margin-bottom:20px;">
+            <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>
+            Only scan systems you own or have explicit written permission to test.
+            Unauthorised scanning may be illegal.
+        </p>
+
+        <button type="submit" class="btn-primary" style="padding:13px 32px;font-size:15px;min-width:160px;">
+            <i class="fas fa-search"></i> Start Scan
+        </button>
+    </form>
+</div>
+</section>
 </div>
 
 <!-- Loading Overlay -->
-<div id="loader-overlay">
-    <div class="loader-box">
-        <div class="spinner"></div>
-        <p>Scanning for vulnerabilities…</p>
-        <span>Focus on your work. Leave cyber threats to us.</span>
-    </div>
+<div id="loader-overlay" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+    <div class="spinner"></div>
+    <p style="color:#22d3ee;font-size:18px;font-weight:600;">Scanning for vulnerabilities…</p>
+    <span style="color:#64748b;font-size:14px;">Focus on your work. Leave cyber threats to us.</span>
 </div>
 
-<script>
-function showLoader() {
-    document.getElementById("loader-overlay").style.display = "flex";
-}
-</script>
+<style>
+.scan-type-card{cursor:pointer;display:block;}
+.scan-type-card input:checked + .scan-type-inner{border-color:#22d3ee;background:rgba(34,211,238,.08);}
+.scan-type-inner{border:1px solid #1e293b;border-radius:10px;padding:16px;transition:border-color .2s,background .2s;display:flex;flex-direction:column;gap:4px;}
+.scan-type-inner i{color:#22d3ee;font-size:18px;margin-bottom:4px;}
+.scan-type-inner strong{color:#f8fafc;font-size:14px;}
+.scan-type-inner span{color:#64748b;font-size:12px;}
+.scan-type-inner em{color:#475569;font-size:11px;font-style:normal;}
+.scan-type-locked{cursor:not-allowed;opacity:.5;}
+.scan-type-locked .scan-type-inner{border-color:#1e293b;}
+</style>
 
+<script>
+function showLoader(){
+    document.getElementById("loader-overlay").style.display="flex";
+}
+document.querySelectorAll('.scan-type-card:not(.scan-type-locked)').forEach(label=>{
+    label.addEventListener('click',function(){
+        document.querySelectorAll('.scan-type-inner').forEach(el=>el.style.borderColor='');
+    });
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan #{{ scan.id }} | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a class="active" href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+</aside>
+
+<div class="soc-main">
+
+<header class="soc-topbar glass">
+    <div class="scan-target">Target: {{ scan.target_url }}</div>
+    <div class="live-alert">&#9679; Scan #{{ scan.id }} · {{ scan.scan_type|upper }}</div>
+</header>
+
+<section class="soc-grid">
+
+<div class="panel monitor glass">
+    <h3>Security Score</h3>
+    <div class="score-ring" data-score="{{ scan.security_score() }}">
+        <span>{{ scan.security_score() }}%</span>
+    </div>
+</div>
+
+<div class="panel glass">
+    <h3>Risk Distribution</h3>
+    <canvas id="riskChart"></canvas>
+</div>
+
+<div class="panel glass">
+    <h3>Scan Summary</h3>
+    <table style="width:100%;font-size:13px;">
+        <tr><td style="color:#64748b;padding:4px 0;">Status</td><td><span class="{% if scan.status=='completed' %}sev-low{% else %}sev-high{% endif %}" style="border-radius:4px;padding:2px 8px;">{{ scan.status }}</span></td></tr>
+        <tr><td style="color:#64748b;padding:4px 0;">Type</td><td>{{ scan.scan_type }}</td></tr>
+        <tr><td style="color:#64748b;padding:4px 0;">Duration</td><td>{{ "%.1f"|format(scan.duration_seconds or 0) }}s</td></tr>
+        <tr><td style="color:#64748b;padding:4px 0;">Started</td><td style="font-size:12px;">{{ scan.started_at.strftime('%b %d %H:%M') if scan.started_at else '—' }}</td></tr>
+        <tr><td style="color:#64748b;padding:4px 0;">Total Vulns</td><td style="color:#f59e0b;font-weight:700;">{{ scan.total_vulnerabilities }}</td></tr>
+    </table>
+</div>
+
+<div class="panel glass">
+    <h3>Severity Breakdown</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#ef4444;font-size:13px;"><i class="fas fa-circle"></i> Critical</span>
+            <span style="font-weight:700;color:#ef4444;">{{ scan.critical_count }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#f97316;font-size:13px;"><i class="fas fa-circle"></i> High</span>
+            <span style="font-weight:700;color:#f97316;">{{ scan.high_count }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#f59e0b;font-size:13px;"><i class="fas fa-circle"></i> Medium</span>
+            <span style="font-weight:700;color:#f59e0b;">{{ scan.medium_count }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#22c55e;font-size:13px;"><i class="fas fa-circle"></i> Low</span>
+            <span style="font-weight:700;color:#22c55e;">{{ scan.low_count }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#64748b;font-size:13px;"><i class="fas fa-circle"></i> Info</span>
+            <span style="font-weight:700;color:#64748b;">{{ scan.info_count }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Vulnerabilities -->
+<div class="panel full glass">
+    <h3>Detected Vulnerabilities</h3>
+    {% if vulns %}
+    <table>
+        <thead>
+            <tr><th>Vulnerability</th><th>Category</th><th>Severity</th><th>CVSS</th><th>URL</th><th>CWE</th></tr>
+        </thead>
+        <tbody>
+        {% for v in vulns %}
+        <tr>
+            <td>
+                <strong style="color:#f8fafc;">{{ v.name }}</strong>
+                {% if v.description %}<br><span style="font-size:12px;color:#64748b;">{{ v.description[:100] }}{% if v.description|length > 100 %}…{% endif %}</span>{% endif %}
+            </td>
+            <td><span style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:11px;text-transform:uppercase;">{{ v.category or '—' }}</span></td>
+            <td>
+                <span class="{% if v.severity == 'Critical' %}sev-critical{% elif v.severity == 'High' %}sev-high{% elif v.severity == 'Medium' %}sev-medium{% elif v.severity == 'Low' %}sev-low{% else %}sev-info{% endif %}"
+                      style="border-radius:4px;padding:3px 8px;">{{ v.severity }}</span>
+            </td>
+            <td style="color:{% if (v.cvss_score or 0) >= 9 %}#ef4444{% elif (v.cvss_score or 0) >= 7 %}#f97316{% elif (v.cvss_score or 0) >= 4 %}#f59e0b{% else %}#94a3b8{% endif %};">
+                {{ "%.1f"|format(v.cvss_score) if v.cvss_score else '—' }}
+            </td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#64748b;">
+                {{ v.url_affected or '—' }}
+            </td>
+            <td style="font-size:12px;color:#475569;">{{ v.cwe_id or '—' }}</td>
+        </tr>
+        {% if v.remediation %}
+        <tr style="background:rgba(34,211,238,.03);">
+            <td colspan="6" style="padding:8px 12px;font-size:12px;color:#64748b;border-top:none;">
+                <strong style="color:#22d3ee;">Remediation:</strong> {{ v.remediation }}
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="clean">No vulnerabilities detected. Your target appears secure.</p>
+    {% endif %}
+</div>
+
+<!-- Expert Contact Form -->
+<div class="panel full glass">
+    <h3>Consult a Cybersecurity Expert</h3>
+    <p>Need help fixing vulnerabilities or securing your infrastructure?
+    Our certified specialists provide remediation, penetration testing, and incident response.</p>
+    <div class="contact-grid">
+        <div>
+            <p><strong>Phone:</strong> +255 748 348 996</p>
+            <p><strong>Email:</strong> security@mulikascans.com</p>
+            <p><strong>Support:</strong> 24/7 response team</p>
+        </div>
+        <form method="POST" action="/contact-expert">
+            <input type="text" name="name" placeholder="Full name" required>
+            <input type="email" name="email" placeholder="Business email" required>
+            <input type="text" name="organization" placeholder="Company">
+            <select name="category" required>
+                <option value="">Support type</option>
+                <option>Vulnerability remediation</option>
+                <option>Penetration testing</option>
+                <option>Incident response</option>
+                <option>Security consulting</option>
+            </select>
+            <select name="priority">
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+            </select>
+            <textarea name="message" placeholder="Describe your security issue..." required></textarea>
+            <input type="hidden" name="target" value="{{ scan.target_url }}">
+            <input type="hidden" name="score" value="{{ scan.security_score() }}">
+            <button class="btn-primary">Request Expert Assistance</button>
+        </form>
+    </div>
+</div>
+
+</section>
+</div>
+
+<script>
+const riskData = [{{ scan.critical_count }}, {{ scan.high_count }}, {{ scan.medium_count }}, {{ scan.low_count }}, {{ scan.info_count }}];
+const ctx = document.getElementById('riskChart');
+if(ctx){
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical','High','Medium','Low','Info'],
+            datasets: [{
+                data: riskData,
+                backgroundColor: ['#ef4444','#f97316','#f59e0b','#22c55e','#475569'],
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } } }
+    });
+}
+document.querySelectorAll('.score-ring').forEach(el => {
+    const score = Number(el.dataset.score) || 0;
+    el.style.background = `conic-gradient(#22c55e ${score * 3.6}deg, #1e293b 0deg)`;
+});
+</script>
+
+<style>
+.sev-critical { background: rgba(239,68,68,.15); color: #ef4444; }
+.sev-info { background: rgba(71,85,105,.2); color: #94a3b8; }
+</style>
+
+</body>
+</html>

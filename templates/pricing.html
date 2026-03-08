@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='pricing.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<header class="prod-nav glass-nav">
+    <div class="prod-logo">MulikaScans</div>
+    <nav class="prod-menu">
+        <a href="/">Home</a>
+        <a href="#plans">Plans</a>
+        <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-right">
+        {% if current_user %}
+            <a href="/dashboard" class="nav-login">Dashboard</a>
+        {% else %}
+            <a href="/login" class="nav-login">Sign in</a>
+        {% endif %}
+    </div>
+</header>
+
+<section class="prod-hero animate" style="min-height:340px;">
+    <div class="prod-content">
+        <h1>Simple, Transparent Pricing</h1>
+        <p>Start free. Upgrade as your security programme grows. No hidden fees.</p>
+    </div>
+</section>
+
+<section id="plans" class="prod-section">
+    <div class="pricing-grid">
+
+        <!-- Free -->
+        <div class="pricing-card animate-step">
+            <div class="plan-badge">Free</div>
+            <div class="plan-price">$0<span>/mo</span></div>
+            <p class="plan-desc">Perfect for trying MulikaScans. No card required.</p>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> 2 scans per month</li>
+                <li><i class="fas fa-check"></i> Quick scan only</li>
+                <li><i class="fas fa-check"></i> Up to 10 pages per scan</li>
+                <li><i class="fas fa-check"></i> Basic vulnerability report</li>
+                <li class="plan-no"><i class="fas fa-times"></i> PDF export</li>
+                <li class="plan-no"><i class="fas fa-times"></i> Full / Compliance scans</li>
+                <li class="plan-no"><i class="fas fa-times"></i> API access</li>
+                <li class="plan-no"><i class="fas fa-times"></i> Scheduled scans</li>
+            </ul>
+            <a href="/register" class="prod-primary-btn">Start Free</a>
+        </div>
+
+        <!-- Basic -->
+        <div class="pricing-card animate-step">
+            <div class="plan-badge">Basic</div>
+            <div class="plan-price">$29<span>/mo</span></div>
+            <p class="plan-desc">For individuals and small security teams.</p>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> 5 scans per month</li>
+                <li><i class="fas fa-check"></i> Quick &amp; Full scans</li>
+                <li><i class="fas fa-check"></i> Up to 50 pages per scan</li>
+                <li><i class="fas fa-check"></i> PDF vulnerability reports</li>
+                <li><i class="fas fa-check"></i> Email support</li>
+                <li class="plan-no"><i class="fas fa-times"></i> Compliance scans</li>
+                <li class="plan-no"><i class="fas fa-times"></i> API access</li>
+                <li class="plan-no"><i class="fas fa-times"></i> Scheduled scans</li>
+            </ul>
+            <a href="/register" class="prod-primary-btn plan-cta" data-plan="basic">Get Basic</a>
+        </div>
+
+        <!-- Pro — highlighted -->
+        <div class="pricing-card pricing-card-pro animate-step">
+            <div class="plan-popular">MOST POPULAR</div>
+            <div class="plan-badge">Pro</div>
+            <div class="plan-price">$79<span>/mo</span></div>
+            <p class="plan-desc">For security teams and growing organisations.</p>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> 20 scans per month</li>
+                <li><i class="fas fa-check"></i> All scan types incl. Compliance</li>
+                <li><i class="fas fa-check"></i> Up to 200 pages per scan</li>
+                <li><i class="fas fa-check"></i> PDF reports</li>
+                <li><i class="fas fa-check"></i> REST API access</li>
+                <li><i class="fas fa-check"></i> Scheduled scans</li>
+                <li><i class="fas fa-check"></i> Priority email support</li>
+                <li><i class="fas fa-check"></i> OWASP/CVSS scoring</li>
+            </ul>
+            <a href="/register" class="prod-primary-btn plan-cta" data-plan="pro">Get Pro</a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="pricing-card animate-step">
+            <div class="plan-badge">Enterprise</div>
+            <div class="plan-price">Custom</div>
+            <p class="plan-desc">For large organisations with bespoke requirements.</p>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Unlimited scans</li>
+                <li><i class="fas fa-check"></i> Unlimited pages per scan</li>
+                <li><i class="fas fa-check"></i> All Pro features</li>
+                <li><i class="fas fa-check"></i> Dedicated security consultant</li>
+                <li><i class="fas fa-check"></i> Custom integrations</li>
+                <li><i class="fas fa-check"></i> SLA &amp; 24/7 support</li>
+                <li><i class="fas fa-check"></i> On-premise deployment options</li>
+                <li><i class="fas fa-check"></i> White-label reports</li>
+            </ul>
+            <a href="/pricing/enterprise" class="prod-primary-btn">Contact Sales</a>
+        </div>
+
+    </div>
+</section>
+
+<!-- Feature Comparison Table -->
+<section class="prod-section prod-alt-section">
+    <h2>Full Feature Comparison</h2>
+    <div class="compare-table-wrap">
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Free</th>
+                    <th>Basic</th>
+                    <th class="th-pro">Pro</th>
+                    <th>Enterprise</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Scans / month</td><td>2</td><td>5</td><td class="td-pro">20</td><td>Unlimited</td></tr>
+                <tr><td>Pages per scan</td><td>10</td><td>50</td><td class="td-pro">200</td><td>Unlimited</td></tr>
+                <tr><td>Quick Scan</td><td><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>Full Scan</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>Compliance Scan</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-times text-muted"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>XSS Detection</td><td><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>SQL Injection</td><td><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>CSRF / SSRF / Open Redirect</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>SSL/TLS Analysis</td><td><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>CVSS Scoring</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>PDF Reports</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>REST API</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-times text-muted"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>Scheduled Scans</td><td><i class="fas fa-times text-muted"></i></td><td><i class="fas fa-times text-muted"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+                <tr><td>2FA / TOTP</td><td><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td><td class="td-pro"><i class="fas fa-check text-cyan"></i></td><td><i class="fas fa-check text-cyan"></i></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="prod-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <div class="faq-item">
+            <h4>Is the free plan really free?</h4>
+            <p>Yes — no credit card required. You get 2 scans per month forever on the free plan.</p>
+        </div>
+        <div class="faq-item">
+            <h4>Can I cancel anytime?</h4>
+            <p>Yes. Cancel from your billing portal anytime. You keep access until the end of the billing period.</p>
+        </div>
+        <div class="faq-item">
+            <h4>What payment methods do you accept?</h4>
+            <p>All major credit/debit cards via Stripe (Visa, Mastercard, Amex). Invoiced billing available for Enterprise.</p>
+        </div>
+        <div class="faq-item">
+            <h4>Do I own my scan data?</h4>
+            <p>Yes. Your scan results belong to you. We never share your data with third parties.</p>
+        </div>
+        <div class="faq-item">
+            <h4>What is the monthly scan limit?</h4>
+            <p>Scan counts reset on the 1st of each month. Unused scans do not roll over.</p>
+        </div>
+    </div>
+</section>
+
+<footer class="prod-footer">
+    <p>© 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener" style="color:#22d3ee;">IklwaLabs</a>. All rights reserved.</p>
+    <p class="footer-tagline">A product by IklwaLabs</p>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const els = document.querySelectorAll('.animate, .animate-step, .faq-item, .pricing-card');
+    const obs = new IntersectionObserver((entries, o) => {
+        entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); o.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    els.forEach(el => obs.observe(el));
+});
+</script>
+
+<style>
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;max-width:1100px;margin:0 auto;}
+.pricing-card{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:32px;position:relative;transition:border-color .3s,transform .3s;}
+.pricing-card:hover{border-color:#334155;transform:translateY(-4px);}
+.pricing-card-pro{border-color:#22d3ee;box-shadow:0 0 30px rgba(34,211,238,.15);}
+.plan-popular{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#22d3ee;color:#0f172a;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:.8px;}
+.plan-badge{font-size:18px;font-weight:700;color:#f8fafc;margin-bottom:8px;}
+.plan-price{font-size:40px;font-weight:800;color:#22d3ee;margin-bottom:6px;}
+.plan-price span{font-size:16px;color:#64748b;font-weight:400;}
+.plan-desc{color:#64748b;font-size:13px;margin-bottom:20px;}
+.plan-features{list-style:none;padding:0;margin:0 0 24px;font-size:14px;color:#94a3b8;}
+.plan-features li{padding:6px 0;display:flex;align-items:center;gap:10px;}
+.plan-features .fa-check{color:#22d3ee;}
+.plan-no{color:#475569!important;}
+.plan-no .fa-times{color:#475569;}
+.compare-table-wrap{overflow-x:auto;}
+.compare-table{width:100%;border-collapse:collapse;font-size:14px;}
+.compare-table th,.compare-table td{padding:12px 16px;border-bottom:1px solid #1e293b;text-align:center;}
+.compare-table th:first-child,.compare-table td:first-child{text-align:left;color:#94a3b8;}
+.compare-table th{background:#020617;color:#64748b;font-weight:600;}
+.th-pro,.td-pro{background:rgba(34,211,238,.06);color:#22d3ee!important;}
+.text-cyan{color:#22d3ee;}
+.text-muted{color:#334155;}
+.faq-list{max-width:700px;margin:0 auto;}
+.faq-item{background:#020617;border:1px solid #1e293b;border-radius:12px;padding:20px 24px;margin-bottom:14px;}
+.faq-item h4{color:#f8fafc;margin-bottom:8px;font-size:16px;}
+.faq-item p{color:#64748b;font-size:14px;margin:0;}
+.footer-tagline{font-size:12px;color:#64748b;margin-top:6px;}
+</style>
+</body>
+</html>
