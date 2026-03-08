@@ -1,19 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login | CyberShield</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | MulikaScans</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-<div class="container">
-    <div class="card">
-        <h2>Login</h2>
-        <form method="POST">
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <p>No account? <a href="/register">Register</a></p>
+<body class="auth-body">
+<div class="auth-card">
+    <div class="auth-logo">MulikaScans</div>
+    <div class="auth-tagline">A product by IklwaLabs</div>
+
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your security dashboard</p>
+
+    {% if error %}
+    <div class="auth-err">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ error }}
+        {% if show_resend %}
+            <br><br>
+            <form method="POST" action="/resend-verification" class="resend-form">
+                <input type="hidden" name="email" value="{{ email|default('') }}">
+                <button class="resend-link" type="submit">Resend verification email</button>
+            </form>
+        {% endif %}
+        </span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/login">
+        <div class="auth-field">
+            <label>Email address</label>
+            <input type="email" name="email" placeholder="you@example.com"
+                   value="{{ email|default('') }}" required autocomplete="email">
+        </div>
+        <div class="auth-field">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="••••••••"
+                   required autocomplete="current-password">
+        </div>
+        <a href="/forgot-password" class="auth-forgot">Forgot password?</a>
+        <button class="auth-btn" type="submit">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+    </form>
+
+    <div class="auth-divider">or</div>
+
+    <a class="oauth-btn" href="/oauth/google">
+        <i class="fab fa-google"></i> Continue with Google
+    </a>
+
+    <div class="auth-link">
+        Don't have an account? <a href="/register">Create one free</a>
+    </div>
+
+    <div class="iklwa-badge">
+        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
     </div>
 </div>
 </body>

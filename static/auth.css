@@ -1,0 +1,294 @@
+/* MulikaScans — Auth Pages Shared Stylesheet */
+
+.auth-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.auth-card {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+}
+
+.auth-logo {
+    font-size: 22px;
+    font-weight: 800;
+    color: #22d3ee;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.auth-tagline {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 6px;
+}
+
+.auth-sub {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 26px;
+}
+
+/* Form fields */
+.auth-field {
+    margin-bottom: 18px;
+}
+
+.auth-field label {
+    display: block;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.auth-field input,
+.auth-field select {
+    width: 100%;
+    padding: 12px 14px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f8fafc;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.auth-field input:focus,
+.auth-field select:focus {
+    border-color: #22d3ee;
+}
+
+.auth-hint {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.auth-optional {
+    color: #475569;
+    font-weight: 400;
+}
+
+/* Submit button */
+.auth-btn {
+    width: 100%;
+    padding: 13px;
+    background: #22d3ee;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+    letter-spacing: 0.3px;
+}
+
+.auth-btn:hover {
+    opacity: 0.9;
+}
+
+/* Error / info boxes */
+.auth-err {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.auth-success {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #86efac;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.auth-info {
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    color: #67e8f9;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 18px;
+}
+
+/* Links */
+.auth-link {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.auth-link a {
+    color: #22d3ee;
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+/* Divider */
+.auth-divider {
+    text-align: center;
+    color: #334155;
+    font-size: 12px;
+    margin: 18px 0;
+    position: relative;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 42%;
+    height: 1px;
+    background: #1e293b;
+}
+
+.auth-divider::before { left: 0; }
+.auth-divider::after  { right: 0; }
+
+/* OAuth button */
+.oauth-btn {
+    width: 100%;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: border-color 0.2s, color 0.2s;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.oauth-btn:hover {
+    border-color: #22d3ee;
+    color: #f8fafc;
+}
+
+/* Resend link */
+.resend-link {
+    color: #22d3ee;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: underline;
+    padding: 0;
+}
+
+/* Forgot password link */
+.auth-forgot {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #22d3ee;
+    text-decoration: none;
+    margin-bottom: 16px;
+}
+
+/* Free plan badge */
+.auth-free-badge {
+    text-align: center;
+    margin-top: 18px;
+    padding: 10px;
+    background: rgba(34, 211, 238, 0.06);
+    border: 1px solid rgba(34, 211, 238, 0.12);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #67e8f9;
+}
+
+/* IklwaLabs footer badge */
+.iklwa-badge {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 11px;
+    color: #334155;
+}
+
+.iklwa-badge a {
+    color: #475569;
+    text-decoration: none;
+}
+
+.iklwa-badge a:hover {
+    color: #22d3ee;
+}
+
+/* QR code container (2FA setup) */
+.qr-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+}
+
+.qr-container img {
+    border-radius: 8px;
+    max-width: 180px;
+}
+
+.secret-box {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 14px;
+    color: #22d3ee;
+    text-align: center;
+    letter-spacing: 2px;
+    word-break: break-all;
+    margin: 12px 0;
+}
