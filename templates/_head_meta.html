@@ -1,0 +1,98 @@
+{# ── MulikaScans — shared brand meta (include in every <head>) ── #}
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/mulikascans-dark.ico') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/mulikascans-dark-16.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon/mulikascans-dark-32.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/mulikascans-dark-180.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon/mulikascans-dark-192.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='favicon/site.webmanifest') }}">
+<meta name="theme-color" content="#07070C">
+<meta name="msapplication-TileColor" content="#07070C">
+<meta name="description" content="MulikaScans detects SQL injection, XSS, broken authentication, and 200+ vulnerability types automatically. Free to start.">
+<meta property="og:title" content="MulikaScans — Web Vulnerability Scanner">
+<meta property="og:description" content="Enterprise-grade vulnerability scanning for web applications. Built in Tanzania by IklwaLabs.">
+<meta property="og:image" content="/static/img/brand/MulikaScans-Logo-Dark.png">
+<meta property="og:url" content="https://mulikascans.com">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+
+{% if current_user %}
+<style>
+#idle-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:center;justify-content:center;font-family:Inter,sans-serif}
+#idle-box{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:36px 40px;max-width:420px;width:90%;text-align:center;color:#e5e7eb}
+#idle-icon{font-size:2.5rem;color:#f59e0b;margin-bottom:12px}
+#idle-box h3{margin:0 0 8px;font-size:1.3rem;color:#f8fafc}
+#idle-box p{margin:0 0 24px;color:#94a3b8;font-size:.95rem;line-height:1.5}
+#idle-countdown{color:#f59e0b;font-weight:700}
+#idle-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+#idle-stay{background:#22d3ee;color:#0f172a;border:none;border-radius:8px;padding:10px 22px;font-size:.95rem;font-weight:600;cursor:pointer}
+#idle-stay:hover{background:#06b6d4}
+#idle-logout{background:transparent;color:#64748b;border:1px solid #334155;border-radius:8px;padding:10px 22px;font-size:.95rem;text-decoration:none}
+#idle-logout:hover{color:#94a3b8}
+</style>
+<script>
+(function(){
+  var TIMEOUT_MS  = {{ session_timeout_minutes }} * 60 * 1000;
+  var WARN_BEFORE = 2 * 60 * 1000;
+  var idleTimer, warnTimer, countdown;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var modal = document.createElement('div');
+    modal.id = 'idle-modal';
+    modal.innerHTML =
+      '<div id="idle-box">' +
+        '<div id="idle-icon">&#9200;</div>' +
+        '<h3>Still there?</h3>' +
+        '<p>You\'ll be logged out in <span id="idle-countdown">2:00</span> due to inactivity.</p>' +
+        '<div id="idle-actions">' +
+          '<button id="idle-stay">Stay logged in</button>' +
+          '<a id="idle-logout" href="/logout">Log out now</a>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    document.getElementById('idle-stay').addEventListener('click', function(){
+      hideModal();
+      resetTimer();
+      fetch('/api/auth/keepalive', {method:'POST', credentials:'same-origin'}).catch(function(){});
+    });
+
+    ['mousemove','keydown','mousedown','touchstart','scroll','click'].forEach(function(e){
+      document.addEventListener(e, resetTimer, {passive:true});
+    });
+
+    resetTimer();
+  });
+
+  function resetTimer(){
+    clearTimeout(idleTimer);
+    clearTimeout(warnTimer);
+    clearInterval(countdown);
+    hideModal();
+    warnTimer = setTimeout(showWarning, TIMEOUT_MS - WARN_BEFORE);
+    idleTimer  = setTimeout(doLogout,   TIMEOUT_MS);
+  }
+
+  function showWarning(){
+    var secs = Math.round(WARN_BEFORE / 1000);
+    document.getElementById('idle-modal').style.display = 'flex';
+    countdown = setInterval(function(){
+      secs--;
+      var m = Math.floor(secs / 60);
+      var s = String(secs % 60).padStart(2,'0');
+      var el = document.getElementById('idle-countdown');
+      if(el) el.textContent = m + ':' + s;
+      if(secs <= 0){ clearInterval(countdown); doLogout(); }
+    }, 1000);
+  }
+
+  function hideModal(){
+    var m = document.getElementById('idle-modal');
+    if(m) m.style.display = 'none';
+  }
+
+  function doLogout(){
+    window.location.href = '/logout?timeout=1';
+  }
+})();
+</script>
+{% endif %}

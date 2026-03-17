@@ -3,155 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
     <title>New Scan | MulikaScans</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
+<!-- Sidebar -->
 <aside class="soc-sidebar">
     <div class="soc-logo">MULIKASCANS</div>
     <nav class="soc-menu">
         <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a class="active"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scan" class="active"><i class="fas fa-search"></i> New Scan</a>
         <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
         <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
         <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
         <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
-        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        {% if user %}
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}
+        <a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+        {% endif %}
     </nav>
 </aside>
 
+<!-- Main -->
 <div class="soc-main">
 
-<header class="soc-topbar glass">
-    <div class="scan-target">New Security Scan</div>
-    <div class="live-alert">&#9679; MulikaScans ACTIVE</div>
-</header>
+    <header class="soc-topbar">
+        <div class="scan-target">New Security Scan</div>
+        <div class="live-alert">MulikaScans Active</div>
+    </header>
 
-<section class="soc-grid">
-<div class="panel full glass">
-    <h3>Configure Your Scan</h3>
+    <div class="page-content">
 
-    {% if error %}
-    <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:14px;">
-        <i class="fas fa-exclamation-triangle"></i> {{ error }}
-        {% if upgrade %}
-        <a href="/pricing" style="color:#22d3ee;margin-left:8px;font-weight:600;">Upgrade Plan &#8594;</a>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <form method="POST" action="/scan" onsubmit="showLoader()" style="max-width:640px;">
-        <div style="margin-bottom:20px;">
-            <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:8px;font-weight:500;">Target URL</label>
-            <input type="text" name="url" placeholder="https://example.com"
-                   required style="width:100%;padding:13px 16px;background:#020617;border:1px solid #334155;border-radius:8px;color:#f8fafc;font-size:15px;outline:none;box-sizing:border-box;">
+        <div class="scan-hero">
+            <h1>Scan for Vulnerabilities</h1>
+            <p>Enter a target URL to run a security assessment. Only scan systems you own or have explicit permission to test.</p>
         </div>
 
-        <div style="margin-bottom:24px;">
-            <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:8px;font-weight:500;">Scan Type</label>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+        {# ── Scan quota bar ── #}
+        {% if quota %}
+        {% if quota.unlimited %}
+        <div class="quota-bar quota-unlimited">
+            <i class="fas fa-infinity"></i>
+            <span>Unlimited scans on your <strong>{{ user.role|title }}</strong> plan</span>
+        </div>
+        {% elif quota.exhausted %}
+        <div class="quota-bar quota-exhausted">
+            <div class="quota-bar-top">
+                <span><i class="fas fa-ban"></i> Scan limit reached &mdash; <strong>{{ quota.used }}/{{ quota.limit }}</strong> scans used this month</span>
+                <a href="/pricing" class="quota-upgrade-btn">Upgrade Plan <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="quota-track"><div class="quota-fill quota-fill-full" style="width:100%"></div></div>
+            <p class="quota-hint">Upgrade to continue scanning. <a href="/pricing">See plans &rarr;</a></p>
+        </div>
+        {% else %}
+        <div class="quota-bar quota-active">
+            <div class="quota-bar-top">
+                <span><i class="fas fa-tachometer-alt"></i> <strong>{{ quota.remaining }}</strong> scan{{ 's' if quota.remaining != 1 }} remaining this month</span>
+                <span class="quota-used-label">{{ quota.used }} / {{ quota.limit }} used</span>
+            </div>
+            <div class="quota-track">
+                <div class="quota-fill {% if quota.remaining <= 1 %}quota-fill-warn{% else %}quota-fill-ok{% endif %}"
+                     style="width: {{ ((quota.used / quota.limit) * 100)|round|int }}%"></div>
+            </div>
+            {% if quota.remaining == 1 %}
+            <p class="quota-hint"><i class="fas fa-exclamation-triangle"></i> Last scan remaining. <a href="/pricing">Upgrade for more</a></p>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% endif %}
 
-                <label class="scan-type-card">
-                    <input type="radio" name="scan_type" value="quick" checked style="display:none;">
-                    <div class="scan-type-inner">
+        {% if error %}
+        <div class="scan-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ error }}{% if upgrade %} &mdash; <a href="/pricing">Upgrade your plan</a>{% endif %}</span>
+        </div>
+        {% endif %}
+
+        {% if quota and quota.exhausted %}
+        {# ── Quota gate — show upgrade CTA instead of form ── #}
+        <div class="quota-gate">
+            <div class="quota-gate-icon"><i class="fas fa-lock"></i></div>
+            <h3>Monthly scan limit reached</h3>
+            <p>You've used all <strong>{{ quota.limit }}</strong> scan{{ 's' if quota.limit != 1 }} on your <strong>{{ user.role|title }}</strong> plan. Upgrade to get more scans and unlock advanced features.</p>
+            <div class="quota-gate-actions">
+                <a href="/pricing" class="btn-primary"><i class="fas fa-star"></i> View Plans &amp; Upgrade</a>
+                <a href="/scans" class="btn-outline"><i class="fas fa-history"></i> View Past Scans</a>
+            </div>
+            <p class="quota-gate-note">Your limit resets on the 1st of each month.</p>
+        </div>
+        {% else %}
+        <form method="POST" action="/scan" onsubmit="showLoader()">
+
+            <!-- URL input -->
+            <div class="scan-input-bar">
+                <span class="url-prefix"><i class="fas fa-globe" style="margin-right:8px;"></i>Target URL</span>
+                <input type="text" name="url"
+                       placeholder="https://example.com"
+                       autocomplete="off" spellcheck="false"
+                       required>
+                <button type="submit" class="scan-btn">
+                    <i class="fas fa-search"></i> Start Scan
+                </button>
+            </div>
+
+            <!-- Scan type -->
+            <p class="scan-type-label">Scan Type</p>
+            <div class="scan-pills">
+
+                <label class="scan-pill">
+                    <input type="radio" name="scan_type" value="quick" checked>
+                    <div class="scan-pill-inner">
                         <i class="fas fa-bolt"></i>
-                        <strong>Quick Scan</strong>
-                        <span>Headers, SSL, root URL · ~30s</span>
-                        <em>Free &amp; up</em>
+                        <span class="pill-name">Quick</span>
+                        <span class="pill-desc">Headers, SSL, root URL · ~30s</span>
                     </div>
                 </label>
 
                 {% if user and user.role in ('basic','pro','enterprise','admin') %}
-                <label class="scan-type-card">
-                    <input type="radio" name="scan_type" value="full" style="display:none;">
-                    <div class="scan-type-inner">
+                <label class="scan-pill">
+                    <input type="radio" name="scan_type" value="full">
+                    <div class="scan-pill-inner">
                         <i class="fas fa-shield-alt"></i>
-                        <strong>Full Scan</strong>
-                        <span>All checks, full crawl · 2–5 min</span>
-                        <em>Basic &amp; up</em>
+                        <span class="pill-name">Full</span>
+                        <span class="pill-desc">All checks, full crawl · 2–5 min</span>
                     </div>
                 </label>
                 {% else %}
-                <div class="scan-type-card scan-type-locked" title="Upgrade to Basic or higher">
-                    <div class="scan-type-inner">
+                <div class="scan-pill scan-pill-locked" title="Requires Basic plan or higher">
+                    <div class="scan-pill-inner">
                         <i class="fas fa-lock"></i>
-                        <strong>Full Scan</strong>
-                        <span>All checks, full crawl</span>
-                        <a href="/pricing" style="color:#22d3ee;font-size:11px;">Upgrade</a>
+                        <span class="pill-name">Full</span>
+                        <span class="pill-desc">All checks · <a href="/pricing">Upgrade</a></span>
                     </div>
                 </div>
                 {% endif %}
 
                 {% if user and user.role in ('pro','enterprise','admin') %}
-                <label class="scan-type-card">
-                    <input type="radio" name="scan_type" value="compliance" style="display:none;">
-                    <div class="scan-type-inner">
+                <label class="scan-pill">
+                    <input type="radio" name="scan_type" value="compliance">
+                    <div class="scan-pill-inner">
                         <i class="fas fa-clipboard-check"></i>
-                        <strong>Compliance</strong>
-                        <span>OWASP + full · 5–10 min</span>
-                        <em>Pro &amp; up</em>
+                        <span class="pill-name">Compliance</span>
+                        <span class="pill-desc">OWASP + full · 5–10 min</span>
                     </div>
                 </label>
                 {% else %}
-                <div class="scan-type-card scan-type-locked" title="Upgrade to Pro or higher">
-                    <div class="scan-type-inner">
+                <div class="scan-pill scan-pill-locked" title="Requires Pro plan or higher">
+                    <div class="scan-pill-inner">
                         <i class="fas fa-lock"></i>
-                        <strong>Compliance</strong>
-                        <span>OWASP + full scan</span>
-                        <a href="/pricing" style="color:#22d3ee;font-size:11px;">Upgrade</a>
+                        <span class="pill-name">Compliance</span>
+                        <span class="pill-desc">OWASP + full · <a href="/pricing">Upgrade</a></span>
                     </div>
                 </div>
                 {% endif %}
 
             </div>
+
+            <!-- Legal -->
+            <div class="legal-notice">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>Only scan systems you own or have explicit written permission to test. Unauthorised scanning may be illegal under the Computer Misuse Act and similar laws.</span>
+            </div>
+
+        </form>
+        {% endif %}{# end quota.exhausted else #}
+
+        <div class="page-footer">
+            &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
         </div>
-
-        <p style="font-size:12px;color:#475569;margin-bottom:20px;">
-            <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>
-            Only scan systems you own or have explicit written permission to test.
-            Unauthorised scanning may be illegal.
-        </p>
-
-        <button type="submit" class="btn-primary" style="padding:13px 32px;font-size:15px;min-width:160px;">
-            <i class="fas fa-search"></i> Start Scan
-        </button>
-    </form>
-</div>
-</section>
+    </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loader-overlay" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
-    <div class="spinner"></div>
-    <p style="color:#22d3ee;font-size:18px;font-weight:600;">Scanning for vulnerabilities…</p>
-    <span style="color:#64748b;font-size:14px;">Focus on your work. Leave cyber threats to us.</span>
+<!-- Loading overlay -->
+<div id="loader-overlay">
+    <div class="loader-spinner"></div>
+    <p>Scanning for vulnerabilities&hellip;</p>
+    <span>This may take a minute depending on scan type.</span>
 </div>
 
 <style>
-.scan-type-card{cursor:pointer;display:block;}
-.scan-type-card input:checked + .scan-type-inner{border-color:#22d3ee;background:rgba(34,211,238,.08);}
-.scan-type-inner{border:1px solid #1e293b;border-radius:10px;padding:16px;transition:border-color .2s,background .2s;display:flex;flex-direction:column;gap:4px;}
-.scan-type-inner i{color:#22d3ee;font-size:18px;margin-bottom:4px;}
-.scan-type-inner strong{color:#f8fafc;font-size:14px;}
-.scan-type-inner span{color:#64748b;font-size:12px;}
-.scan-type-inner em{color:#475569;font-size:11px;font-style:normal;}
-.scan-type-locked{cursor:not-allowed;opacity:.5;}
-.scan-type-locked .scan-type-inner{border-color:#1e293b;}
+/* ── Quota bar ── */
+.quota-bar {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+
+.quota-bar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.quota-unlimited {
+    background: rgba(34,211,238,.06);
+    border: 1px solid rgba(34,211,238,.2);
+    color: var(--cyan);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quota-active {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.quota-exhausted {
+    background: rgba(239,68,68,.06);
+    border: 1px solid rgba(239,68,68,.25);
+    color: #fca5a5;
+}
+
+.quota-exhausted .quota-bar-top span { font-size: 13.5px; font-weight: 600; }
+
+.quota-used-label {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.quota-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.quota-fill { height: 100%; border-radius: 2px; transition: width .3s; min-width: 4px; }
+.quota-fill-ok   { background: var(--cyan); }
+.quota-fill-warn { background: var(--amber); }
+.quota-fill-full { background: var(--red); }
+
+.quota-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+.quota-hint i { color: var(--amber); margin-right: 4px; }
+.quota-hint a, .quota-exhausted a { color: var(--cyan); }
+
+.quota-upgrade-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    background: var(--cyan);
+    color: #03091a;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s;
+}
+.quota-upgrade-btn:hover { background: #38bdf8; text-decoration: none; }
+
+/* ── Quota gate (exhausted state replacing form) ── */
+.quota-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 52px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.quota-gate-icon {
+    width: 72px;
+    height: 72px;
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--red);
+    margin-bottom: 20px;
+}
+
+.quota-gate h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+}
+
+.quota-gate p {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 420px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.quota-gate-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.quota-gate-note {
+    font-size: 12px;
+    color: var(--muted-2);
+    margin: 0;
+}
 </style>
 
 <script>
-function showLoader(){
-    document.getElementById("loader-overlay").style.display="flex";
+function showLoader() {
+    document.getElementById('loader-overlay').style.display = 'flex';
 }
-document.querySelectorAll('.scan-type-card:not(.scan-type-locked)').forEach(label=>{
-    label.addEventListener('click',function(){
-        document.querySelectorAll('.scan-type-inner').forEach(el=>el.style.borderColor='');
-    });
-});
 </script>
 </body>
 </html>

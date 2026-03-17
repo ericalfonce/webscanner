@@ -12,8 +12,7 @@ psycopg2-binary>=2.9.9
 python-dotenv>=1.0.0
 
 # Authentication
-bcrypt>=4.1.2
-PyJWT>=2.8.0
+supabase>=2.10.0
 pyotp>=2.9.0
 qrcode[pil]>=7.4.2
 
@@ -26,10 +25,7 @@ flask-limiter>=3.5.0
 # OAuth
 authlib>=1.3.0
 
-# Payments
-stripe>=8.0.0
-
-# HTTP Scanning
+# HTTP (scanning + Flutterwave API -- no SDK needed, uses requests)
 requests>=2.31.0
 beautifulsoup4>=4.12.3
 urllib3>=2.2.0

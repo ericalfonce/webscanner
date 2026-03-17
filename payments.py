@@ -1,52 +1,25 @@
 """
-MulikaScans — Stripe Payment Integration
-Checkout sessions, webhook handler, billing portal.
+MulikaScans — Flutterwave Payment Integration
+Checkout sessions, webhook handler, billing dashboard.
+Mobile money (M-Pesa, Airtel, Tigo) + card payments for Tanzania & East Africa.
 """
 
 import os
-import stripe
 from datetime import datetime, timezone
-from flask import Blueprint, request, jsonify, redirect, url_for, render_template, current_app
+from flask import (Blueprint, request, jsonify, redirect,
+                   render_template, current_app)
 
 from models import db, User, Subscription, Payment
 from auth import login_required, get_current_user
+from flutterwave_service import (
+    PLAN_CONFIG, PaymentError,
+    create_subscription_checkout, verify_transaction,
+    cancel_flw_subscription, get_payment_history,
+    get_user_flw_subscriptions, parse_payment_method,
+    extract_meta, validate_amount,
+)
 
 payments_bp = Blueprint("payments", __name__)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Stripe client setup
-# ─────────────────────────────────────────────────────────────────────────────
-def _stripe():
-    stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
-    return stripe
-
-
-PLAN_CONFIG = {
-    "basic": {
-        "name": "Basic",
-        "price_id": lambda: os.environ.get("STRIPE_BASIC_PRICE_ID", ""),
-        "amount_cents": 2900,
-        "currency": "usd",
-        "scan_limit": 5,
-        "role": "basic",
-    },
-    "pro": {
-        "name": "Pro",
-        "price_id": lambda: os.environ.get("STRIPE_PRO_PRICE_ID", ""),
-        "amount_cents": 7900,
-        "currency": "usd",
-        "scan_limit": 20,
-        "role": "pro",
-    },
-    "enterprise": {
-        "name": "Enterprise",
-        "price_id": None,
-        "amount_cents": None,
-        "currency": "usd",
-        "scan_limit": 9999,
-        "role": "enterprise",
-    },
-}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -55,249 +28,312 @@ PLAN_CONFIG = {
 @payments_bp.route("/pricing")
 def pricing():
     user = get_current_user()
-    stripe_pk = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
-    return render_template("pricing.html", user=user, stripe_pk=stripe_pk,
-                           plans=PLAN_CONFIG)
+    return render_template("pricing.html", user=user)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Create Checkout Session
+# Create Checkout — redirects to Flutterwave hosted page
 # ─────────────────────────────────────────────────────────────────────────────
-@payments_bp.route("/api/payments/create-checkout", methods=["POST"])
+@payments_bp.route("/api/v1/subscriptions/checkout", methods=["POST"])
 @login_required
-def create_checkout_session():
+def create_checkout():
     user = get_current_user()
     data = request.get_json() or {}
-    plan = data.get("plan", "basic")
+    plan = data.get("plan", "").lower().strip()
+    billing_cycle = data.get("billing_cycle", "monthly").lower().strip()
 
-    if plan not in PLAN_CONFIG or plan == "enterprise":
-        return jsonify({"error": "Invalid plan. Contact us for Enterprise pricing."}), 400
+    if plan == "enterprise":
+        return jsonify({"redirect_url": "mailto:support@mulikascans.com?subject=Enterprise%20Enquiry"}), 200
 
-    cfg = PLAN_CONFIG[plan]
-    price_id = cfg["price_id"]()
-    if not price_id:
-        return jsonify({"error": "Payment not configured. Contact support."}), 503
+    if plan not in ("basic", "pro"):
+        return jsonify({"error": "Invalid plan. Choose 'basic' or 'pro'."}), 400
 
-    s = _stripe()
+    if billing_cycle not in ("monthly", "annual"):
+        billing_cycle = "monthly"
 
-    # Get or create Stripe customer
-    customer_id = user.stripe_customer_id
-    if not customer_id:
-        customer = s.Customer.create(
-            email=user.email,
-            metadata={"user_id": user.id, "app": "MulikaScans"}
+    try:
+        checkout_url, tx_ref = create_subscription_checkout(user, plan, billing_cycle)
+        return jsonify({"checkout_url": checkout_url, "tx_ref": tx_ref})
+    except PaymentError as e:
+        current_app.logger.warning(f"Checkout error for user {user.id}: {e}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Unexpected checkout error: {e}")
+        return jsonify({"error": "Payment service unavailable. Please try again."}), 503
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Payment Callback — Flutterwave redirects here after payment
+# ─────────────────────────────────────────────────────────────────────────────
+@payments_bp.route("/payment/callback")
+@login_required
+def payment_callback():
+    tx_ref = request.args.get("tx_ref", "")
+    transaction_id = request.args.get("transaction_id", "")
+    status = request.args.get("status", "")
+
+    if status == "cancelled":
+        return redirect("/pricing?cancelled=1")
+
+    if status != "successful" or not transaction_id:
+        return render_template("payment/failed.html",
+                               reason="Payment was not completed. No charge has been made.")
+
+    # Server-side verification — CRITICAL: never trust client redirect params alone
+    try:
+        tx_data = verify_transaction(transaction_id)
+    except Exception as e:
+        current_app.logger.error(f"FLW verify error: {e}")
+        tx_data = None
+
+    if not tx_data:
+        return render_template("payment/failed.html",
+                               reason="We could not verify your payment. If charged, contact support@mulikascans.com with your reference.")
+
+    user_id, plan, billing_cycle = extract_meta(tx_data)
+    billing_cycle = billing_cycle or "monthly"
+
+    if not user_id or not plan:
+        current_app.logger.warning(f"FLW callback: missing meta in tx {transaction_id}")
+        return render_template("payment/failed.html",
+                               reason="Payment verified but subscription activation failed. Contact support.")
+
+    if not validate_amount(tx_data, plan, billing_cycle):
+        current_app.logger.warning(f"FLW callback: amount mismatch tx={transaction_id}")
+        return render_template("payment/failed.html",
+                               reason="Payment amount mismatch. Contact support@mulikascans.com.")
+
+    if tx_data.get("status") == "pending":
+        return render_template("payment/pending.html",
+                               tx_ref=tx_ref, transaction_id=transaction_id)
+
+    _activate_subscription(user_id, plan, billing_cycle, tx_data, tx_ref)
+    cfg = PLAN_CONFIG.get(f"{plan}_{billing_cycle}", {})
+    return render_template("billing_success.html",
+                           plan=plan.title(), billing_cycle=billing_cycle,
+                           amount=cfg.get("amount", 0), tx_ref=tx_ref)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Payment Status Polling (for mobile money pending state)
+# ─────────────────────────────────────────────────────────────────────────────
+@payments_bp.route("/api/v1/payment/status/<transaction_id>")
+@login_required
+def payment_status(transaction_id):
+    try:
+        tx_data = verify_transaction(transaction_id)
+    except Exception:
+        return jsonify({"status": "error"}), 500
+
+    if not tx_data:
+        return jsonify({"status": "pending"})
+
+    user_id, plan, billing_cycle = extract_meta(tx_data)
+    if tx_data.get("status") == "successful" and user_id and plan:
+        _activate_subscription(user_id, plan, billing_cycle or "monthly", tx_data,
+                               tx_data.get("tx_ref", ""))
+        return jsonify({"status": "successful", "redirect": "/billing/success"})
+
+    return jsonify({"status": tx_data.get("status", "pending")})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Flutterwave Webhook Handler
+# ─────────────────────────────────────────────────────────────────────────────
+@payments_bp.route("/api/webhooks/flutterwave", methods=["POST"])
+def flutterwave_webhook():
+    import hmac as _hmac
+    secret_hash = os.environ.get("FLW_WEBHOOK_SECRET_HASH", "")
+    if not secret_hash:
+        current_app.logger.error(
+            "FLW_WEBHOOK_SECRET_HASH is not configured — webhook rejected for safety"
         )
-        customer_id = customer.id
-        user.stripe_customer_id = customer_id
-        db.session.commit()
+        return jsonify({"error": "Webhook not configured"}), 503
 
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+    signature = request.headers.get("verif-hash", "")
+    # Constant-time comparison to prevent timing attacks
+    if not _hmac.compare_digest(signature, secret_hash):
+        current_app.logger.warning("Flutterwave webhook: invalid verif-hash from %s",
+                                   request.remote_addr)
+        return jsonify({"error": "Invalid signature"}), 401
 
-    session_obj = s.checkout.Session.create(
-        customer=customer_id,
-        mode="subscription",
-        payment_method_types=["card"],
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=f"{frontend_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{frontend_url}/pricing",
-        metadata={"user_id": user.id, "plan": plan},
-        subscription_data={
-            "metadata": {"user_id": user.id, "plan": plan}
-        },
+    payload = request.get_json(force=True) or {}
+    event = payload.get("event", "")
+    data = payload.get("data", {})
+
+    current_app.logger.info(f"FLW webhook: {event}")
+
+    if event == "charge.completed":
+        if data.get("status") == "successful":
+            _handle_successful_charge(data)
+        else:
+            _handle_failed_charge(data)
+    elif event == "subscription.cancelled":
+        _handle_subscription_cancelled(data)
+
+    return jsonify({"status": "ok"}), 200
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Billing Dashboard
+# ─────────────────────────────────────────────────────────────────────────────
+@payments_bp.route("/billing")
+@login_required
+def billing_dashboard():
+    user = get_current_user()
+    limits = user.get_plan_limits()
+
+    local_payments = (
+        Payment.query.filter_by(user_id=user.id)
+        .order_by(Payment.created_at.desc())
+        .limit(20).all()
     )
 
-    return jsonify({"checkout_url": session_obj.url})
+    flw_payments = []
+    flw_subscriptions = []
+    if os.environ.get("FLW_SECRET_KEY", "").startswith("FLWSECK"):
+        try:
+            flw_payments = get_payment_history(user.email)
+            flw_subscriptions = get_user_flw_subscriptions(user.email)
+        except Exception as e:
+            current_app.logger.warning(f"FLW API fetch failed: {e}")
+
+    active_sub = (Subscription.query
+                  .filter_by(user_id=user.id, status="active")
+                  .order_by(Subscription.created_at.desc()).first())
+
+    return render_template(
+        "billing.html",
+        user=user, limits=limits,
+        local_payments=local_payments,
+        flw_payments=flw_payments,
+        flw_subscriptions=flw_subscriptions,
+        active_sub=active_sub,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Stripe Webhook Handler
+# Cancel Subscription
 # ─────────────────────────────────────────────────────────────────────────────
-@payments_bp.route("/api/webhooks/stripe", methods=["POST"])
-def stripe_webhook():
-    payload = request.get_data()
-    sig_header = request.headers.get("Stripe-Signature", "")
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+@payments_bp.route("/api/v1/subscriptions/cancel", methods=["POST"])
+@login_required
+def cancel_subscription():
+    user = get_current_user()
+    sub = Subscription.query.filter_by(user_id=user.id, status="active").first()
+    if not sub:
+        return jsonify({"error": "No active subscription found."}), 404
 
-    s = _stripe()
-    try:
-        event = s.Webhook.construct_event(payload, sig_header, webhook_secret)
-    except s.error.SignatureVerificationError:
-        current_app.logger.warning("Stripe webhook signature verification failed")
-        return jsonify({"error": "Invalid signature"}), 400
-    except Exception as e:
-        current_app.logger.error(f"Stripe webhook error: {e}")
-        return jsonify({"error": "Webhook error"}), 400
+    cancelled_flw = False
+    if sub.flw_subscription_id:
+        try:
+            cancelled_flw = cancel_flw_subscription(sub.flw_subscription_id)
+        except Exception as e:
+            current_app.logger.error(f"FLW cancel error: {e}")
 
-    event_type = event["type"]
-    data = event["data"]["object"]
+    sub.status = "cancelled"
+    sub.cancelled_at = datetime.now(timezone.utc)
+    user.subscription_status = "cancelled"
+    db.session.commit()
 
-    current_app.logger.info(f"Stripe webhook: {event_type}")
-
-    if event_type == "checkout.session.completed":
-        _handle_checkout_completed(data)
-
-    elif event_type == "invoice.paid":
-        _handle_invoice_paid(data)
-
-    elif event_type == "invoice.payment_failed":
-        _handle_invoice_payment_failed(data)
-
-    elif event_type == "customer.subscription.deleted":
-        _handle_subscription_deleted(data)
-
-    elif event_type == "customer.subscription.updated":
-        _handle_subscription_updated(data)
-
-    return jsonify({"received": True})
+    return jsonify({
+        "message": "Subscription cancelled. You retain access until the end of your billing period.",
+        "flw_cancelled": cancelled_flw,
+    })
 
 
-def _handle_checkout_completed(session_obj):
-    user_id = int(session_obj.get("metadata", {}).get("user_id", 0))
-    plan = session_obj.get("metadata", {}).get("plan", "basic")
-    stripe_sub_id = session_obj.get("subscription")
+# ─────────────────────────────────────────────────────────────────────────────
+# Billing Success redirect target
+# ─────────────────────────────────────────────────────────────────────────────
+@payments_bp.route("/billing/success")
+@login_required
+def billing_success():
+    return render_template("billing_success.html", plan=None, billing_cycle=None,
+                           amount=None, tx_ref=request.args.get("tx_ref", ""))
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Internal helpers
+# ─────────────────────────────────────────────────────────────────────────────
+def _activate_subscription(user_id, plan, billing_cycle, tx_data, tx_ref):
+    key = f"{plan}_{billing_cycle}"
+    cfg = PLAN_CONFIG.get(key, {})
     user = db.session.get(User, user_id)
     if not user:
         return
 
-    cfg = PLAN_CONFIG.get(plan, PLAN_CONFIG["basic"])
-
-    user.role = cfg["role"]
-    user.monthly_scan_limit = cfg["scan_limit"]
-    user.subscription_id = stripe_sub_id
+    user.role = cfg.get("role", plan)
+    user.monthly_scan_limit = cfg.get("scan_limit", 2)
     user.subscription_status = "active"
+    user.scan_count_this_month = 0
 
-    # Create or update Subscription record
-    sub = Subscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
-    if not sub:
-        sub = Subscription(
-            user_id=user_id,
-            plan=plan,
-            stripe_subscription_id=stripe_sub_id,
-            stripe_customer_id=session_obj.get("customer"),
-            status="active",
-        )
-        db.session.add(sub)
+    payment_method = parse_payment_method(tx_data)
 
-    db.session.commit()
+    Subscription.query.filter_by(user_id=user_id, status="active").update({"status": "superseded"})
+    sub = Subscription(user_id=user_id, plan=plan, billing_cycle=billing_cycle,
+                       flw_subscription_id=str(tx_data.get("id", "")), status="active")
+    db.session.add(sub)
+    db.session.flush()
 
-
-def _handle_invoice_paid(invoice):
-    stripe_sub_id = invoice.get("subscription")
-    if not stripe_sub_id:
-        return
-
-    sub = Subscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
-    if not sub:
-        return
-
-    user = db.session.get(User, sub.user_id)
-    if user:
-        user.subscription_status = "active"
-        user.scan_count_this_month = 0  # Reset monthly scan count on renewal
-
-    # Record payment
+    amount_cents = int((tx_data.get("amount") or 0) * 100)
     payment = Payment(
-        user_id=sub.user_id,
-        subscription_id=sub.id,
-        stripe_payment_intent_id=invoice.get("payment_intent"),
-        amount_cents=invoice.get("amount_paid", 0),
-        currency=invoice.get("currency", "usd"),
-        status="succeeded",
+        user_id=user_id, subscription_id=sub.id,
+        flw_tx_ref=tx_ref, flw_transaction_id=str(tx_data.get("id", "")),
+        payment_method=payment_method, amount_cents=amount_cents,
+        currency=(tx_data.get("currency") or "USD").lower(), status="succeeded",
     )
     db.session.add(payment)
     db.session.commit()
+    current_app.logger.info(f"Activated: user={user_id} plan={plan}/{billing_cycle}")
 
 
-def _handle_invoice_payment_failed(invoice):
-    stripe_sub_id = invoice.get("subscription")
-    if not stripe_sub_id:
+def _handle_successful_charge(data):
+    meta = data.get("meta", {}) or {}
+    try:
+        user_id = int(meta.get("user_id", 0))
+    except (TypeError, ValueError):
         return
+    plan = meta.get("plan", "")
+    billing_cycle = meta.get("billing_cycle", "monthly")
+    if user_id and plan:
+        _activate_subscription(user_id, plan, billing_cycle, data, data.get("tx_ref", ""))
 
-    sub = Subscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
-    if not sub:
+
+def _handle_failed_charge(data):
+    meta = data.get("meta", {}) or {}
+    try:
+        user_id = int(meta.get("user_id", 0))
+    except (TypeError, ValueError):
         return
-
-    user = db.session.get(User, sub.user_id)
+    if not user_id:
+        return
+    user = db.session.get(User, user_id)
     if user:
         user.subscription_status = "past_due"
-
-    sub.status = "past_due"
-
-    # Record failed payment
-    payment = Payment(
-        user_id=sub.user_id,
-        subscription_id=sub.id,
-        stripe_payment_intent_id=invoice.get("payment_intent"),
-        amount_cents=invoice.get("amount_due", 0),
-        currency=invoice.get("currency", "usd"),
-        status="failed",
-    )
-    db.session.add(payment)
+    sub = Subscription.query.filter_by(user_id=user_id, status="active").first()
+    if sub:
+        sub.status = "past_due"
+    amount_cents = int((data.get("amount") or 0) * 100)
+    db.session.add(Payment(
+        user_id=user_id, flw_tx_ref=data.get("tx_ref", ""),
+        flw_transaction_id=str(data.get("id", "")),
+        payment_method=parse_payment_method(data),
+        amount_cents=amount_cents,
+        currency=(data.get("currency") or "USD").lower(), status="failed",
+    ))
     db.session.commit()
 
 
-def _handle_subscription_deleted(subscription):
-    stripe_sub_id = subscription.get("id")
-    sub = Subscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
+def _handle_subscription_cancelled(data):
+    flw_sub_id = str(data.get("id", ""))
+    sub = Subscription.query.filter_by(flw_subscription_id=flw_sub_id).first()
     if not sub:
         return
-
+    sub.status = "cancelled"
+    sub.cancelled_at = datetime.now(timezone.utc)
     user = db.session.get(User, sub.user_id)
     if user:
         user.role = "free"
         user.monthly_scan_limit = 2
         user.subscription_status = "cancelled"
         user.subscription_id = None
-
-    sub.status = "cancelled"
-    sub.cancelled_at = datetime.now(timezone.utc)
     db.session.commit()
-
-
-def _handle_subscription_updated(subscription):
-    stripe_sub_id = subscription.get("id")
-    sub = Subscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
-    if not sub:
-        return
-
-    new_status = subscription.get("status", "active")
-    sub.status = new_status
-
-    user = db.session.get(User, sub.user_id)
-    if user:
-        user.subscription_status = new_status
-
-    db.session.commit()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Billing Portal (Stripe Customer Portal)
-# ─────────────────────────────────────────────────────────────────────────────
-@payments_bp.route("/billing")
-@login_required
-def billing_portal():
-    user = get_current_user()
-    s = _stripe()
-
-    if not user.stripe_customer_id:
-        # Free user — redirect to pricing
-        return redirect("/pricing")
-
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
-    try:
-        portal_session = s.billing_portal.Session.create(
-            customer=user.stripe_customer_id,
-            return_url=f"{frontend_url}/dashboard",
-        )
-        return redirect(portal_session.url)
-    except Exception as e:
-        current_app.logger.error(f"Billing portal error: {e}")
-        return render_template("billing.html", error="Unable to open billing portal. Please contact support.")
-
-
-@payments_bp.route("/billing/success")
-@login_required
-def billing_success():
-    session_id = request.args.get("session_id", "")
-    return render_template("billing_success.html", session_id=session_id)

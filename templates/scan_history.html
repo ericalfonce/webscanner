@@ -3,92 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
     <title>Scan History | MulikaScans</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
+{# ── Mobile nav ── #}
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans" class="active"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">{{ user.email if user else '' }}</div>
+        <div class="mob-plan">{{ user.plan|upper if user and user.plan else 'FREE' }}</div>
+    </div>
+</nav>
+
+{# ── Sidebar ── #}
 <aside class="soc-sidebar">
     <div class="soc-logo">MULIKASCANS</div>
     <nav class="soc-menu">
         <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
-        <a class="active"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/scans" class="active"><i class="fas fa-history"></i> Scan History</a>
         <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
         <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
         <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
-        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
-        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email if user else '' }}</div>
+        <div class="sidebar-plan">{{ user.plan|upper if user and user.plan else 'FREE' }}</div>
+    </div>
 </aside>
 
+{# ── Main ── #}
 <div class="soc-main">
-<header class="soc-topbar glass">
-    <div class="scan-target">Scan History</div>
-    <div class="live-alert">&#9679; MulikaScans ACTIVE</div>
-</header>
 
-<section class="soc-grid">
-<div class="panel full glass">
-    <h3>All Scans</h3>
-    {% if scans.items %}
-    <table>
-        <thead>
-            <tr>
-                <th>#</th><th>Target</th><th>Type</th><th>Status</th>
-                <th>Vulnerabilities</th><th>Score</th><th>Duration</th><th>Date</th><th></th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for s in scans.items %}
-        <tr>
-            <td style="color:#475569;font-size:12px;">{{ s.id }}</td>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.target_url }}</td>
-            <td><span style="background:#0f172a;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:11px;text-transform:uppercase;">{{ s.scan_type }}</span></td>
-            <td>
-                <span class="{% if s.status == 'completed' %}sev-low{% elif s.status == 'failed' %}sev-high{% else %}sev-medium{% endif %}"
-                      style="border-radius:4px;padding:3px 8px;font-size:12px;">{{ s.status }}</span>
-            </td>
-            <td>
-                {% if s.critical_count > 0 %}<span class="sev-high" style="border-radius:3px;padding:1px 6px;font-size:11px;margin-right:2px;">{{ s.critical_count }}C</span>{% endif %}
-                {% if s.high_count > 0 %}<span style="color:#f97316;font-size:11px;margin-right:2px;">{{ s.high_count }}H</span>{% endif %}
-                {{ s.total_vulnerabilities }} total
-            </td>
-            <td style="color:{% if s.security_score() >= 80 %}#22c55e{% elif s.security_score() >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-                {{ s.security_score() }}%
-            </td>
-            <td style="color:#64748b;font-size:12px;">
-                {% if s.duration_seconds %}{{ "%.0f"|format(s.duration_seconds) }}s{% else %}—{% endif %}
-            </td>
-            <td style="color:#64748b;font-size:12px;">{{ s.created_at.strftime('%b %d, %Y %H:%M') if s.created_at else '—' }}</td>
-            <td><a href="/scans/{{ s.id }}" style="color:#22d3ee;font-size:12px;">View &#8594;</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- Pagination -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13px;">
-        <span style="color:#64748b;">
-            Page {{ scans.page }} of {{ scans.pages }} ({{ scans.total }} scans)
-        </span>
-        <div style="display:flex;gap:8px;">
-            {% if scans.has_prev %}
-            <a href="/scans?page={{ scans.prev_num }}" style="color:#22d3ee;text-decoration:none;padding:6px 12px;border:1px solid #334155;border-radius:6px;">&#8592; Prev</a>
-            {% endif %}
-            {% if scans.has_next %}
-            <a href="/scans?page={{ scans.next_num }}" style="color:#22d3ee;text-decoration:none;padding:6px 12px;border:1px solid #334155;border-radius:6px;">Next &#8594;</a>
-            {% endif %}
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <span>Scan History</span>
+            <button class="mob-hamburger" id="mob-open" aria-label="Open menu"><i class="fas fa-bars"></i></button>
         </div>
     </div>
-    {% else %}
-    <p class="clean">No scans found. <a href="/scan" style="color:#22d3ee;">Run your first scan</a>.</p>
-    {% endif %}
-</div>
-</section>
+
+    <header class="soc-topbar">
+        <div class="scan-target">Scan <span>History</span></div>
+        <div class="history-topbar-actions">
+            <a href="/scan" class="btn-primary">
+                <i class="fas fa-plus"></i> New Scan
+            </a>
+        </div>
+    </header>
+
+    <div class="page-content">
+
+        {# ── Page header ── #}
+        <div class="history-page-header">
+            <div>
+                <h2 class="history-title">All Scans</h2>
+                <p class="history-sub">
+                    {% if scans.total %}{{ scans.total }} scan{{ 's' if scans.total != 1 }} on record{% else %}No scans yet{% endif %}
+                </p>
+            </div>
+            <a href="/scan" class="btn-outline"><i class="fas fa-search"></i> Start New Scan</a>
+        </div>
+
+        {% if scans.items %}
+        <div class="history-table-wrap">
+            <table class="data-table history-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Target URL</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Findings</th>
+                        <th>Score</th>
+                        <th>Duration</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for s in scans.items %}
+                {% set sc = s.security_score() %}
+                <tr>
+                    <td class="td-id">{{ s.id }}</td>
+                    <td class="td-url" title="{{ s.target_url }}">{{ s.target_url }}</td>
+                    <td>
+                        <span class="badge-type">{{ s.scan_type }}</span>
+                    </td>
+                    <td>
+                        {% if s.status == 'completed' %}
+                        <span class="badge-status status-completed"><i class="fas fa-check-circle"></i> Completed</span>
+                        {% elif s.status == 'failed' %}
+                        <span class="badge-status status-failed"><i class="fas fa-times-circle"></i> Failed</span>
+                        {% else %}
+                        <span class="badge-status status-running"><i class="fas fa-spinner fa-spin"></i> Running</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="findings-cell">
+                            {% if s.critical_count > 0 %}
+                            <span class="sev-badge sev-critical">{{ s.critical_count }}C</span>
+                            {% endif %}
+                            {% if s.high_count > 0 %}
+                            <span class="sev-badge sev-high">{{ s.high_count }}H</span>
+                            {% endif %}
+                            {% if s.medium_count > 0 %}
+                            <span class="sev-badge sev-medium">{{ s.medium_count }}M</span>
+                            {% endif %}
+                            {% if s.total_vulnerabilities == 0 %}
+                            <span class="findings-none"><i class="fas fa-check"></i> Clean</span>
+                            {% else %}
+                            <span class="findings-total">{{ s.total_vulnerabilities }} total</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="score-cell {% if sc >= 80 %}score-good{% elif sc >= 50 %}score-warn{% else %}score-bad{% endif %}">
+                            {{ sc }}<span class="score-denom">/100</span>
+                        </span>
+                    </td>
+                    <td class="td-date">
+                        {% if s.duration_seconds %}{{ "%.0f"|format(s.duration_seconds) }}s{% else %}<span class="dash">—</span>{% endif %}
+                    </td>
+                    <td class="td-date">{{ s.created_at.strftime('%b %d, %Y %H:%M') if s.created_at else '—' }}</td>
+                    <td class="td-action">
+                        <a href="/scans/{{ s.id }}" class="view-link">
+                            View <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── Pagination ── #}
+        {% if scans.pages > 1 %}
+        <div class="pagination-row">
+            <span class="pagination-info">
+                Page {{ scans.page }} of {{ scans.pages }} &nbsp;&middot;&nbsp; {{ scans.total }} scans
+            </span>
+            <div class="pagination-btns">
+                {% if scans.has_prev %}
+                <a href="/scans?page={{ scans.prev_num }}" class="btn-outline pag-btn">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </a>
+                {% endif %}
+                {% if scans.has_next %}
+                <a href="/scans?page={{ scans.next_num }}" class="btn-outline pag-btn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="clean-state">
+            <div class="clean-icon"><i class="fas fa-history"></i></div>
+            <h3>No scans yet</h3>
+            <p>Run your first scan to start building your security history.</p>
+            <a href="/scan" class="btn-primary" style="margin-top:20px;text-decoration:none;">
+                <i class="fas fa-search"></i> Run Your First Scan
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="page-footer">
+            &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+            &nbsp;&middot;&nbsp; All rights reserved
+        </div>
+
+    </div>
 </div>
 
+<style>
+.history-topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.history-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.history-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.history-sub {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.history-table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.history-table { margin-top: 0; }
+
+.td-id {
+    color: var(--muted-2);
+    font-size: 12px;
+    font-weight: 600;
+    width: 40px;
+}
+
+.td-url {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.findings-cell {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.findings-cell .sev-badge { font-size: 10px; padding: 2px 7px; }
+
+.findings-none {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 500;
+}
+
+.findings-total {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.score-cell {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.score-cell .score-denom {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: .6;
+}
+
+.score-good { color: var(--green); }
+.score-warn { color: var(--amber); }
+.score-bad  { color: var(--red); }
+
+.td-action { text-align: right; white-space: nowrap; }
+
+.dash { color: var(--muted-2); }
+
+.pagination-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.pagination-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.pag-btn { padding: 7px 14px; font-size: 12px; }
+
+@media (max-width: 900px) {
+    .history-table-wrap { border-radius: 8px; overflow-x: auto; }
+    .data-table { min-width: 600px; }
+    .history-page-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+<script>
+const mobOpen    = document.getElementById('mob-open');
+const mobClose   = document.getElementById('mob-close');
+const mobDrawer  = document.getElementById('mob-drawer');
+const mobOverlay = document.getElementById('mob-overlay');
+function openDrawer()  { mobDrawer.classList.add('open'); mobOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classList.remove('open'); document.body.style.overflow=''; }
+mobOpen.addEventListener('click', openDrawer);
+mobClose.addEventListener('click', closeDrawer);
+mobOverlay.addEventListener('click', closeDrawer);
+</script>
 </body>
 </html>

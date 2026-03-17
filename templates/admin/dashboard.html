@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Admin Dashboard | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --admin-accent: #f59e0b;
+            --admin-accent-dim: rgba(245,158,11,.15);
+        }
+        .admin-badge {
+            display:inline-flex;align-items:center;gap:.4rem;
+            background:var(--admin-accent-dim);color:var(--admin-accent);
+            border:1px solid rgba(245,158,11,.3);border-radius:999px;
+            padding:.25rem .8rem;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+        }
+        .stat-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem; }
+        .stat-card {
+            background:#0f172a;border:1px solid #1e293b;border-radius:12px;
+            padding:1.25rem 1.5rem;
+        }
+        .stat-card .stat-label { font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:.4rem; }
+        .stat-card .stat-val { font-size:2rem;font-weight:800;color:#f1f5f9; }
+        .stat-card .stat-sub { font-size:.78rem;color:#64748b;margin-top:.2rem; }
+        .stat-card.green .stat-val { color:#22c55e; }
+        .stat-card.blue .stat-val  { color:#38bdf8; }
+        .stat-card.amber .stat-val { color:#f59e0b; }
+        .stat-card.red .stat-val   { color:#f87171; }
+        .stat-card.purple .stat-val{ color:#a78bfa; }
+        .stat-card .stat-icon { font-size:1.6rem;margin-bottom:.5rem; }
+
+        .panel {
+            background:#0f172a;border:1px solid #1e293b;border-radius:12px;
+            padding:1.25rem 1.5rem;margin-bottom:1.5rem;
+        }
+        .panel-head {
+            display:flex;align-items:center;justify-content:space-between;
+            margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid #1e293b;
+        }
+        .panel-title { font-size:.85rem;font-weight:700;color:#f1f5f9;text-transform:uppercase;letter-spacing:.06em; }
+        .panel-link { font-size:.78rem;color:#22d3ee;text-decoration:none; }
+        .panel-link:hover { text-decoration:underline; }
+
+        .role-bars { display:flex;flex-direction:column;gap:.6rem; }
+        .role-row { display:flex;align-items:center;gap:.75rem; }
+        .role-label { width:80px;font-size:.78rem;color:#94a3b8;text-transform:capitalize; }
+        .role-bar-wrap { flex:1;background:#1e293b;border-radius:999px;height:8px;overflow:hidden; }
+        .role-bar { height:100%;border-radius:999px;transition:width .5s; }
+        .role-count { width:36px;text-align:right;font-size:.78rem;color:#f1f5f9;font-weight:600; }
+        .bar-free{background:#64748b;} .bar-basic{background:#38bdf8;}
+        .bar-pro{background:#a78bfa;} .bar-enterprise{background:#f59e0b;} .bar-admin{background:#f87171;}
+
+        table.admin-tbl { width:100%;border-collapse:collapse; }
+        table.admin-tbl th {
+            font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;
+            letter-spacing:.07em;padding:.6rem .75rem;border-bottom:1px solid #1e293b;text-align:left;
+        }
+        table.admin-tbl td {
+            padding:.65rem .75rem;font-size:.82rem;color:#cbd5e1;
+            border-bottom:1px solid #0f172a;vertical-align:middle;
+        }
+        table.admin-tbl tr:hover td { background:rgba(255,255,255,.02); }
+        table.admin-tbl a { color:#22d3ee;text-decoration:none; }
+        table.admin-tbl a:hover { text-decoration:underline; }
+
+        .role-pill {
+            display:inline-block;border-radius:999px;padding:.15rem .6rem;
+            font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+        }
+        .pill-free{background:#1e293b;color:#94a3b8;}
+        .pill-basic{background:rgba(56,189,248,.15);color:#38bdf8;}
+        .pill-pro{background:rgba(167,139,250,.15);color:#a78bfa;}
+        .pill-enterprise{background:rgba(245,158,11,.15);color:#f59e0b;}
+        .pill-admin{background:rgba(248,113,113,.15);color:#f87171;}
+
+        .status-pill {
+            display:inline-block;border-radius:999px;padding:.15rem .6rem;
+            font-size:.68rem;font-weight:700;text-transform:uppercase;
+        }
+        .pill-completed{background:rgba(34,197,94,.15);color:#22c55e;}
+        .pill-failed{background:rgba(248,113,113,.15);color:#f87171;}
+        .pill-running{background:rgba(56,189,248,.15);color:#38bdf8;}
+
+        .two-col { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+        @media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/admin" class="active"><i class="fas fa-shield-alt"></i> Admin</a>
+        <a href="/admin/users"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans"><i class="fas fa-search"></i> All Scans</a>
+        <a href="/scans"><i class="fas fa-history"></i> My Scans</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">{{ user.email }}</div>
+        <div class="mob-plan">ADMIN</div>
+    </div>
+</nav>
+
+<aside class="soc-sidebar" id="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <div style="font-size:.65rem;color:#475569;text-transform:uppercase;letter-spacing:.1em;padding:0 1rem .5rem;">Admin</div>
+        <a href="/admin" class="active"><i class="fas fa-shield-alt"></i> Overview</a>
+        <a href="/admin/users"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans"><i class="fas fa-list-alt"></i> All Scans</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email }}</div>
+        <div class="sidebar-plan">ADMIN</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <button type="button" class="mob-hamburger" id="mob-open"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target" style="display:flex;align-items:center;gap:.75rem;">
+            Admin Control Panel
+            <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Access</span>
+        </div>
+        <div class="live-alert">MulikaScans Active</div>
+    </header>
+
+    <!-- Stats Grid -->
+    <div class="stat-grid">
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-val">{{ total_users }}</div>
+            <div class="stat-sub">+{{ new_users_week }} this week</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon"><i class="fas fa-search"></i></div>
+            <div class="stat-label">Total Scans</div>
+            <div class="stat-val">{{ total_scans }}</div>
+            <div class="stat-sub">{{ scans_this_month }} this month</div>
+        </div>
+        <div class="stat-card amber">
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-val">${{ "%.0f"|format(total_revenue) }}</div>
+            <div class="stat-sub">${{ "%.0f"|format(month_revenue) }} this month</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
+            <div class="stat-label">Active Subscriptions</div>
+            <div class="stat-val">{{ active_subs }}</div>
+            <div class="stat-sub">paying customers</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-label">Failed Scans</div>
+            <div class="stat-val">{{ failed_scans }}</div>
+            <div class="stat-sub">all-time failures</div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <!-- Role Distribution -->
+        <div class="panel">
+            <div class="panel-head">
+                <span class="panel-title"><i class="fas fa-chart-pie"></i> Users by Plan</span>
+                <a href="/admin/users" class="panel-link">Manage all →</a>
+            </div>
+            {% set role_colors = {'free':'bar-free','basic':'bar-basic','pro':'bar-pro','enterprise':'bar-enterprise','admin':'bar-admin'} %}
+            <div class="role-bars">
+                {% for role, count in role_counts.items() %}
+                <div class="role-row">
+                    <span class="role-label">{{ role }}</span>
+                    <div class="role-bar-wrap">
+                        <div class="role-bar {{ role_colors[role] }}"
+                             style="width:{{ ((count/total_users)*100)|int if total_users > 0 else 0 }}%">
+                        </div>
+                    </div>
+                    <span class="role-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Signups -->
+        <div class="panel">
+            <div class="panel-head">
+                <span class="panel-title"><i class="fas fa-user-plus"></i> Recent Signups</span>
+                <a href="/admin/users" class="panel-link">All users →</a>
+            </div>
+            <table class="admin-tbl">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in recent_users %}
+                    <tr>
+                        <td><a href="/admin/users/{{ u.id }}">{{ u.email }}</a></td>
+                        <td><span class="role-pill pill-{{ u.role }}">{{ u.role }}</span></td>
+                        <td style="color:#475569;">
+                            {% if u.created_at %}
+                                {{ u.created_at.strftime('%b %d') }}
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Scans -->
+    <div class="panel">
+        <div class="panel-head">
+            <span class="panel-title"><i class="fas fa-search"></i> Recent Platform Scans</span>
+            <a href="/admin/scans" class="panel-link">All scans →</a>
+        </div>
+        <table class="admin-tbl">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Target</th>
+                    <th>Type</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Vulns</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in recent_scans %}
+                <tr>
+                    <td style="color:#475569;">{{ s.id }}</td>
+                    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ s.target_url }}
+                    </td>
+                    <td><span style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;">{{ s.scan_type }}</span></td>
+                    <td>
+                        {% if s.user %}
+                        <a href="/admin/users/{{ s.user_id }}">{{ s.user.email }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <span class="status-pill pill-{{ s.status }}">{{ s.status }}</span>
+                    </td>
+                    <td>{{ s.total_vulnerabilities or 0 }}</td>
+                    <td style="color:#475569;">
+                        {% if s.created_at %}{{ s.created_at.strftime('%b %d %H:%M') }}{% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div><!-- /soc-main -->
+
+<script>
+const overlay = document.getElementById('mob-overlay');
+const drawer  = document.getElementById('mob-drawer');
+document.getElementById('mob-open').addEventListener('click', () => {
+    drawer.classList.add('open'); overlay.classList.add('show');
+});
+['mob-close','mob-overlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', () => {
+        drawer.classList.remove('open'); overlay.classList.remove('show');
+    });
+});
+</script>
+</body>
+</html>

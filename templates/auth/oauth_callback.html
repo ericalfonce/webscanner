@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signing in… | MulikaScans</title>
+    <style>
+        body{margin:0;background:#020617;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Inter,system-ui,sans-serif;}
+        .box{text-align:center;color:#94a3b8;}
+        .spinner{width:40px;height:40px;border:3px solid #1e293b;border-top-color:#22d3ee;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px;}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        h2{color:#f8fafc;font-size:18px;margin:0 0 8px;}
+        p{font-size:14px;margin:0;}
+        .err{color:#f87171;margin-top:16px;font-size:14px;}
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="spinner"></div>
+    <h2>Completing sign-in…</h2>
+    <p>Please wait while we verify your Google account.</p>
+    <div class="err" id="err" style="display:none"></div>
+</div>
+
+<script>
+(function () {
+    // Tokens can arrive in the hash fragment (implicit flow)
+    var hash   = new URLSearchParams(window.location.hash.substring(1));
+    var query  = new URLSearchParams(window.location.search);
+
+    var accessToken  = hash.get('access_token')  || query.get('access_token');
+    var refreshToken = hash.get('refresh_token') || query.get('refresh_token');
+    var errCode      = hash.get('error')         || query.get('error');
+    var errMsg       = hash.get('error_description') || query.get('error_description') || errCode;
+
+    // Clear tokens from URL bar
+    history.replaceState(null, '', window.location.pathname);
+
+    if (errMsg) {
+        showError(decodeURIComponent(errMsg));
+        return;
+    }
+
+    if (!accessToken) {
+        showError('No authentication token received. Please try again.\n(Hint: make sure http://localhost:5000 is in your Supabase allowed redirect URLs)');
+        return;
+    }
+
+    fetch('/oauth/google/session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            access_token:  accessToken,
+            refresh_token: refreshToken || ''
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            showError(data.error || 'Sign-in failed. Please try again.');
+        }
+    })
+    .catch(function() {
+        showError('Network error. Please try again.');
+    });
+
+    function showError(msg) {
+        document.querySelector('.spinner').style.display = 'none';
+        document.querySelector('h2').textContent = 'Sign-in failed';
+        document.querySelector('p').innerHTML = '<a href="/login" style="color:#22d3ee;">Back to login</a>';
+        var el = document.getElementById('err');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+})();
+</script>
+</body>
+</html>

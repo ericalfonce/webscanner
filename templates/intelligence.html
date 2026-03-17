@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Intelligence | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        <a href="/billing"><i class="fas fa-credit-card"></i> Billing</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email }}</div>
+        <div class="sidebar-plan">{{ user.role }} plan</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+
+<header class="soc-topbar glass">
+    <div class="scan-target">Security Intelligence</div>
+    <div class="live-alert">&#9679; MulikaScans ACTIVE</div>
+</header>
+
+<section class="soc-grid">
+
+<div class="panel glass" style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+    <div style="font-size:56px;color:#a855f7;margin-bottom:20px;"><i class="fas fa-brain"></i></div>
+    <h2 style="color:#f8fafc;font-size:22px;margin-bottom:12px;">Security Intelligence Hub</h2>
+    <p style="color:#64748b;max-width:500px;margin:0 auto 24px;">
+        Aggregated security intelligence from your scans, including CVE correlations,
+        technology fingerprints, and remediation priorities.
+    </p>
+    <a href="/scan" style="display:inline-block;background:#22d3ee;color:#0f172a;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+        <i class="fas fa-search"></i> Start Scanning
+    </a>
+</div>
+
+<div class="panel glass">
+    <h3 style="color:#f8fafc;margin-bottom:16px;"><i class="fas fa-fingerprint" style="color:#a855f7;margin-right:8px;"></i>Technology Stack</h3>
+    <p style="color:#64748b;font-size:14px;">Detected technologies and frameworks will be listed here after scanning.</p>
+</div>
+
+<div class="panel glass">
+    <h3 style="color:#f8fafc;margin-bottom:16px;"><i class="fas fa-database" style="color:#22d3ee;margin-right:8px;"></i>CVE Correlations</h3>
+    <p style="color:#64748b;font-size:14px;">Known CVEs matched to your detected technologies will appear here.</p>
+</div>
+
+<div class="panel glass">
+    <h3 style="color:#f8fafc;margin-bottom:16px;"><i class="fas fa-list-ol" style="color:#22c55e;margin-right:8px;"></i>Remediation Priority</h3>
+    <p style="color:#64748b;font-size:14px;">CVSS-ranked remediation recommendations based on your findings.</p>
+</div>
+
+</section>
+
+<footer class="soc-footer">
+    <p>© 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener" style="color:#22d3ee;">IklwaLabs</a>. All rights reserved.</p>
+</footer>
+
+</div>
+</body>
+</html>

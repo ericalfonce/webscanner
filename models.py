@@ -13,7 +13,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     username = db.Column(db.String(80), unique=True, nullable=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)
+    supabase_uid = db.Column(db.String(255), unique=True, nullable=True, index=True)
 
     # Role: free | basic | pro | enterprise | admin
     role = db.Column(db.String(20), nullable=False, default="free")
@@ -40,6 +41,10 @@ class User(db.Model):
     # Scan usage limits
     scan_count_this_month = db.Column(db.Integer, default=0)
     monthly_scan_limit = db.Column(db.Integer, default=2)  # Free tier default
+
+    # Profile extras
+    phone_number = db.Column(db.String(30), nullable=True)
+    profile_picture = db.Column(db.String(512), nullable=True)  # local path or Google avatar URL
 
     # Two-factor auth (TOTP)
     two_factor_secret = db.Column(db.String(64), nullable=True)
@@ -198,6 +203,8 @@ class Subscription(db.Model):
 
     stripe_subscription_id = db.Column(db.String(255), nullable=True, unique=True)
     stripe_customer_id = db.Column(db.String(255), nullable=True)
+    flw_subscription_id = db.Column(db.String(255), nullable=True)  # Flutterwave plan subscription ID
+    billing_cycle = db.Column(db.String(10), nullable=True, default="monthly")  # monthly | annual
 
     # Status: active | cancelled | past_due | trialing | incomplete
     status = db.Column(db.String(30), nullable=False, default="active")
@@ -226,7 +233,10 @@ class Payment(db.Model):
     subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"), nullable=True)
 
     stripe_payment_intent_id = db.Column(db.String(255), nullable=True, unique=True)
-    amount_cents = db.Column(db.Integer, nullable=False)  # Amount in cents
+    flw_tx_ref = db.Column(db.String(255), nullable=True)          # Flutterwave tx_ref
+    flw_transaction_id = db.Column(db.String(255), nullable=True)  # Flutterwave transaction ID
+    payment_method = db.Column(db.String(50), nullable=True)       # mpesa | airtel | tigo | card | bank
+    amount_cents = db.Column(db.Integer, nullable=False)  # Amount in cents (USD)
     currency = db.Column(db.String(10), nullable=False, default="usd")
 
     # Status: succeeded | failed | refunded | pending

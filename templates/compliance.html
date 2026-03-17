@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Compliance | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance" class="active"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        {% if user %}<a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}<a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>{% endif %}
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">{{ user.email if user else 'Guest' }}</div>
+        <div class="mob-plan">{{ user.role if user else 'free' }} plan</div>
+    </div>
+</nav>
+
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance" class="active"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        {% if user %}<a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}<a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>{% endif %}
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email if user else 'Guest' }}</div>
+        <div class="sidebar-plan">{{ user.role if user else 'free' }} plan</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <span>Compliance</span>
+            <button type="button" class="mob-hamburger" id="mob-open" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target">Compliance Center</div>
+        <div class="live-alert">MulikaScans Active</div>
+    </header>
+
+    <div class="page-content">
+
+        <div class="page-hero">
+            <div class="page-hero-icon icon-cyan"><i class="fas fa-clipboard-check"></i></div>
+            <h2>Compliance Reporting</h2>
+            <p>OWASP Top 10, PCI-DSS, and ISO 27001 compliance reports are generated from your scan results. Run a Compliance Scan to generate a full report.</p>
+            <div class="hero-actions">
+                {% if user and user.role in ('pro','enterprise','admin') %}
+                <a href="/scan" class="btn-primary"><i class="fas fa-search"></i> Run Compliance Scan</a>
+                {% else %}
+                <a href="/pricing" class="btn-primary"><i class="fas fa-arrow-up"></i> Upgrade to Pro</a>
+                <a href="/scan" class="btn-outline"><i class="fas fa-bolt"></i> Run Quick Scan</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if not user or user.role in ('free', 'basic') %}
+        <div class="access-gate">
+            <p><i class="fas fa-lock"></i> Compliance scans require <strong>Pro</strong> or higher. Upgrade your plan to access OWASP, PCI-DSS, and ISO 27001 reports.</p>
+            <a href="/pricing" class="btn-primary"><i class="fas fa-arrow-up"></i> Upgrade Now</a>
+        </div>
+        {% endif %}
+
+        <div class="divider"></div>
+
+        <p class="section-title">Supported Frameworks</p>
+        <div class="info-grid">
+            <div class="info-block">
+                <div class="info-block-icon icon-cyan"><i class="fas fa-shield-alt"></i></div>
+                <span class="feature-badge badge-free">All Plans</span>
+                <h3>OWASP Top 10</h3>
+                <p>OWASP 2021 coverage automatically mapped to your scan findings. Includes injection, XSS, misconfigurations, and more.</p>
+            </div>
+            <div class="info-block">
+                <div class="info-block-icon icon-amber"><i class="fas fa-credit-card"></i></div>
+                <span class="feature-badge badge-pro">Pro &amp; Enterprise</span>
+                <h3>PCI-DSS</h3>
+                <p>Payment card industry compliance checks for e-commerce and financial applications handling cardholder data.</p>
+            </div>
+            <div class="info-block">
+                <div class="info-block-icon icon-purple"><i class="fas fa-globe"></i></div>
+                <span class="feature-badge badge-enterprise">Enterprise</span>
+                <h3>ISO 27001</h3>
+                <p>Information security management system controls assessment aligned with ISO/IEC 27001:2022 requirements.</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const mobOpen    = document.getElementById('mob-open');
+const mobClose   = document.getElementById('mob-close');
+const mobDrawer  = document.getElementById('mob-drawer');
+const mobOverlay = document.getElementById('mob-overlay');
+function openDrawer()  { mobDrawer.classList.add('open'); mobOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classList.remove('open'); document.body.style.overflow=''; }
+mobOpen.addEventListener('click', openDrawer);
+mobClose.addEventListener('click', closeDrawer);
+mobOverlay.addEventListener('click', closeDrawer);
+</script>
+</body>
+</html>

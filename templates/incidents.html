@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Incidents | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents" class="active"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        {% if user %}<a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}<a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>{% endif %}
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">{{ user.email if user else 'Guest' }}</div>
+        <div class="mob-plan">{{ user.role if user else 'free' }} plan</div>
+    </div>
+</nav>
+
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents" class="active"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        {% if user %}<a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}<a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>{% endif %}
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email if user else 'Guest' }}</div>
+        <div class="sidebar-plan">{{ user.role if user else 'free' }} plan</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <span>Incidents</span>
+            <button type="button" class="mob-hamburger" id="mob-open" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target">Incident Management</div>
+        <div class="live-alert">MulikaScans Active</div>
+    </header>
+
+    <div class="page-content">
+
+        <div class="page-hero">
+            <div class="page-hero-icon icon-amber"><i class="fas fa-bell"></i></div>
+            <h2>Incident Tracker</h2>
+            <p>Incidents are created automatically when critical or high severity vulnerabilities are detected. Scan your targets to begin tracking security incidents.</p>
+            <div class="hero-actions">
+                <a href="/scan" class="btn-primary"><i class="fas fa-search"></i> Run a Scan</a>
+            </div>
+        </div>
+
+        <p class="section-title">Incident Summary</p>
+        <div class="info-grid">
+            <div class="info-block">
+                <div class="info-block-icon icon-red"><i class="fas fa-fire"></i></div>
+                <div class="big-num icon-red">0</div>
+                <h3>Open Incidents</h3>
+                <p>No active incidents. Scan your targets to detect critical and high severity issues.</p>
+            </div>
+            <div class="info-block">
+                <div class="info-block-icon icon-green"><i class="fas fa-check-circle"></i></div>
+                <div class="big-num icon-green">0</div>
+                <h3>Resolved</h3>
+                <p>Closed incidents with confirmed remediation applied.</p>
+            </div>
+            <div class="info-block">
+                <div class="info-block-icon icon-amber"><i class="fas fa-clock"></i></div>
+                <div class="big-num icon-amber">—</div>
+                <h3>Avg Resolution Time</h3>
+                <p>Average time from detection to closure. Data available after first incident.</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const mobOpen    = document.getElementById('mob-open');
+const mobClose   = document.getElementById('mob-close');
+const mobDrawer  = document.getElementById('mob-drawer');
+const mobOverlay = document.getElementById('mob-overlay');
+function openDrawer()  { mobDrawer.classList.add('open'); mobOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classList.remove('open'); document.body.style.overflow=''; }
+mobOpen.addEventListener('click', openDrawer);
+mobClose.addEventListener('click', closeDrawer);
+mobOverlay.addEventListener('click', closeDrawer);
+</script>
+</body>
+</html>

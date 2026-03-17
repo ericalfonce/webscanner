@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>All Scans | Admin | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .panel{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+        .panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid #1e293b;}
+        .panel-title{font-size:.82rem;font-weight:700;color:#f1f5f9;text-transform:uppercase;letter-spacing:.06em;}
+        .search-bar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+        .search-bar input,.search-bar select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:.42rem .8rem;font-size:.82rem;font-family:inherit;outline:none;}
+        .search-bar input:focus,.search-bar select:focus{border-color:#22d3ee;}
+        .search-bar button{background:#22d3ee;color:#0f172a;border:none;border-radius:8px;padding:.42rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;}
+        .search-bar a{color:#64748b;font-size:.82rem;text-decoration:none;padding:.42rem .75rem;}
+        .search-bar a:hover{color:#94a3b8;}
+        table.admin-tbl{width:100%;border-collapse:collapse;}
+        table.admin-tbl th{font-size:.67rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;padding:.6rem .7rem;border-bottom:1px solid #1e293b;text-align:left;white-space:nowrap;}
+        table.admin-tbl td{padding:.6rem .7rem;font-size:.8rem;color:#cbd5e1;border-bottom:1px solid rgba(30,41,59,.5);vertical-align:middle;}
+        table.admin-tbl tr:hover td{background:rgba(255,255,255,.02);}
+        table.admin-tbl a{color:#22d3ee;text-decoration:none;}
+        table.admin-tbl a:hover{text-decoration:underline;}
+        .status-pill{display:inline-block;border-radius:999px;padding:.16rem .6rem;font-size:.67rem;font-weight:700;text-transform:uppercase;}
+        .pill-completed{background:rgba(34,197,94,.15);color:#22c55e;}
+        .pill-failed{background:rgba(248,113,113,.15);color:#f87171;}
+        .pill-running{background:rgba(56,189,248,.15);color:#38bdf8;}
+        .type-badge{font-size:.68rem;text-transform:uppercase;color:#94a3b8;letter-spacing:.04em;}
+        .sev-bar{display:flex;gap:2px;height:6px;border-radius:999px;overflow:hidden;width:80px;}
+        .sev-c{background:#f87171;} .sev-h{background:#fb923c;} .sev-m{background:#facc15;} .sev-l{background:#4ade80;}
+        .pagination{display:flex;gap:.35rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap;}
+        .pagination a,.pagination span{display:inline-block;padding:.35rem .7rem;border-radius:6px;font-size:.78rem;font-weight:600;text-decoration:none;border:1px solid #1e293b;color:#94a3b8;}
+        .pagination a:hover{border-color:#22d3ee;color:#22d3ee;}
+        .pagination span.current{background:#22d3ee;color:#0f172a;border-color:#22d3ee;}
+    </style>
+</head>
+<body>
+
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/admin"><i class="fas fa-shield-alt"></i> Admin Overview</a>
+        <a href="/admin/users"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans" class="active"><i class="fas fa-list-alt"></i> All Scans</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+</nav>
+
+<aside class="soc-sidebar" id="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <div style="font-size:.65rem;color:#475569;text-transform:uppercase;letter-spacing:.1em;padding:0 1rem .5rem;">Admin</div>
+        <a href="/admin"><i class="fas fa-shield-alt"></i> Overview</a>
+        <a href="/admin/users"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans" class="active"><i class="fas fa-list-alt"></i> All Scans</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email }}</div>
+        <div class="sidebar-plan">ADMIN</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <button type="button" class="mob-hamburger" id="mob-open"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target">All Platform Scans</div>
+        <div class="live-alert">{{ scans_page.total }} Scans Total</div>
+    </header>
+
+    <div class="panel">
+        <div class="panel-head">
+            <span class="panel-title"><i class="fas fa-list-alt"></i> Scan Log</span>
+            <form class="search-bar" method="GET">
+                <input type="text" name="q" value="{{ search }}" placeholder="Search target URL…" style="min-width:220px;">
+                <select name="status">
+                    <option value="">All Statuses</option>
+                    {% for s in ['completed','failed','running'] %}
+                    <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit"><i class="fas fa-filter"></i> Filter</button>
+                {% if search or status_filter %}
+                <a href="/admin/scans">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <table class="admin-tbl">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Target URL</th>
+                    <th>Type</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Vulns</th>
+                    <th>Score</th>
+                    <th>Duration</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in scans_page.items %}
+                <tr>
+                    <td style="color:#475569;">{{ s.id }}</td>
+                    <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <a href="/scans/{{ s.id }}" target="_blank" title="{{ s.target_url }}">{{ s.target_url }}</a>
+                    </td>
+                    <td><span class="type-badge">{{ s.scan_type }}</span></td>
+                    <td>
+                        {% if s.user %}
+                        <a href="/admin/users/{{ s.user_id }}">{{ s.user.email }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td><span class="status-pill pill-{{ s.status }}">{{ s.status }}</span></td>
+                    <td>
+                        {% set tv = s.total_vulnerabilities or 0 %}
+                        {% if tv > 0 %}
+                        <span style="font-weight:600;color:{% if (s.critical_count or 0) > 0 %}#f87171{% elif (s.high_count or 0) > 0 %}#fb923c{% else %}#facc15{% endif %};">
+                            {{ tv }}
+                        </span>
+                        {% else %}
+                        <span style="color:#475569;">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set score = s.security_score() %}
+                        <span style="font-weight:700;color:{% if score >= 80 %}#22c55e{% elif score >= 50 %}#facc15{% else %}#f87171{% endif %};">
+                            {{ score }}
+                        </span>
+                    </td>
+                    <td style="color:#64748b;font-size:.75rem;">
+                        {% if s.duration_seconds %}{{ "%.1f"|format(s.duration_seconds) }}s{% else %}—{% endif %}
+                    </td>
+                    <td style="color:#475569;font-size:.75rem;white-space:nowrap;">
+                        {% if s.created_at %}{{ s.created_at.strftime('%b %d %H:%M') }}{% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" style="text-align:center;color:#475569;padding:2rem;">No scans found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if scans_page.pages > 1 %}
+        <div class="pagination">
+            {% if scans_page.has_prev %}
+            <a href="?page={{ scans_page.prev_num }}&q={{ search }}&status={{ status_filter }}">← Prev</a>
+            {% endif %}
+            {% for p in scans_page.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+                {% if p %}
+                    {% if p == scans_page.page %}<span class="current">{{ p }}</span>
+                    {% else %}<a href="?page={{ p }}&q={{ search }}&status={{ status_filter }}">{{ p }}</a>{% endif %}
+                {% else %}<span>…</span>{% endif %}
+            {% endfor %}
+            {% if scans_page.has_next %}
+            <a href="?page={{ scans_page.next_num }}&q={{ search }}&status={{ status_filter }}">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const overlay = document.getElementById('mob-overlay');
+const drawer  = document.getElementById('mob-drawer');
+document.getElementById('mob-open').addEventListener('click', () => {
+    drawer.classList.add('open'); overlay.classList.add('show');
+});
+['mob-close','mob-overlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', () => {
+        drawer.classList.remove('open'); overlay.classList.remove('show');
+    });
+});
+</script>
+</body>
+</html>

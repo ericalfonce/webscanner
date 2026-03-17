@@ -45,3 +45,6 @@ uploads/
 # Celery
 celerybeat-schedule
 celerybeat.pid
+
+# Claude Code internal
+.claude/
