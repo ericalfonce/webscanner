@@ -465,8 +465,7 @@ const mobileNav  = document.getElementById('mobile-nav');
 const mobClose   = document.getElementById('mob-close');
 
 function openMobileNav() {
-    mobileNav.style.display = 'flex';
-    requestAnimationFrame(() => mobileNav.classList.add('open'));
+    mobileNav.classList.add('open');
     hamburger.classList.add('open');
     hamburger.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
@@ -477,7 +476,6 @@ function closeMobileNav() {
     hamburger.classList.remove('open');
     hamburger.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
-    setTimeout(() => { mobileNav.style.display = ''; }, 250);
 }
 
 hamburger.addEventListener('click', openMobileNav);

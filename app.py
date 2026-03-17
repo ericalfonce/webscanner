@@ -70,6 +70,9 @@ def create_app():
     app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD", "")
     app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@mulikascans.com")
 
+    # SEO
+    app.config["BING_VERIFICATION"] = os.environ.get("BING_VERIFICATION", "")
+
     # Initialise extensions
     db.init_app(app)
     Migrate(app, db)
@@ -247,6 +250,62 @@ def inject_user():
         "current_user": get_current_user(),
         "session_timeout_minutes": _SESSION_TIMEOUT_MINUTES,
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SEO — robots.txt, sitemap.xml
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route("/robots.txt")
+def robots_txt():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /dashboard",
+        "Disallow: /scan",
+        "Disallow: /scans",
+        "Disallow: /api/",
+        "Disallow: /profile",
+        "Disallow: /export/",
+        "Disallow: /admin",
+        "Disallow: /logout",
+        "",
+        "Sitemap: https://mulikascans.com/sitemap.xml",
+    ]
+    return "\n".join(lines), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    from datetime import date
+    today = date.today().isoformat()
+    pages = [
+        ("https://mulikascans.com/",                "1.0",  "weekly"),
+        ("https://mulikascans.com/pricing",          "0.9",  "monthly"),
+        ("https://mulikascans.com/pricing/basic",    "0.7",  "monthly"),
+        ("https://mulikascans.com/pricing/pro",      "0.7",  "monthly"),
+        ("https://mulikascans.com/pricing/enterprise", "0.7", "monthly"),
+        ("https://mulikascans.com/privacy",          "0.4",  "yearly"),
+        ("https://mulikascans.com/support",          "0.5",  "monthly"),
+        ("https://mulikascans.com/contact",          "0.5",  "monthly"),
+    ]
+    urls = "\n".join(
+        f"  <url><loc>{loc}</loc><lastmod>{today}</lastmod>"
+        f"<changefreq>{freq}</changefreq><priority>{pri}</priority></url>"
+        for loc, pri, freq in pages
+    )
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{urls}
+</urlset>"""
+    return xml, 200, {"Content-Type": "application/xml; charset=utf-8"}
+
+
+# IndexNow key verification file (Bing/Yandex fast-indexing protocol)
+_INDEXNOW_KEY = os.environ.get("INDEXNOW_KEY", "67fb14cc542d47fdada4048b4c3eb428")
+
+@app.route("/67fb14cc542d47fdada4048b4c3eb428.txt")
+def indexnow_key_file():
+    return _INDEXNOW_KEY, 200, {"Content-Type": "text/plain; charset=utf-8"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
