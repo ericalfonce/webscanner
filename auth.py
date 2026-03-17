@@ -19,7 +19,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from models import db, User, Subscription
-from supabase_service import get_supabase
+from supabase_service import get_supabase, get_supabase_admin
 from supabase_auth.errors import AuthApiError
 
 auth_bp = Blueprint("auth", __name__)
@@ -235,48 +235,59 @@ def register():
         if username and User.query.filter_by(username=username).first():
             return render_template("auth/register.html", error="Username already taken.", email=email)
 
-        # Register with Supabase Auth
-        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+        # Create user in Supabase via Admin API (skips Supabase's own email — we send ours)
         try:
-            sb = get_supabase()
-            sb_response = sb.auth.sign_up({
+            sb_admin = get_supabase_admin()
+            sb_response = sb_admin.auth.admin.create_user({
                 "email": email,
                 "password": password,
-                "options": {"email_redirect_to": frontend_url + "/verify-email/success"}
+                "email_confirm": False,   # we handle verification ourselves
             })
             sb_user = sb_response.user
         except AuthApiError as e:
-            current_app.logger.error(f"Supabase sign_up error: {e}")
+            current_app.logger.error(f"Supabase admin create_user error: {e}")
             return render_template("auth/register.html", error="Registration failed. Please try again.", email=email)
 
         if not sb_user:
             return render_template("auth/register.html", error="Registration failed. Please try again.", email=email)
 
-        # Create our app User record linked to Supabase
-        email_verified = sb_user.email_confirmed_at is not None
+        # Create our app User record
+        token = secrets.token_urlsafe(32)
         user = User(
             email=email,
             username=username,
-            password_hash=None,           # Supabase manages passwords
+            password_hash=None,
             supabase_uid=sb_user.id,
             role="free",
-            email_verified=email_verified,
+            email_verified=False,
+            verification_token=token,
             monthly_scan_limit=2,
         )
         db.session.add(user)
-        sub = Subscription(user=user, plan="free", status="active")
-        db.session.add(sub)
+        db.session.add(Subscription(user=user, plan="free", status="active"))
         db.session.commit()
 
-        # If Supabase already confirmed email (e.g. email confirm disabled in dashboard), auto-login
-        if email_verified and sb_response.session:
-            session.clear()
-            session["_uid"] = user.id
-            resp = make_response(redirect("/dashboard"))
-            _set_auth_cookies(resp, sb_response.session.access_token, sb_response.session.refresh_token)
-            return resp
+        # Send verification email via Flask-Mail
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+        verify_url = f"{frontend_url}/verify-email/{token}"
+        _send_email(
+            subject="Verify your MulikaScans email address",
+            recipients=[email],
+            body_html=f"""
+            <div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0f172a;color:#e2e8f0;padding:32px;border-radius:12px;">
+                <h2 style="color:#22d3ee;margin-top:0;">Verify your email</h2>
+                <p>Thanks for signing up to <strong>MulikaScans</strong>. Click the button below to verify your email address.</p>
+                <a href="{verify_url}"
+                   style="display:inline-block;background:#22d3ee;color:#0f172a;padding:12px 28px;border-radius:8px;font-weight:700;text-decoration:none;margin:16px 0;">
+                    Verify Email Address
+                </a>
+                <p style="color:#64748b;font-size:13px;">This link expires in 24 hours. If you didn't create an account, you can ignore this email.</p>
+                <hr style="border-color:#1e293b;margin:24px 0;">
+                <p style="color:#475569;font-size:12px;">MulikaScans &mdash; Professional Web Vulnerability Scanner</p>
+            </div>
+            """
+        )
 
-        # Otherwise show "check your email" page
         return render_template("auth/register_success.html", email=email)
 
     return render_template("auth/register.html")
@@ -285,8 +296,31 @@ def register():
 # ─────────────────────────────────────────────────────────────────────────────
 # Email Verification
 # ─────────────────────────────────────────────────────────────────────────────
+@auth_bp.route("/verify-email/<token>")
+def verify_email(token):
+    user = User.query.filter_by(verification_token=token).first()
+    if not user:
+        return render_template("auth/verify_email.html", invalid=True)
+
+    # Mark confirmed in Supabase
+    if user.supabase_uid:
+        try:
+            sb_admin = get_supabase_admin()
+            sb_admin.auth.admin.update_user_by_id(
+                user.supabase_uid, {"email_confirm": True}
+            )
+        except Exception as e:
+            current_app.logger.warning(f"Supabase confirm error for {user.email}: {e}")
+
+    user.email_verified = True
+    user.verification_token = None
+    db.session.commit()
+    return render_template("auth/verify_email.html", success=True)
+
+
 @auth_bp.route("/verify-email/success")
 def verify_email_success():
+    """Legacy Supabase redirect — kept for backwards compatibility."""
     return render_template("auth/verify_email.html", success=True)
 
 
@@ -294,11 +328,30 @@ def verify_email_success():
 @limiter.limit("3 per hour")
 def resend_verification():
     email = request.form.get("email", "").strip().lower()
-    try:
-        sb = get_supabase()
-        sb.auth.resend({"type": "signup", "email": email})
-    except Exception as e:
-        current_app.logger.warning(f"Supabase resend verification error for {email}: {e}")
+    user = User.query.filter_by(email=email).first()
+    if user and not user.email_verified:
+        token = secrets.token_urlsafe(32)
+        user.verification_token = token
+        db.session.commit()
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+        verify_url = f"{frontend_url}/verify-email/{token}"
+        _send_email(
+            subject="Verify your MulikaScans email address",
+            recipients=[email],
+            body_html=f"""
+            <div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0f172a;color:#e2e8f0;padding:32px;border-radius:12px;">
+                <h2 style="color:#22d3ee;margin-top:0;">Verify your email</h2>
+                <p>You requested a new verification link for <strong>MulikaScans</strong>.</p>
+                <a href="{verify_url}"
+                   style="display:inline-block;background:#22d3ee;color:#0f172a;padding:12px 28px;border-radius:8px;font-weight:700;text-decoration:none;margin:16px 0;">
+                    Verify Email Address
+                </a>
+                <p style="color:#64748b;font-size:13px;">This link expires in 24 hours.</p>
+                <hr style="border-color:#1e293b;margin:24px 0;">
+                <p style="color:#475569;font-size:12px;">MulikaScans &mdash; Professional Web Vulnerability Scanner</p>
+            </div>
+            """
+        )
     return render_template("auth/verify_email_notice.html", email=email, resent=True)
 
 
