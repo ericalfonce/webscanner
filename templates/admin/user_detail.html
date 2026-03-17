@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>User: {{ target.email }} | Admin | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .panel {
+            background:#0f172a;border:1px solid #1e293b;border-radius:12px;
+            padding:1.25rem 1.5rem;margin-bottom:1.25rem;
+        }
+        .panel-head {
+            display:flex;align-items:center;justify-content:space-between;
+            margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid #1e293b;
+        }
+        .panel-title{font-size:.82rem;font-weight:700;color:#f1f5f9;text-transform:uppercase;letter-spacing:.06em;}
+
+        .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;}
+        .info-item .info-label{font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem;}
+        .info-item .info-val{font-size:.9rem;color:#e2e8f0;font-weight:500;}
+
+        .role-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;
+            font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+        .pill-free{background:#1e293b;color:#94a3b8;}
+        .pill-basic{background:rgba(56,189,248,.15);color:#38bdf8;}
+        .pill-pro{background:rgba(167,139,250,.15);color:#a78bfa;}
+        .pill-enterprise{background:rgba(245,158,11,.15);color:#f59e0b;}
+        .pill-admin{background:rgba(248,113,113,.15);color:#f87171;}
+
+        .status-pill{display:inline-block;border-radius:999px;padding:.18rem .65rem;
+            font-size:.68rem;font-weight:700;text-transform:uppercase;}
+        .pill-completed{background:rgba(34,197,94,.15);color:#22c55e;}
+        .pill-failed{background:rgba(248,113,113,.15);color:#f87171;}
+        .pill-running{background:rgba(56,189,248,.15);color:#38bdf8;}
+
+        .action-section{margin-bottom:1rem;}
+        .action-section h4{font-size:.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;
+            margin:0 0 .6rem;padding-bottom:.4rem;border-bottom:1px solid #1e293b;}
+
+        .btn{display:inline-block;padding:.45rem 1rem;border-radius:8px;font-size:.8rem;
+            font-weight:700;cursor:pointer;border:1px solid transparent;font-family:inherit;}
+        .btn-cyan{background:#22d3ee;color:#0f172a;border-color:#22d3ee;}
+        .btn-cyan:hover{background:#06b6d4;}
+        .btn-slate{background:#1e293b;color:#94a3b8;border-color:#334155;}
+        .btn-slate:hover{border-color:#22d3ee;color:#22d3ee;}
+        .btn-green{background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.3);}
+        .btn-green:hover{background:rgba(34,197,94,.25);}
+        .btn-amber{background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.3);}
+        .btn-amber:hover{background:rgba(245,158,11,.25);}
+        .btn-red{background:rgba(248,113,113,.12);color:#f87171;border-color:rgba(248,113,113,.3);}
+        .btn-red:hover{background:rgba(248,113,113,.25);}
+        .btn-group{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;}
+
+        select.role-select{
+            background:#1e293b;border:1px solid #334155;color:#e2e8f0;
+            border-radius:8px;padding:.42rem .85rem;font-size:.8rem;font-family:inherit;outline:none;
+        }
+        select.role-select:focus{border-color:#22d3ee;}
+
+        table.mini-tbl{width:100%;border-collapse:collapse;}
+        table.mini-tbl th{font-size:.67rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;
+            padding:.5rem .6rem;border-bottom:1px solid #1e293b;text-align:left;}
+        table.mini-tbl td{padding:.55rem .6rem;font-size:.8rem;color:#cbd5e1;
+            border-bottom:1px solid rgba(30,41,59,.4);}
+        table.mini-tbl tr:hover td{background:rgba(255,255,255,.02);}
+
+        .alert-success{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+            color:#86efac;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.83rem;}
+        .alert-error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);
+            color:#fca5a5;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.83rem;}
+
+        .danger-zone{border-color:rgba(248,113,113,.3);}
+        .danger-zone .panel-head{border-bottom-color:rgba(248,113,113,.2);}
+        .danger-zone .panel-title{color:#f87171;}
+
+        .two-col{display:grid;grid-template-columns:340px 1fr;gap:1.25rem;}
+        @media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+
+        .icon-yes{color:#22c55e;} .icon-no{color:#475569;}
+
+        .reset-link-box{
+            background:#1e293b;border:1px solid #334155;border-radius:8px;
+            padding:.6rem .85rem;font-size:.78rem;color:#22d3ee;
+            word-break:break-all;margin-top:.6rem;display:none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/admin"><i class="fas fa-shield-alt"></i> Admin Overview</a>
+        <a href="/admin/users" class="active"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans"><i class="fas fa-list-alt"></i> All Scans</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+</nav>
+
+<aside class="soc-sidebar" id="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <div style="font-size:.65rem;color:#475569;text-transform:uppercase;letter-spacing:.1em;padding:0 1rem .5rem;">Admin</div>
+        <a href="/admin"><i class="fas fa-shield-alt"></i> Overview</a>
+        <a href="/admin/users" class="active"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans"><i class="fas fa-list-alt"></i> All Scans</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email }}</div>
+        <div class="sidebar-plan">ADMIN</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <button type="button" class="mob-hamburger" id="mob-open"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target">
+            <a href="/admin/users" style="color:#64748b;text-decoration:none;font-size:.8rem;">← Users</a>
+            &nbsp; User #{{ target.id }}
+        </div>
+        <div class="live-alert"><span class="role-pill pill-{{ target.role }}">{{ target.role }}</span></div>
+    </header>
+
+    {% if success %}
+    <div class="alert-success"><i class="fas fa-check-circle"></i> {{ success }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    {% endif %}
+
+    <div class="two-col">
+
+        <!-- Left column: info + actions -->
+        <div>
+            <!-- Profile Info -->
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="fas fa-user"></i> Profile</span>
+                </div>
+                <div class="info-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-val" style="font-size:.82rem;word-break:break-all;">{{ target.email }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Username</div>
+                        <div class="info-val">{{ target.username or '—' }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Phone</div>
+                        <div class="info-val">{{ target.phone_number or '—' }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Email Verified</div>
+                        <div class="info-val">
+                            {% if target.email_verified %}
+                            <i class="fas fa-check-circle icon-yes"></i> Yes
+                            {% else %}
+                            <i class="fas fa-times-circle icon-no"></i> No
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">2FA Enabled</div>
+                        <div class="info-val">
+                            {% if target.two_factor_enabled %}
+                            <i class="fas fa-lock icon-yes"></i> Yes
+                            {% else %}
+                            <i class="fas fa-lock-open icon-no"></i> No
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Last Login</div>
+                        <div class="info-val" style="font-size:.8rem;">
+                            {% if target.last_login %}{{ target.last_login.strftime('%b %d, %Y %H:%M') }}{% else %}Never{% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Joined</div>
+                        <div class="info-val" style="font-size:.8rem;">
+                            {% if target.created_at %}{{ target.created_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Scans (this month)</div>
+                        <div class="info-val">{{ target.scan_count_this_month or 0 }} / {{ target.monthly_scan_limit or 2 }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Info -->
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="fas fa-credit-card"></i> Subscription</span>
+                </div>
+                {% if active_sub %}
+                <div class="info-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="info-item">
+                        <div class="info-label">Plan</div>
+                        <div class="info-val"><span class="role-pill pill-{{ active_sub.plan }}">{{ active_sub.plan }}</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Billing</div>
+                        <div class="info-val">{{ active_sub.billing_cycle or 'monthly' }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-val" style="color:#22c55e;">Active</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Since</div>
+                        <div class="info-val" style="font-size:.8rem;">
+                            {% if active_sub.created_at %}{{ active_sub.created_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p style="color:#64748b;font-size:.82rem;margin:0;">No active subscription — Free plan.</p>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="fas fa-sliders-h"></i> Actions</span>
+                </div>
+
+                <!-- Change Role -->
+                <div class="action-section">
+                    <h4>Change Plan / Role</h4>
+                    <form method="POST" action="/admin/users/{{ target.id }}/action">
+                        <input type="hidden" name="action" value="change_role">
+                        <div class="btn-group">
+                            <select name="role" class="role-select">
+                                {% for r in ['free','basic','pro','enterprise','admin'] %}
+                                <option value="{{ r }}" {% if target.role==r %}selected{% endif %}>
+                                    {{ r|capitalize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-cyan">Apply Role</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Email Verification -->
+                <div class="action-section">
+                    <h4>Email Verification</h4>
+                    <div class="btn-group">
+                        {% if not target.email_verified %}
+                        <form method="POST" action="/admin/users/{{ target.id }}/action">
+                            <input type="hidden" name="action" value="verify_email">
+                            <button type="submit" class="btn btn-green">
+                                <i class="fas fa-check"></i> Mark Verified
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="/admin/users/{{ target.id }}/action">
+                            <input type="hidden" name="action" value="unverify_email">
+                            <button type="submit" class="btn btn-amber">
+                                <i class="fas fa-times"></i> Revoke Verification
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Scan Count -->
+                <div class="action-section">
+                    <h4>Scan Usage</h4>
+                    <form method="POST" action="/admin/users/{{ target.id }}/action">
+                        <input type="hidden" name="action" value="reset_scans">
+                        <button type="submit" class="btn btn-slate">
+                            <i class="fas fa-redo"></i> Reset Monthly Scan Count
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 2FA -->
+                {% if target.two_factor_enabled %}
+                <div class="action-section">
+                    <h4>Two-Factor Authentication</h4>
+                    <form method="POST" action="/admin/users/{{ target.id }}/action">
+                        <input type="hidden" name="action" value="disable_2fa">
+                        <button type="submit" class="btn btn-amber">
+                            <i class="fas fa-unlock"></i> Disable 2FA
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Password Reset Link -->
+                <div class="action-section">
+                    <h4>Password Reset</h4>
+                    <form method="POST" action="/admin/users/{{ target.id }}/action" id="resetForm">
+                        <input type="hidden" name="action" value="reset_password_token">
+                        <button type="submit" class="btn btn-slate">
+                            <i class="fas fa-key"></i> Generate Reset Link
+                        </button>
+                    </form>
+                    {% if success and 'Reset link generated' in success %}
+                    <div class="reset-link-box" id="resetLinkBox" style="display:block;">
+                        {{ success.replace('Reset link generated: ', '') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="panel danger-zone">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="fas fa-exclamation-triangle"></i> Danger Zone</span>
+                </div>
+                <p style="font-size:.8rem;color:#94a3b8;margin:0 0 .75rem;">
+                    Permanently deletes this user and all their scans, vulnerabilities, and payment records. This cannot be undone.
+                </p>
+                <form method="POST" action="/admin/users/{{ target.id }}/action"
+                      onsubmit="return confirm('PERMANENTLY delete {{ target.email }} and all their data? This cannot be undone.');">
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-red">
+                        <i class="fas fa-trash-alt"></i> Delete User Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right column: scans + payments -->
+        <div>
+            <!-- Recent Scans -->
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="fas fa-search"></i> Scans</span>
+                    <span style="font-size:.78rem;color:#64748b;">{{ scan_count }} total</span>
+                </div>
+                {% if recent_scans %}
+                <table class="mini-tbl">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Target</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Vulns</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in recent_scans %}
+                        <tr>
+                            <td style="color:#475569;">{{ s.id }}</td>
+                            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                {{ s.target_url }}
+                            </td>
+                            <td style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;">{{ s.scan_type }}</td>
+                            <td><span class="status-pill pill-{{ s.status }}">{{ s.status }}</span></td>
+                            <td>{{ s.total_vulnerabilities or 0 }}</td>
+                            <td style="color:#475569;white-space:nowrap;font-size:.75rem;">
+                                {% if s.created_at %}{{ s.created_at.strftime('%b %d %H:%M') }}{% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color:#64748b;font-size:.82rem;margin:0;">No scans yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Payments -->
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="fas fa-dollar-sign"></i> Payment History</span>
+                </div>
+                {% if payments %}
+                <table class="mini-tbl">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Ref</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payments %}
+                        <tr>
+                            <td style="color:#475569;white-space:nowrap;font-size:.75rem;">
+                                {% if p.created_at %}{{ p.created_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}
+                            </td>
+                            <td style="text-transform:capitalize;">{{ p.payment_method or '—' }}</td>
+                            <td style="font-weight:600;color:#22c55e;">
+                                ${{ "%.2f"|format(p.amount_cents / 100) }} {{ p.currency|upper }}
+                            </td>
+                            <td>
+                                {% if p.status == 'succeeded' %}
+                                <span style="color:#22c55e;font-size:.75rem;">✓ Succeeded</span>
+                                {% elif p.status == 'failed' %}
+                                <span style="color:#f87171;font-size:.75rem;">✗ Failed</span>
+                                {% else %}
+                                <span style="color:#f59e0b;font-size:.75rem;">{{ p.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#475569;font-size:.72rem;font-family:monospace;">
+                                {{ (p.flw_tx_ref or '')[:12] }}{% if p.flw_tx_ref and p.flw_tx_ref|length > 12 %}…{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color:#64748b;font-size:.82rem;margin:0;">No payment history.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const overlay = document.getElementById('mob-overlay');
+const drawer  = document.getElementById('mob-drawer');
+document.getElementById('mob-open').addEventListener('click', () => {
+    drawer.classList.add('open'); overlay.classList.add('show');
+});
+['mob-close','mob-overlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', () => {
+        drawer.classList.remove('open'); overlay.classList.remove('show');
+    });
+});
+</script>
+</body>
+</html>

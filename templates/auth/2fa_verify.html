@@ -3,44 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
     <title>Two-Factor Auth | MulikaScans</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Big OTP input */
+        .otp-input {
+            width: 100%;
+            height: 64px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: .45em;
+            padding: 0 16px;
+            background: var(--panel);
+            border: 1.5px solid var(--border-2);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            box-sizing: border-box;
+        }
+        .otp-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(34,211,238,.1);
+        }
+        .otp-input::placeholder {
+            color: var(--muted-2);
+            letter-spacing: .25em;
+            font-size: 1.4rem;
+        }
+
+        /* Timer ring */
+        .otp-timer-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: .8rem;
+            color: var(--muted);
+        }
+        .otp-timer-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--cyan);
+            flex-shrink: 0;
+        }
+
+        /* Shield icon in form area */
+        .verify-icon-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .verify-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--cyan-dim);
+            border: 1px solid rgba(34,211,238,.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan);
+            font-size: 26px;
+        }
+
+        /* OTP hint */
+        .otp-hint { text-align: center; margin-top: 8px; }
+    </style>
 </head>
-<body class="auth-body">
-<div class="auth-card">
-    <div class="auth-logo">MulikaScans</div>
-    <div class="auth-tagline">A product by IklwaLabs</div>
+<body>
+<div class="auth-split">
 
-    <h1 class="auth-title">Two-Factor Authentication</h1>
-    <p class="auth-sub">Enter the 6-digit code from your authenticator app to continue.</p>
-
-    {% if error %}
-    <div class="auth-err">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>{{ error }}</span>
-    </div>
-    {% endif %}
-
-    <form method="POST" action="/2fa/verify">
-        <div class="auth-field">
-            <label>Authentication Code</label>
-            <input type="text" name="code" placeholder="000000" maxlength="6"
-                   autocomplete="one-time-code" inputmode="numeric" required autofocus>
+    <!-- Brand panel -->
+    <div class="auth-brand-panel">
+        <div class="auth-brand-top">
+            <div class="auth-logo">
+                <img src="/static/img/brand/MulikaScans-Logo-Dark.png" alt="MulikaScans" style="max-width:210px;height:auto;display:block;">
+            </div>
+            <h2 class="auth-brand-heading">One more step</h2>
+            <p class="auth-brand-sub">Two-factor authentication keeps your account safe by requiring a second verification whenever you sign in.</p>
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Open your app</strong>
+                        <span>Google Authenticator, Authy, or any TOTP app.</span>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-sync-alt"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Codes refresh every 30 s</strong>
+                        <span>Enter the current 6-digit code shown in your app.</span>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-headset"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Lost access?</strong>
+                        <span>Contact support@mulikascans.com for account recovery.</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button class="auth-btn" type="submit">
-            <i class="fas fa-unlock-alt"></i> Verify
-        </button>
-    </form>
-
-    <div class="auth-link">
-        <a href="/logout">Cancel &amp; Sign out</a>
+        <div class="auth-brand-footer">
+            &copy; 2026 <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+            &nbsp;&middot;&nbsp; <a href="/privacy">Privacy</a>
+            &nbsp;&middot;&nbsp; <a href="/support">Support</a>
+        </div>
     </div>
 
-    <div class="iklwa-badge">
-        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    <!-- Form area -->
+    <div class="auth-form-area">
+        <div class="auth-form-inner">
+
+            <div class="verify-icon-wrap">
+                <div class="verify-icon"><i class="fas fa-mobile-alt"></i></div>
+            </div>
+
+            <h1 class="auth-title">Two-Factor Authentication</h1>
+            <p class="auth-subtitle">Enter the 6-digit code from your authenticator app to continue.</p>
+
+            {% if error %}
+            <div class="auth-err">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/2fa/verify" novalidate>
+                <div class="auth-field-group">
+                    <label for="code">Authentication Code</label>
+                    <input type="text" id="code" name="code"
+                           class="otp-input"
+                           placeholder="000 000"
+                           maxlength="6"
+                           autocomplete="one-time-code"
+                           inputmode="numeric"
+                           pattern="[0-9]{6}"
+                           required
+                           autofocus
+                           oninput="this.value=this.value.replace(/\D/g,''); autoSubmit(this)">
+                    <div class="otp-timer-wrap">
+                        <div class="otp-timer-dot"></div>
+                        <span id="timer-label">Code refreshes in <strong id="countdown">30</strong>s</span>
+                    </div>
+                    <p class="auth-hint otp-hint">Open your authenticator app and enter the current code</p>
+                </div>
+
+                <button class="auth-btn" type="submit">
+                    <i class="fas fa-unlock-alt"></i> Verify &amp; Sign In
+                </button>
+            </form>
+
+            <div class="auth-link auth-back-link">
+                <a href="/logout"><i class="fas fa-arrow-left"></i> Cancel &amp; Sign out</a>
+            </div>
+
+        </div>
     </div>
+
 </div>
+
+<script>
+/* Auto-submit when 6 digits entered */
+function autoSubmit(inp) {
+    if (inp.value.length === 6) {
+        inp.closest('form').submit();
+    }
+}
+
+/* TOTP countdown timer — synced to 30-second TOTP window */
+(function () {
+    const el = document.getElementById('countdown');
+    function tick() {
+        const secs = 30 - (Math.floor(Date.now() / 1000) % 30);
+        el.textContent = secs;
+        el.style.color = secs <= 5 ? '#ef4444' : '';
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
 </body>
 </html>

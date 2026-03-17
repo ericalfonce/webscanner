@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Support | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0b1120; color: #cbd5e1; margin: 0; }
+
+        /* Nav */
+        .prod-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 64px; background: rgba(11,17,32,.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,.06); position: sticky; top: 0; z-index: 100; }
+        .prod-logo { font-size: 1.2rem; font-weight: 800; color: #38bdf8; letter-spacing: .5px; }
+        .nav-links { display: flex; gap: 28px; }
+        .nav-links a { color: #94a3b8; text-decoration: none; font-size: .9rem; transition: color .2s; }
+        .nav-links a:hover { color: #f1f5f9; }
+        .nav-cta { background: #0ea5e9; color: #fff; padding: 8px 20px; border-radius: 8px; font-size: .875rem; font-weight: 600; text-decoration: none; }
+        .nav-cta:hover { background: #0284c7; }
+
+        /* Hero */
+        .support-hero { text-align: center; padding: 72px 24px 56px; background: linear-gradient(180deg, rgba(14,165,233,.06) 0%, transparent 100%); border-bottom: 1px solid rgba(255,255,255,.06); }
+        .support-hero h1 { font-size: 2.4rem; font-weight: 800; color: #f1f5f9; margin: 0 0 14px; }
+        .support-hero p { font-size: 1.05rem; color: #94a3b8; max-width: 520px; margin: 0 auto 32px; line-height: 1.7; }
+        .hero-search { display: flex; max-width: 480px; margin: 0 auto; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; overflow: hidden; }
+        .hero-search input { flex: 1; background: none; border: none; outline: none; padding: 12px 16px; color: #f1f5f9; font-size: .9rem; font-family: inherit; }
+        .hero-search input::placeholder { color: #64748b; }
+        .hero-search button { background: #0ea5e9; border: none; padding: 0 20px; color: #fff; cursor: pointer; font-size: .875rem; font-weight: 600; font-family: inherit; transition: background .2s; }
+        .hero-search button:hover { background: #0284c7; }
+
+        /* Channels */
+        .channels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 0 auto; padding: 56px 24px 48px; }
+        @media (max-width: 700px) { .channels { grid-template-columns: 1fr; } }
+        .channel-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 28px 24px; text-align: center; transition: border-color .2s, transform .2s; }
+        .channel-card:hover { border-color: rgba(56,189,248,.3); transform: translateY(-2px); }
+        .channel-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 16px; }
+        .ch-blue { background: rgba(14,165,233,.12); color: #38bdf8; }
+        .ch-green { background: rgba(34,197,94,.1); color: #22c55e; }
+        .ch-purple { background: rgba(139,92,246,.1); color: #a78bfa; }
+        .channel-card h3 { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin: 0 0 8px; }
+        .channel-card p { font-size: .875rem; color: #94a3b8; line-height: 1.6; margin: 0 0 20px; }
+        .ch-badge { display: inline-block; background: rgba(56,189,248,.1); color: #38bdf8; border-radius: 20px; padding: 3px 10px; font-size: .75rem; font-weight: 600; margin-bottom: 16px; }
+        .ch-btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 8px; font-size: .85rem; font-weight: 600; text-decoration: none; transition: background .2s; }
+        .ch-btn-blue { background: #0ea5e9; color: #fff; }
+        .ch-btn-blue:hover { background: #0284c7; }
+        .ch-btn-outline { background: rgba(255,255,255,.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,.1); }
+        .ch-btn-outline:hover { background: rgba(255,255,255,.09); }
+
+        /* FAQ */
+        .faq-wrap { max-width: 740px; margin: 0 auto; padding: 0 24px 80px; }
+        .faq-wrap h2 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; text-align: center; margin-bottom: 32px; }
+        .faq-item { border: 1px solid rgba(255,255,255,.07); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+        .faq-q { width: 100%; background: rgba(255,255,255,.03); border: none; color: #e2e8f0; text-align: left; padding: 18px 20px; font-size: .9375rem; font-weight: 600; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: background .2s; }
+        .faq-q:hover { background: rgba(255,255,255,.06); }
+        .faq-q i { color: #38bdf8; font-size: .8rem; transition: transform .25s; flex-shrink: 0; }
+        .faq-q.open i { transform: rotate(180deg); }
+        .faq-a { display: none; padding: 0 20px 18px; font-size: .9rem; color: #94a3b8; line-height: 1.75; }
+        .faq-a.open { display: block; }
+
+        /* Docs grid */
+        .docs-wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 72px; }
+        .docs-wrap h2 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; margin-bottom: 24px; }
+        .docs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        @media (max-width: 640px) { .docs-grid { grid-template-columns: 1fr; } }
+        .doc-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: 20px; display: flex; gap: 14px; align-items: flex-start; text-decoration: none; color: inherit; transition: border-color .2s; }
+        .doc-card:hover { border-color: rgba(56,189,248,.3); }
+        .doc-card i { font-size: 1.1rem; color: #38bdf8; margin-top: 2px; flex-shrink: 0; }
+        .doc-card h4 { font-size: .9rem; font-weight: 700; color: #e2e8f0; margin: 0 0 4px; }
+        .doc-card p { font-size: .8rem; color: #64748b; margin: 0; line-height: 1.5; }
+
+        /* Status bar */
+        .status-bar { max-width: 900px; margin: 0 auto 56px; padding: 0 24px; }
+        .status-indicator { background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.2); border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; gap: 12px; font-size: .875rem; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,.6); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
+        .status-indicator strong { color: #22c55e; }
+        .status-indicator span { color: #94a3b8; }
+
+        /* Footer */
+        .policy-footer { text-align: center; padding: 32px 24px; border-top: 1px solid rgba(255,255,255,.06); font-size: .8rem; color: #475569; }
+        .policy-footer a { color: #64748b; text-decoration: none; margin: 0 8px; }
+        .policy-footer a:hover { color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<header class="prod-nav">
+    <div class="prod-logo">MulikaScans</div>
+    <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/contact">Contact</a>
+    </nav>
+    <div>
+        {% if current_user %}
+        <a href="/dashboard" class="nav-cta">Dashboard</a>
+        {% else %}
+        <a href="/login" class="nav-cta">Sign In</a>
+        {% endif %}
+    </div>
+</header>
+
+<!-- Hero -->
+<section class="support-hero">
+    <h1>How can we help?</h1>
+    <p>Search our documentation, browse FAQs, or reach our team directly — we're here to help you succeed.</p>
+    <div class="hero-search">
+        <input type="text" id="faq-search" placeholder="Search FAQs..." oninput="filterFaq(this.value)">
+        <button type="button"><i class="fas fa-search"></i></button>
+    </div>
+</section>
+
+<!-- Support channels -->
+<div class="channels">
+    <div class="channel-card">
+        <div class="channel-icon ch-blue"><i class="fas fa-envelope"></i></div>
+        <h3>Email Support</h3>
+        <span class="ch-badge"><i class="fas fa-clock"></i> &lt; 24 hours</span>
+        <p>Send a detailed message and a specialist will respond within one business day.</p>
+        <a href="/contact" class="ch-btn ch-btn-blue"><i class="fas fa-paper-plane"></i> Send a Message</a>
+    </div>
+    <div class="channel-card">
+        <div class="channel-icon ch-green"><i class="fas fa-comments"></i></div>
+        <h3>Live Chat</h3>
+        <span class="ch-badge"><i class="fas fa-circle" style="color:#22c55e;font-size:.6rem;"></i> Available now</span>
+        <p>Chat with our team in real time. Available Monday – Friday, 08:00 – 18:00 EAT.</p>
+        <a href="mailto:support@mulikascans.com" class="ch-btn ch-btn-outline"><i class="fas fa-comment-dots"></i> Start Chat</a>
+    </div>
+    <div class="channel-card">
+        <div class="channel-icon ch-purple"><i class="fas fa-phone-alt"></i></div>
+        <h3>Enterprise Hotline</h3>
+        <span class="ch-badge" style="background:rgba(139,92,246,.12);color:#a78bfa;">Enterprise only</span>
+        <p>Dedicated phone support for Enterprise subscribers with priority SLA guarantees.</p>
+        <a href="/pricing" class="ch-btn ch-btn-outline"><i class="fas fa-arrow-up"></i> Upgrade to Enterprise</a>
+    </div>
+</div>
+
+<!-- System status -->
+<div class="status-bar">
+    <div class="status-indicator">
+        <div class="status-dot"></div>
+        <div><strong>All systems operational</strong> &nbsp;<span>Scanner engine, authentication, billing — no incidents reported.</span></div>
+    </div>
+</div>
+
+<!-- Docs grid -->
+<div class="docs-wrap">
+    <h2>Documentation</h2>
+    <div class="docs-grid">
+        <a href="#" class="doc-card">
+            <i class="fas fa-rocket"></i>
+            <div>
+                <h4>Quick Start</h4>
+                <p>Run your first scan in under 2 minutes.</p>
+            </div>
+        </a>
+        <a href="#" class="doc-card">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <h4>Scan Types Explained</h4>
+                <p>Quick, Full, and Deep scans — what to use when.</p>
+            </div>
+        </a>
+        <a href="#" class="doc-card">
+            <i class="fas fa-file-alt"></i>
+            <div>
+                <h4>Reading Reports</h4>
+                <p>Understand severity levels, CVSS scores, and remediation steps.</p>
+            </div>
+        </a>
+        <a href="#" class="doc-card">
+            <i class="fas fa-user-shield"></i>
+            <div>
+                <h4>Account &amp; 2FA</h4>
+                <p>Set up two-factor authentication and manage your account.</p>
+            </div>
+        </a>
+        <a href="#" class="doc-card">
+            <i class="fas fa-credit-card"></i>
+            <div>
+                <h4>Billing &amp; Plans</h4>
+                <p>Upgrade, downgrade, and manage your subscription.</p>
+            </div>
+        </a>
+        <a href="/contact" class="doc-card">
+            <i class="fas fa-headset"></i>
+            <div>
+                <h4>Contact Support</h4>
+                <p>Can't find what you need? Our team is here to help.</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-wrap">
+    <h2>Frequently Asked Questions</h2>
+
+    <div class="faq-item" data-q="how do i run my first scan">
+        <button class="faq-q" onclick="toggleFaq(this)">How do I run my first scan? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">After creating and verifying your account, go to <strong>New Scan</strong> from the dashboard. Enter your target URL (e.g. https://example.com), select a scan type, and click Start Scan. Results appear within 30 seconds to a few minutes depending on scan depth.</div>
+    </div>
+
+    <div class="faq-item" data-q="what is the difference between scan types quick full deep">
+        <button class="faq-q" onclick="toggleFaq(this)">What is the difference between scan types? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><strong>Quick</strong> scans check headers, SSL/TLS configuration, and the root URL — ideal for a rapid health check (~30s). <strong>Full</strong> scans crawl the entire site and test for OWASP Top 10 vulnerabilities. <strong>Deep</strong> scans run an exhaustive audit including active exploitation tests, and are reserved for Pro and Enterprise subscribers.</div>
+    </div>
+
+    <div class="faq-item" data-q="my verification email not received spam">
+        <button class="faq-q" onclick="toggleFaq(this)">I didn't receive my verification email. <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">Check your spam or junk folder first. If it's not there, use the <strong>Resend Verification Email</strong> button on the verification notice page. If you still don't receive it within 5 minutes, contact us at <strong>support@mulikascans.com</strong> and we'll manually verify your account.</div>
+    </div>
+
+    <div class="faq-item" data-q="can i scan any website legal permission">
+        <button class="faq-q" onclick="toggleFaq(this)">Can I scan any website? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">You may only scan systems you own or have explicit written permission to test. Scanning systems without authorisation may violate computer crime laws in your jurisdiction. MulikaScans logs all scan targets and cooperates with law enforcement investigations. By using the platform, you confirm you have the right to scan the targets you submit.</div>
+    </div>
+
+    <div class="faq-item" data-q="how do i reset my password forgot">
+        <button class="faq-q" onclick="toggleFaq(this)">How do I reset my password? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">On the <a href="/login" style="color:#38bdf8;">Sign In</a> page, click <strong>Forgot password?</strong> and enter your email address. We'll send a reset link valid for 1 hour. If you don't receive it, check your spam folder or contact support.</div>
+    </div>
+
+    <div class="faq-item" data-q="cancel subscription refund billing">
+        <button class="faq-q" onclick="toggleFaq(this)">Can I cancel my subscription or get a refund? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">You can cancel your subscription at any time from the <strong>Billing</strong> section in your dashboard. Your access continues until the end of the current billing period. Refunds are considered on a case-by-case basis — contact <strong>billing@mulikascans.com</strong> within 7 days of a charge.</div>
+    </div>
+
+    <div class="faq-item" data-q="is my data safe secure scan results">
+        <button class="faq-q" onclick="toggleFaq(this)">Is my data and scan results secure? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">Yes. Scan results are private to your account and are never shared. Data is stored in encrypted databases. Passwords are hashed with bcrypt. All traffic is encrypted via HTTPS. See our <a href="/privacy" style="color:#38bdf8;">Privacy Policy</a> for full details.</div>
+    </div>
+
+    <div class="faq-item" data-q="two factor authentication 2fa setup">
+        <button class="faq-q" onclick="toggleFaq(this)">How do I enable two-factor authentication (2FA)? <i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a">Go to your account settings and navigate to the <strong>Security</strong> tab. Click <strong>Enable 2FA</strong> and follow the instructions to set up TOTP with an authenticator app such as Google Authenticator or Authy.</div>
+    </div>
+
+</div>
+
+<footer class="policy-footer">
+    &copy; 2026 <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    &nbsp;&middot;&nbsp;
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/support">Support</a>
+    <a href="/contact">Contact</a>
+</footer>
+
+<script>
+function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const ans  = item.querySelector('.faq-a');
+    const open = btn.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-q.open').forEach(b => {
+        b.classList.remove('open');
+        b.closest('.faq-item').querySelector('.faq-a').classList.remove('open');
+    });
+    if (!open) { btn.classList.add('open'); ans.classList.add('open'); }
+}
+
+function filterFaq(q) {
+    const term = q.toLowerCase();
+    document.querySelectorAll('.faq-item').forEach(item => {
+        const text = (item.dataset.q || '') + ' ' + item.innerText.toLowerCase();
+        item.style.display = (!term || text.includes(term)) ? '' : 'none';
+    });
+}
+</script>
+</body>
+</html>

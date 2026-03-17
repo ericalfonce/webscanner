@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Access Denied | MulikaScans</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .err-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;
+            min-height:100vh;text-align:center;padding:2rem;}
+        .err-icon{font-size:4rem;color:#f87171;margin-bottom:1rem;}
+        .err-code{font-size:5rem;font-weight:800;color:#1e293b;line-height:1;}
+        .err-msg{font-size:1.1rem;color:#64748b;margin:.75rem 0 1.5rem;}
+        .btn-home{display:inline-block;background:#22d3ee;color:#0f172a;padding:.65rem 1.5rem;
+            border-radius:8px;font-weight:700;text-decoration:none;font-size:.9rem;}
+    </style>
+</head>
+<body>
+<div class="err-wrap">
+    <div class="err-icon"><i class="fas fa-shield-alt"></i></div>
+    <div class="err-code">403</div>
+    <p class="err-msg">Admin access required. Your account does not have permission to view this page.</p>
+    <a href="/dashboard" class="btn-home">← Back to Dashboard</a>
+</div>
+</body>
+</html>

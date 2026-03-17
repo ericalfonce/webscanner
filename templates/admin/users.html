@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>User Management | Admin | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .panel {
+            background:#0f172a;border:1px solid #1e293b;border-radius:12px;
+            padding:1.25rem 1.5rem;margin-bottom:1.5rem;
+        }
+        .panel-head {
+            display:flex;align-items:center;justify-content:space-between;
+            flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;
+            padding-bottom:.75rem;border-bottom:1px solid #1e293b;
+        }
+        .panel-title { font-size:.85rem;font-weight:700;color:#f1f5f9;text-transform:uppercase;letter-spacing:.06em; }
+
+        .search-bar {
+            display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;
+        }
+        .search-bar input, .search-bar select {
+            background:#1e293b;border:1px solid #334155;color:#e2e8f0;
+            border-radius:8px;padding:.45rem .85rem;font-size:.82rem;
+            font-family:inherit;outline:none;
+        }
+        .search-bar input:focus, .search-bar select:focus { border-color:#22d3ee; }
+        .search-bar button {
+            background:#22d3ee;color:#0f172a;border:none;border-radius:8px;
+            padding:.45rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer;
+        }
+        .search-bar a {
+            color:#64748b;font-size:.82rem;text-decoration:none;padding:.45rem .75rem;
+        }
+        .search-bar a:hover{color:#94a3b8;}
+
+        table.admin-tbl { width:100%;border-collapse:collapse; }
+        table.admin-tbl th {
+            font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;
+            letter-spacing:.07em;padding:.65rem .75rem;border-bottom:1px solid #1e293b;text-align:left;
+            white-space:nowrap;
+        }
+        table.admin-tbl td {
+            padding:.65rem .75rem;font-size:.82rem;color:#cbd5e1;
+            border-bottom:1px solid rgba(30,41,59,.6);vertical-align:middle;
+        }
+        table.admin-tbl tr:hover td { background:rgba(255,255,255,.02); }
+
+        .role-pill {
+            display:inline-block;border-radius:999px;padding:.18rem .65rem;
+            font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+        }
+        .pill-free{background:#1e293b;color:#94a3b8;}
+        .pill-basic{background:rgba(56,189,248,.15);color:#38bdf8;}
+        .pill-pro{background:rgba(167,139,250,.15);color:#a78bfa;}
+        .pill-enterprise{background:rgba(245,158,11,.15);color:#f59e0b;}
+        .pill-admin{background:rgba(248,113,113,.15);color:#f87171;}
+
+        .icon-yes{color:#22c55e;} .icon-no{color:#475569;}
+
+        .btn-sm {
+            display:inline-block;padding:.3rem .8rem;border-radius:6px;
+            font-size:.75rem;font-weight:700;text-decoration:none;cursor:pointer;
+            border:1px solid transparent;
+        }
+        .btn-view{background:#0f172a;border-color:#334155;color:#94a3b8;}
+        .btn-view:hover{border-color:#22d3ee;color:#22d3ee;}
+
+        .pagination {
+            display:flex;gap:.35rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap;
+        }
+        .pagination a, .pagination span {
+            display:inline-block;padding:.35rem .7rem;border-radius:6px;
+            font-size:.78rem;font-weight:600;text-decoration:none;
+            border:1px solid #1e293b;color:#94a3b8;
+        }
+        .pagination a:hover{border-color:#22d3ee;color:#22d3ee;}
+        .pagination span.current{background:#22d3ee;color:#0f172a;border-color:#22d3ee;}
+
+        .success-bar{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+            color:#86efac;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.83rem;}
+    </style>
+</head>
+<body>
+
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/admin"><i class="fas fa-shield-alt"></i> Admin Overview</a>
+        <a href="/admin/users" class="active"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans"><i class="fas fa-list-alt"></i> All Scans</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+</nav>
+
+<aside class="soc-sidebar" id="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <div style="font-size:.65rem;color:#475569;text-transform:uppercase;letter-spacing:.1em;padding:0 1rem .5rem;">Admin</div>
+        <a href="/admin"><i class="fas fa-shield-alt"></i> Overview</a>
+        <a href="/admin/users" class="active"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/scans"><i class="fas fa-list-alt"></i> All Scans</a>
+        <div style="border-top:1px solid #1e293b;margin:.75rem 0;"></div>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email }}</div>
+        <div class="sidebar-plan">ADMIN</div>
+    </div>
+</aside>
+
+<div class="soc-main">
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <button type="button" class="mob-hamburger" id="mob-open"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target">User Management</div>
+        <div class="live-alert">{{ users_page.total }} Total Users</div>
+    </header>
+
+    {% if request.args.get('success') %}
+    <div class="success-bar"><i class="fas fa-check-circle"></i> {{ request.args.get('success') }}</div>
+    {% endif %}
+
+    <div class="panel">
+        <div class="panel-head">
+            <span class="panel-title"><i class="fas fa-users"></i> All Users</span>
+            <form class="search-bar" method="GET">
+                <input type="text" name="q" value="{{ search }}" placeholder="Search email or username…">
+                <select name="role">
+                    <option value="">All Roles</option>
+                    {% for r in ['free','basic','pro','enterprise','admin'] %}
+                    <option value="{{ r }}" {% if role_filter==r %}selected{% endif %}>{{ r|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit"><i class="fas fa-search"></i> Filter</button>
+                {% if search or role_filter %}
+                <a href="/admin/users">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <table class="admin-tbl">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Email ✓</th>
+                    <th>2FA</th>
+                    <th>Scans</th>
+                    <th>Last Login</th>
+                    <th>Joined</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users_page.items %}
+                <tr>
+                    <td style="color:#475569;">{{ u.id }}</td>
+                    <td style="font-weight:500;color:#f1f5f9;">{{ u.email }}</td>
+                    <td style="color:#94a3b8;">{{ u.username or '—' }}</td>
+                    <td><span class="role-pill pill-{{ u.role }}">{{ u.role }}</span></td>
+                    <td>
+                        {% if u.email_verified %}
+                        <i class="fas fa-check-circle icon-yes"></i>
+                        {% else %}
+                        <i class="fas fa-times-circle icon-no"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.two_factor_enabled %}
+                        <i class="fas fa-lock icon-yes"></i>
+                        {% else %}
+                        <i class="fas fa-lock-open icon-no"></i>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.scan_count_this_month or 0 }} / {{ u.monthly_scan_limit or 2 }}</td>
+                    <td style="color:#475569;white-space:nowrap;">
+                        {% if u.last_login %}{{ u.last_login.strftime('%b %d %Y') }}{% else %}Never{% endif %}
+                    </td>
+                    <td style="color:#475569;white-space:nowrap;">
+                        {% if u.created_at %}{{ u.created_at.strftime('%b %d %Y') }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <a href="/admin/users/{{ u.id }}" class="btn-sm btn-view">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" style="text-align:center;color:#475569;padding:2rem;">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if users_page.pages > 1 %}
+        <div class="pagination">
+            {% if users_page.has_prev %}
+            <a href="?page={{ users_page.prev_num }}&q={{ search }}&role={{ role_filter }}">← Prev</a>
+            {% endif %}
+            {% for p in users_page.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                    {% if p == users_page.page %}
+                    <span class="current">{{ p }}</span>
+                    {% else %}
+                    <a href="?page={{ p }}&q={{ search }}&role={{ role_filter }}">{{ p }}</a>
+                    {% endif %}
+                {% else %}
+                <span>…</span>
+                {% endif %}
+            {% endfor %}
+            {% if users_page.has_next %}
+            <a href="?page={{ users_page.next_num }}&q={{ search }}&role={{ role_filter }}">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const overlay = document.getElementById('mob-overlay');
+const drawer  = document.getElementById('mob-drawer');
+document.getElementById('mob-open').addEventListener('click', () => {
+    drawer.classList.add('open'); overlay.classList.add('show');
+});
+['mob-close','mob-overlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', () => {
+        drawer.classList.remove('open'); overlay.classList.remove('show');
+    });
+});
+</script>
+</body>
+</html>

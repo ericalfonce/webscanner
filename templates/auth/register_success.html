@@ -3,46 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check Your Email | MulikaScans</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% include '_head_meta.html' %}
+    <title>Account Created | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="auth-body">
-<div class="auth-card">
-    <div class="auth-logo">MulikaScans</div>
-    <div class="auth-tagline">A product by IklwaLabs</div>
+<body>
+<div class="auth-split">
 
-    <div class="auth-success">
-        <i class="fas fa-envelope-open-text"></i>
-        <span>Account created! Check your inbox.</span>
+    <!-- Brand panel -->
+    <div class="auth-brand-panel">
+        <div class="auth-brand-top">
+            <div class="auth-logo">
+                <img src="/static/img/brand/MulikaScans-Logo-Dark.png" alt="MulikaScans" style="max-width:210px;height:auto;display:block;">
+            </div>
+            <h2 class="auth-brand-heading">You're almost in</h2>
+            <p class="auth-brand-sub">One quick step left — verify your email to activate your account and start scanning.</p>
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Check your inbox</strong>
+                        <span>A verification link has been sent to your email address.</span>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-clock"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Link expires in 24 hours</strong>
+                        <span>Click it before it expires to activate your account.</span>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-headset"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Need help?</strong>
+                        <span>Contact support@mulikascans.com and we'll sort it out.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="auth-brand-footer">
+            &copy; 2026 <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+            &nbsp;&middot;&nbsp; <a href="#">Privacy</a>
+            &nbsp;&middot;&nbsp; <a href="#">Support</a>
+        </div>
     </div>
 
-    <h1 class="auth-title">Verify your email</h1>
-    <p class="auth-sub">
-        We sent a verification link to <strong style="color:#f8fafc;">{{ email }}</strong>.
-        Click the link in that email to activate your account.
-    </p>
+    <!-- Form area (success state) -->
+    <div class="auth-form-area">
+        <div class="auth-form-inner">
 
-    <div class="auth-info">
-        <i class="fas fa-info-circle"></i>
-        Didn't receive it? Check your spam folder or request a new link below.
+            <div class="auth-sent-wrap">
+                <div class="auth-sent-icon"><i class="fas fa-envelope-open-text"></i></div>
+                <h1 class="auth-title">Verify your email</h1>
+                <p class="auth-subheading">
+                    We sent a verification link to<br>
+                    <strong class="auth-em">{{ email }}</strong>
+                </p>
+                <p class="auth-subheading">Click the link in that email to activate your account. The link expires in <strong class="auth-em">24 hours</strong>.</p>
+
+                <p class="auth-sent-note" style="margin-bottom:20px;">
+                    Didn't receive it? Check your spam folder or resend below.
+                </p>
+
+                <form method="POST" action="/resend-verification">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <button class="auth-btn" type="submit">
+                        <i class="fas fa-redo"></i> Resend Verification Email
+                    </button>
+                </form>
+
+                <div class="auth-link" style="margin-top:12px;">
+                    <a href="/login">&larr; Back to Sign In</a>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <form method="POST" action="/resend-verification">
-        <input type="hidden" name="email" value="{{ email }}">
-        <button class="auth-btn" type="submit">
-            <i class="fas fa-redo"></i> Resend Verification Email
-        </button>
-    </form>
-
-    <div class="auth-link">
-        <a href="/login">Back to Sign In</a>
-    </div>
-
-    <div class="iklwa-badge">
-        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
-    </div>
 </div>
 </body>
 </html>

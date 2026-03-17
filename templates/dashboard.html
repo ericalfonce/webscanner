@@ -3,174 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
     <title>Dashboard | MulikaScans</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<aside class="soc-sidebar">
-    <div class="soc-logo">MULIKASCANS</div>
-    <nav class="soc-menu">
-        <a class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
         <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
         <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
         <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
         <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
         <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
-        <a href="/billing"><i class="fas fa-credit-card"></i> Billing</a>
+        {% if user and user.role == 'admin' %}
+        <a href="/admin" style="color:#f59e0b;"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        {% endif %}
+        {% if user %}<a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}<a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>{% endif %}
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">{{ user.email if user else 'Guest' }}</div>
+        <div class="mob-plan">{{ user.role if user else 'free' }} plan</div>
+    </div>
+</nav>
+
+<aside class="soc-sidebar" id="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        {% if user and user.role == 'admin' %}
+        <a href="/admin" style="color:#f59e0b;"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        {% endif %}
+        {% if user %}
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        {% else %}
+        <a href="/login"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+        {% endif %}
     </nav>
     <div class="sidebar-user">
-        <div class="sidebar-email">{{ user.email }}</div>
-        <div class="sidebar-plan">{{ user.role }} plan</div>
+        <div class="sidebar-email">{{ user.email if user else 'Guest' }}</div>
+        <div class="sidebar-plan">{{ user.role if user else 'free' }} plan</div>
     </div>
 </aside>
 
 <div class="soc-main">
 
-<header class="soc-topbar glass">
-    <div class="scan-target">Security Operations Center</div>
-    <div class="live-alert">&#9679; MulikaScans ACTIVE</div>
-</header>
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <span>Dashboard</span>
+            <button type="button" class="mob-hamburger" id="mob-open" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
 
-{% set limits = user.get_plan_limits() %}
-{% set usage_pct = ((user.scan_count_this_month / limits.scans) * 100)|int if limits.scans > 0 else 0 %}
-{% if usage_pct >= 80 and user.role != 'admin' %}
-<div class="usage-warning">
-    <i class="fas fa-exclamation-circle"></i>
-    You've used {{ user.scan_count_this_month }} of {{ limits.scans }} scans this month.
-    <a href="/pricing">Upgrade your plan &#8594;</a>
-</div>
-{% endif %}
+    <header class="soc-topbar">
+        <div class="scan-target">Security Operations Center</div>
+        <div class="live-alert">MulikaScans Active</div>
+    </header>
 
-<section class="soc-grid">
+    {% if user %}
+    {% set limits = user.get_plan_limits() %}
+    {% set usage_pct = ((user.scan_count_this_month / limits.scans) * 100)|int if limits.scans > 0 else 0 %}
+    {% if usage_pct >= 80 and user.role != 'admin' %}
+    <div class="usage-warning">
+        <i class="fas fa-exclamation-circle"></i>
+        You've used {{ user.scan_count_this_month }} of {{ limits.scans }} scans this month.
+        <a href="/pricing">Upgrade your plan &rarr;</a>
+    </div>
+    {% endif %}
+    {% endif %}
 
-<div class="panel monitor glass">
-    <h3>Scans This Month</h3>
-    <div class="score-ring" data-score="{{ usage_pct }}">
-        <span>{{ user.scan_count_this_month }} / {{ limits.scans }}</span>
+    <div class="page-content">
+
+        <!-- Stats -->
+        <p class="section-title">Overview</p>
+        <div class="metric-row">
+            <div class="metric-block">
+                <div class="metric-label">Scans This Month</div>
+                <div class="metric-value cyan">{{ user.scan_count_this_month if user else 0 }}</div>
+                <div class="metric-sub">of {{ limits.scans if user else '&infin;' }} allowed</div>
+            </div>
+            <div class="metric-block">
+                <div class="metric-label">Total Scans</div>
+                <div class="metric-value">{{ total_scans }}</div>
+                <div class="metric-sub">all time</div>
+            </div>
+            <div class="metric-block">
+                <div class="metric-label">Total Vulnerabilities</div>
+                <div class="metric-value amber">{{ total_vulns }}</div>
+                <div class="metric-sub">across all scans</div>
+            </div>
+            <div class="metric-block">
+                <div class="metric-label">Critical Issues</div>
+                <div class="metric-value red">{{ total_critical }}</div>
+                <div class="metric-sub">require immediate action</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Quick scan -->
+        <div class="inline-section">
+            <p class="section-title">Launch a Scan</p>
+            <form method="POST" action="/scan" class="scan-form" onsubmit="showLoader()">
+                <div class="scan-form-field">
+                    <label>Target URL</label>
+                    <input type="text" name="url" placeholder="https://example.com" required autocomplete="off">
+                </div>
+                <div class="scan-form-field scan-form-narrow">
+                    <label>Scan Type</label>
+                    <select name="scan_type" title="Scan type">
+                        <option value="quick">Quick</option>
+                        {% if user and user.role in ('basic','pro','enterprise','admin') %}
+                        <option value="full">Full</option>
+                        {% endif %}
+                        {% if user and user.role in ('pro','enterprise','admin') %}
+                        <option value="compliance">Compliance</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-search"></i> Start Scan
+                </button>
+            </form>
+        </div>
+
+        <!-- Recent scans -->
+        <div class="inline-section">
+            <p class="section-title">Recent Scans</p>
+            {% if recent_scans %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Vulns</th>
+                        <th>Score</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for s in recent_scans %}
+                <tr>
+                    <td class="td-url">{{ s.target_url }}</td>
+                    <td><span class="badge-type">{{ s.scan_type }}</span></td>
+                    <td>
+                        <span class="badge-status
+                            {% if s.status == 'completed' %}status-completed
+                            {% elif s.status == 'failed' %}status-failed
+                            {% else %}status-running{% endif %}">
+                            {{ s.status }}
+                        </span>
+                    </td>
+                    <td>{{ s.total_vulnerabilities }}</td>
+                    <td class="{% if s.security_score() >= 80 %}score-good{% elif s.security_score() >= 50 %}score-warn{% else %}score-bad{% endif %}">
+                        {{ s.security_score() }}%
+                    </td>
+                    <td class="td-date">{{ s.created_at.strftime('%b %d, %Y') if s.created_at else '—' }}</td>
+                    <td><a href="/scans/{{ s.id }}" class="view-link">View &rarr;</a></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% if total_scans > 10 %}
+            <div class="see-all">
+                <a href="/scans">View all {{ total_scans }} scans &rarr;</a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="clean-state">
+                <i class="fas fa-search"></i>
+                <h3>No scans yet</h3>
+                <p>Run your first scan above to start monitoring your security posture.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="page-footer">
+            &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+        </div>
     </div>
 </div>
 
-<div class="panel glass stat-panel">
-    <h3>Total Scans</h3>
-    <div class="stat-number">{{ total_scans }}</div>
+<div id="loader-overlay">
+    <div class="loader-spinner"></div>
+    <p>Scanning&hellip;</p>
+    <span>Please wait while we check for vulnerabilities.</span>
 </div>
-
-<div class="panel glass stat-panel">
-    <h3>Total Vulnerabilities</h3>
-    <div class="stat-number stat-warn">{{ total_vulns }}</div>
-</div>
-
-<div class="panel glass stat-panel">
-    <h3>Critical Issues</h3>
-    <div class="stat-number stat-crit">{{ total_critical }}</div>
-</div>
-
-<div class="panel full glass">
-    <h3>Launch a New Scan</h3>
-    <form method="POST" action="/scan" class="scan-form">
-        <div class="scan-form-field">
-            <label>Target URL</label>
-            <input type="text" name="url" placeholder="https://example.com" required>
-        </div>
-        <div class="scan-form-field scan-form-narrow">
-            <label>Scan Type</label>
-            <select name="scan_type">
-                <option value="quick">Quick</option>
-                {% if user.role in ('basic','pro','enterprise','admin') %}
-                <option value="full">Full</option>
-                {% endif %}
-                {% if user.role in ('pro','enterprise','admin') %}
-                <option value="compliance">Compliance</option>
-                {% endif %}
-            </select>
-        </div>
-        <button type="submit" class="btn-primary scan-submit">
-            <i class="fas fa-search"></i> Start Scan
-        </button>
-    </form>
-</div>
-
-<div class="panel full glass">
-    <h3>Recent Scans</h3>
-    {% if recent_scans %}
-    <table>
-        <thead>
-            <tr>
-                <th>Target</th><th>Type</th><th>Status</th>
-                <th>Vulns</th><th>Score</th><th>Date</th><th></th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for s in recent_scans %}
-        <tr>
-            <td class="td-url">{{ s.target_url }}</td>
-            <td><span class="badge-type">{{ s.scan_type }}</span></td>
-            <td>
-                <span class="{% if s.status == 'completed' %}sev-low{% elif s.status == 'failed' %}sev-high{% else %}sev-medium{% endif %} badge-status">
-                    {{ s.status }}
-                </span>
-            </td>
-            <td>{{ s.total_vulnerabilities }}</td>
-            <td class="{% if s.security_score() >= 80 %}score-good{% elif s.security_score() >= 50 %}score-warn{% else %}score-bad{% endif %}">
-                {{ s.security_score() }}%
-            </td>
-            <td class="td-date">{{ s.created_at.strftime('%b %d, %Y') if s.created_at else '—' }}</td>
-            <td><a href="/scans/{{ s.id }}" class="view-link">View &#8594;</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% if total_scans > 10 %}
-    <div class="see-all">
-        <a href="/scans">View all {{ total_scans }} scans &#8594;</a>
-    </div>
-    {% endif %}
-    {% else %}
-    <p class="clean">No scans yet. Run your first scan above!</p>
-    {% endif %}
-</div>
-
-</section>
-</div>
-
-<style>
-.sidebar-user{padding:16px;margin-top:auto;border-top:1px solid #1e293b;font-size:11px;color:#475569;}
-.sidebar-email{color:#94a3b8;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;}
-.sidebar-plan{text-transform:uppercase;letter-spacing:.8px;color:#22d3ee;}
-.usage-warning{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fcd34d;padding:12px 20px;border-radius:8px;margin-bottom:16px;font-size:13px;}
-.usage-warning a{color:#22d3ee;margin-left:8px;}
-.stat-panel .stat-number{font-size:48px;font-weight:800;color:#22d3ee;text-align:center;padding:16px 0;}
-.stat-warn{color:#f59e0b!important;}
-.stat-crit{color:#ef4444!important;}
-.scan-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
-.scan-form-field{flex:1;min-width:200px;}
-.scan-form-narrow{flex:0 0 160px;min-width:140px;}
-.scan-form-field label{display:block;font-size:12px;color:#64748b;margin-bottom:6px;}
-.scan-form-field input,.scan-form-field select{width:100%;padding:11px 14px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#f8fafc;font-size:14px;outline:none;box-sizing:border-box;}
-.scan-submit{padding:11px 22px;white-space:nowrap;}
-.td-url{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.badge-type{background:#0f172a;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
-.badge-status{border-radius:4px;padding:3px 10px;font-size:12px;}
-.score-good{color:#22c55e;}
-.score-warn{color:#f59e0b;}
-.score-bad{color:#ef4444;}
-.td-date{color:#64748b;font-size:13px;}
-.view-link{color:#22d3ee;font-size:12px;text-decoration:none;}
-.see-all{text-align:right;margin-top:12px;}
-.see-all a{color:#22d3ee;font-size:13px;text-decoration:none;}
-</style>
 
 <script>
-document.querySelectorAll('.score-ring').forEach(el=>{
-    const score=Number(el.dataset.score)||0;
-    el.style.background=`conic-gradient(#22c55e ${score*3.6}deg,#1e293b 0deg)`;
-});
+function showLoader() {
+    document.getElementById('loader-overlay').style.display = 'flex';
+}
+const mobOpen    = document.getElementById('mob-open');
+const mobClose   = document.getElementById('mob-close');
+const mobDrawer  = document.getElementById('mob-drawer');
+const mobOverlay = document.getElementById('mob-overlay');
+function openDrawer()  { mobDrawer.classList.add('open'); mobOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classList.remove('open'); document.body.style.overflow=''; }
+mobOpen.addEventListener('click', openDrawer);
+mobClose.addEventListener('click', closeDrawer);
+mobOverlay.addEventListener('click', closeDrawer);
 </script>
 
 </body>

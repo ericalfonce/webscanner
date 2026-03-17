@@ -3,64 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
     <title>Sign In | MulikaScans</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="auth-body">
-<div class="auth-card">
-    <div class="auth-logo">MulikaScans</div>
-    <div class="auth-tagline">A product by IklwaLabs</div>
+<body>
+<div class="auth-split">
 
-    <h1 class="auth-title">Welcome back</h1>
-    <p class="auth-sub">Sign in to your security dashboard</p>
+    <!-- ── Brand panel ── -->
+    <div class="auth-brand-panel">
+        <div class="auth-brand-top">
+            <div class="auth-logo">
+                <img src="/static/img/brand/MulikaScans-Logo-Dark.png" alt="MulikaScans" style="max-width:210px;height:auto;display:block;">
+            </div>
+            <h2 class="auth-brand-heading">Enterprise Vulnerability Management</h2>
+            <p class="auth-brand-sub">Detect, analyse, and remediate security vulnerabilities across your web infrastructure with professional-grade scanning tools.</p>
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Fast Scanning</strong>
+                        <span>Quick scans complete in under 30 seconds with no setup required.</span>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>OWASP Coverage</strong>
+                        <span>Full OWASP Top 10 detection including SQLi, XSS, misconfigurations, and more.</span>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fas fa-file-alt"></i></div>
+                    <div class="auth-feature-text">
+                        <strong>Detailed Reports</strong>
+                        <span>Downloadable PDF reports with prioritised remediation guidance.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="auth-brand-footer">
+            &copy; 2026 <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+            &nbsp;&middot;&nbsp; <a href="/privacy">Privacy</a>
+            &nbsp;&middot;&nbsp; <a href="/support">Support</a>
+            &nbsp;&middot;&nbsp; <a href="/contact">Contact</a>
+        </div>
+    </div>
 
-    {% if error %}
-    <div class="auth-err">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>{{ error }}
-        {% if show_resend %}
-            <br><br>
-            <form method="POST" action="/resend-verification" class="resend-form">
-                <input type="hidden" name="email" value="{{ email|default('') }}">
-                <button class="resend-link" type="submit">Resend verification email</button>
+    <!-- ── Form area ── -->
+    <div class="auth-form-area">
+        <div class="auth-form-inner">
+
+            <h1 class="auth-title">Welcome back</h1>
+            <p class="auth-subtitle">Sign in to your MulikaScans account to continue.</p>
+
+            {% if request.args.get('timeout') %}
+            <div class="auth-err" style="background:rgba(245,158,11,.12);border-color:#f59e0b;color:#fbbf24;">
+                <i class="fas fa-clock"></i>
+                <span>You were logged out due to inactivity. Please sign in again.</span>
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div class="auth-err">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ error }}
+                {% if show_resend %}
+                    &mdash;
+                    <form method="POST" action="/resend-verification" class="resend-form">
+                        <input type="hidden" name="email" value="{{ email|default('') }}">
+                        <button class="resend-link" type="submit">Resend verification email</button>
+                    </form>
+                {% endif %}
+                </span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login{% if next %}?next={{ next }}{% endif %}" novalidate>
+                <div class="auth-field-group">
+                    <label for="email">Email Address</label>
+                    <div class="auth-input-wrap">
+                        <i class="fas fa-envelope auth-input-icon"></i>
+                        <input type="email" id="email" name="email"
+                               placeholder="you@company.com"
+                               value="{{ email|default('') }}"
+                               required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="auth-field-group">
+                    <div class="auth-field-header">
+                        <label for="password">Password</label>
+                        <a href="/forgot-password" class="auth-forgot">Forgot password?</a>
+                    </div>
+                    <div class="auth-input-wrap">
+                        <i class="fas fa-lock auth-input-icon"></i>
+                        <input type="password" id="password" name="password"
+                               placeholder="••••••••"
+                               required autocomplete="current-password">
+                        <button type="button" class="pw-toggle" onclick="togglePw('password',this)" aria-label="Show password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <label class="auth-remember">
+                    <input type="checkbox" name="remember">
+                    Keep me signed in for 30 days
+                </label>
+
+                <button class="auth-btn" type="submit">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
             </form>
-        {% endif %}
-        </span>
-    </div>
-    {% endif %}
 
-    <form method="POST" action="/login">
-        <div class="auth-field">
-            <label>Email address</label>
-            <input type="email" name="email" placeholder="you@example.com"
-                   value="{{ email|default('') }}" required autocomplete="email">
+            <div class="auth-link auth-link--spaced">
+                Don't have an account? <a href="/register">Create one free</a>
+            </div>
+
+            <div class="auth-divider">OR CONTINUE WITH</div>
+
+            <div class="auth-alt-row">
+                <a class="auth-alt-btn" href="/oauth/google">
+                    <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
+                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
+                        <path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332Z" fill="#FBBC05"/>
+                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
+                    </svg>
+                    Google
+                </a>
+                <a class="auth-alt-btn" href="#">
+                    <i class="fas fa-key"></i> SSO
+                </a>
+            </div>
+
         </div>
-        <div class="auth-field">
-            <label>Password</label>
-            <input type="password" name="password" placeholder="••••••••"
-                   required autocomplete="current-password">
-        </div>
-        <a href="/forgot-password" class="auth-forgot">Forgot password?</a>
-        <button class="auth-btn" type="submit">
-            <i class="fas fa-sign-in-alt"></i> Sign In
-        </button>
-    </form>
-
-    <div class="auth-divider">or</div>
-
-    <a class="oauth-btn" href="/oauth/google">
-        <i class="fab fa-google"></i> Continue with Google
-    </a>
-
-    <div class="auth-link">
-        Don't have an account? <a href="/register">Create one free</a>
     </div>
 
-    <div class="iklwa-badge">
-        © 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
-    </div>
 </div>
+<script>
+function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    const ic  = btn.querySelector('i');
+    const show = inp.type === 'password';
+    inp.type     = show ? 'text' : 'password';
+    ic.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+</script>
 </body>
 </html>

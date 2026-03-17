@@ -1,311 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>MulikaScans SOC | Security Intelligence</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Scan Report | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body>
 
-<!-- =====================================================
-   SCORE CALCULATION
-   ===================================================== -->
-{% set high = 0 %}
-{% set medium = 0 %}
-{% set low = 0 %}
-
+{# ── Score calculation ── #}
+{% set ns = namespace(crit=0, high=0, medium=0, low=0, info=0) %}
 {% for r in results %}
-    {% if r.severity == "High" %}
-        {% set high = high + 1 %}
-    {% elif r.severity == "Medium" %}
-        {% set medium = medium + 1 %}
-    {% else %}
-        {% set low = low + 1 %}
+    {% set sev = r.severity|lower if r.severity else r.get('severity','info')|lower %}
+    {% if sev == 'critical' %}{% set ns.crit = ns.crit + 1 %}
+    {% elif sev == 'high' %}{% set ns.high = ns.high + 1 %}
+    {% elif sev == 'medium' %}{% set ns.medium = ns.medium + 1 %}
+    {% elif sev == 'low' %}{% set ns.low = ns.low + 1 %}
+    {% else %}{% set ns.info = ns.info + 1 %}
     {% endif %}
 {% endfor %}
-
 {% set total = results|length %}
-{% if total == 0 %}
-    {% set score = 100 %}
-{% else %}
-    {% set score = 100 - (high*25 + medium*10 + low*3) %}
-{% endif %}
-{% if score < 0 %}{% set score = 0 %}{% endif %}
+{% set raw_score = 100 - (ns.crit * 30 + ns.high * 18 + ns.medium * 8 + ns.low * 2) %}
+{% set score = [raw_score, 0]|max %}
 
+{# ── Mobile nav ── #}
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans" class="active"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">Scan Results</div>
+        <div class="mob-plan">Report View</div>
+    </div>
+</nav>
 
-<!-- =====================================================
-   SIDEBAR
-   ===================================================== -->
+{# ── Sidebar ── #}
 <aside class="soc-sidebar">
-    <div class="soc-logo">MULIKASCANS SOC</div>
-
+    <div class="soc-logo">MULIKASCANS</div>
     <nav class="soc-menu">
-        <a class="active">Security Overview</a>
-        <a href="/threats">Threat Monitoring</a>
-        <a href="/intelligence">Scan Intelligence</a>
-        <a href="/analytics">Risk Analytics</a>
-        <a href="/incidents">Incident Response</a>
-        <a href="/compliance">Compliance</a>
-        <a href="/scan">New Scan</a>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
     </nav>
 </aside>
 
-
-<!-- =====================================================
-   MAIN AREA
-   ===================================================== -->
+{# ── Main ── #}
 <div class="soc-main">
 
-<header class="soc-topbar glass">
-    <div class="scan-target">Target: {{ target }}</div>
-    <div class="live-alert">● LIVE SECURITY MONITOR ACTIVE</div>
-</header>
+    {# Mobile topbar #}
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <span>Scan Report</span>
+            <button class="mob-hamburger" id="mob-open" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
 
+    <header class="soc-topbar">
+        <div class="scan-target">Report<span>{{ target }}</span></div>
+        <div class="live-alert">Scan Complete</div>
+    </header>
 
-<section class="soc-grid">
+    <div class="page-content">
 
-<!-- ================= SCORE ================= -->
-<div class="panel monitor glass">
-<h3>Security Score</h3>
-<div class="score-ring" data-score="{{ score }}">
-<span>{{ score }}%</span>
+        {# ── Report header ── #}
+        <div class="report-header">
+            <div class="report-title">
+                <div class="report-title-row">
+                    <div class="report-score-badge {% if score >= 80 %}score-badge-good{% elif score >= 50 %}score-badge-warn{% else %}score-badge-bad{% endif %}">
+                        {{ score }}<span>/100</span>
+                    </div>
+                    <div>
+                        <h2>Security Scan Report</h2>
+                        <p class="report-meta">
+                            <i class="fas fa-globe"></i> <span>{{ target }}</span>
+                            &nbsp;&middot;&nbsp;
+                            <i class="fas fa-bug"></i> {{ total }} issue{{ 's' if total != 1 }} found
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="report-actions">
+                <a href="/scan" class="btn-outline">
+                    <i class="fas fa-redo"></i> New Scan
+                </a>
+                {% if current_user and current_user.role in ('basic', 'pro', 'enterprise', 'admin') %}
+                <button type="button" class="btn-primary" onclick="window.print()">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                {% if scan %}
+                <a href="/export/json/{{ scan.id }}" class="btn-outline">
+                    <i class="fas fa-file-code"></i> Export JSON
+                </a>
+                <a href="/export/csv/{{ scan.id }}" class="btn-outline">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </a>
+                {% if current_user.role in ('pro', 'enterprise', 'admin') %}
+                <a href="/export/html/{{ scan.id }}" class="btn-outline">
+                    <i class="fas fa-file-alt"></i> Export HTML
+                </a>
+                {% endif %}
+                {% endif %}
+                {% else %}
+                <a href="/pricing" class="btn-outline" title="Upgrade to Basic for PDF, JSON, CSV exports">
+                    <i class="fas fa-lock"></i> Exports — Upgrade
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── Stats row ── #}
+        <div class="stats-row">
+            <div class="stat-block stat-score">
+                <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="stat-num">{{ score }}</div>
+                <div class="stat-label">Security Score</div>
+            </div>
+            <div class="stat-block stat-critical">
+                <div class="stat-icon"><i class="fas fa-radiation-alt"></i></div>
+                <div class="stat-num">{{ ns.crit }}</div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-block stat-high">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-num">{{ ns.high }}</div>
+                <div class="stat-label">High</div>
+            </div>
+            <div class="stat-block stat-medium">
+                <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="stat-num">{{ ns.medium }}</div>
+                <div class="stat-label">Medium</div>
+            </div>
+            <div class="stat-block stat-low">
+                <div class="stat-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="stat-num">{{ ns.low }}</div>
+                <div class="stat-label">Low</div>
+            </div>
+            <div class="stat-block stat-info">
+                <div class="stat-icon"><i class="fas fa-circle"></i></div>
+                <div class="stat-num">{{ ns.info }}</div>
+                <div class="stat-label">Informational</div>
+            </div>
+        </div>
+
+        {# ── Vulnerabilities ── #}
+        <div class="section-header">
+            <p class="section-title">Detected Issues</p>
+            {% if total > 0 %}
+            <span class="section-count">{{ total }} finding{{ 's' if total != 1 }}</span>
+            {% endif %}
+        </div>
+
+        {% if total == 0 %}
+        <div class="clean-state">
+            <div class="clean-icon"><i class="fas fa-shield-check"></i></div>
+            <h3>No vulnerabilities detected</h3>
+            <p>The target passed all security checks for this scan type.</p>
+        </div>
+        {% else %}
+        <div class="vuln-list">
+            {% for r in results %}
+            {% set sev = r.severity if r.severity else r.get('severity','Info') %}
+            {% set name = r.name if r.name is defined else r.get('type', r.get('name','Unknown')) %}
+            {% set detail = r.description if r.description is defined else r.get('detail','') %}
+            <div class="vuln-item" data-sev="{{ sev|lower }}">
+                <div class="vuln-header">
+                    <div class="vuln-title-row">
+                        {% if sev|lower == 'critical' %}
+                        <span class="sev-badge sev-critical"><i class="fas fa-radiation-alt"></i> Critical</span>
+                        {% elif sev|lower == 'high' %}
+                        <span class="sev-badge sev-high"><i class="fas fa-exclamation-triangle"></i> High</span>
+                        {% elif sev|lower == 'medium' %}
+                        <span class="sev-badge sev-medium"><i class="fas fa-exclamation-circle"></i> Medium</span>
+                        {% elif sev|lower == 'low' %}
+                        <span class="sev-badge sev-low"><i class="fas fa-info-circle"></i> Low</span>
+                        {% else %}
+                        <span class="sev-badge sev-info"><i class="fas fa-circle"></i> Info</span>
+                        {% endif %}
+                        <span class="vuln-name">{{ name }}</span>
+                    </div>
+                    {% if detail %}
+                    <p class="vuln-detail">{{ detail }}</p>
+                    {% endif %}
+                </div>
+                <div class="vuln-fix">
+                    <div class="vuln-fix-label"><i class="fas fa-wrench"></i> Recommended Fix</div>
+                    <div class="vuln-fix-text">
+                    {% set t = name|lower %}
+                    {% if 'header' in t %}
+                        Set Content-Security-Policy, X-Frame-Options, and HSTS headers on your web server.
+                    {% elif 'sql' in t %}
+                        Use parameterized queries or prepared statements. Never concatenate user input into SQL.
+                    {% elif 'xss' in t %}
+                        Encode all user-supplied output before rendering. Enforce a strong Content-Security-Policy header.
+                    {% elif 'ssl' in t or 'tls' in t or 'cert' in t %}
+                        Renew the TLS certificate and enforce TLS 1.2 or higher. Disable legacy protocols.
+                    {% elif 'redirect' in t %}
+                        Validate all redirect targets against a strict allowlist of trusted domains.
+                    {% elif 'inject' in t %}
+                        Sanitize all user inputs and use an ORM or prepared statements for database calls.
+                    {% elif 'cookie' in t %}
+                        Set the Secure, HttpOnly, and SameSite=Strict flags on all session cookies.
+                    {% elif 'cors' in t %}
+                        Restrict Access-Control-Allow-Origin to explicitly trusted domains only.
+                    {% elif 'csrf' in t %}
+                        Implement anti-CSRF tokens on all state-changing requests and verify them server-side.
+                    {% elif 'auth' in t or 'login' in t %}
+                        Enforce multi-factor authentication and implement account lockout after failed attempts.
+                    {% else %}
+                        Review OWASP guidance for this vulnerability class and apply appropriate security hardening.
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="divider"></div>
+
+        {# ── Expert contact ── #}
+        <p class="section-title">Get Professional Help</p>
+        <div class="expert-section">
+            <div class="expert-card">
+                <div class="expert-intro">
+                    <div class="expert-intro-icon"><i class="fas fa-user-shield"></i></div>
+                    <div>
+                        <h3>Need expert remediation?</h3>
+                        <p>Our certified security specialists provide hands-on vulnerability remediation, penetration testing, and incident response — available 24/7.</p>
+                    </div>
+                </div>
+                <div class="expert-contacts">
+                    <div class="expert-contact-item">
+                        <div class="expert-contact-icon"><i class="fas fa-phone"></i></div>
+                        <div>
+                            <div class="expert-contact-label">Phone</div>
+                            <div class="expert-contact-value">+255 748 348 996</div>
+                        </div>
+                    </div>
+                    <div class="expert-contact-item">
+                        <div class="expert-contact-icon"><i class="fas fa-envelope"></i></div>
+                        <div>
+                            <div class="expert-contact-label">Email</div>
+                            <div class="expert-contact-value">security@mulikascans.com</div>
+                        </div>
+                    </div>
+                    <div class="expert-contact-item">
+                        <div class="expert-contact-icon"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <div class="expert-contact-label">Availability</div>
+                            <div class="expert-contact-value">24/7 response team</div>
+                        </div>
+                    </div>
+                    <div class="expert-contact-item">
+                        <div class="expert-contact-icon"><i class="fas fa-certificate"></i></div>
+                        <div>
+                            <div class="expert-contact-label">Credentials</div>
+                            <div class="expert-contact-value">Certified security specialists</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expert-form-wrap">
+                <h4 class="expert-form-title">Request Assistance</h4>
+                <form class="contact-form" method="POST" action="/contact-expert">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Full Name</label>
+                            <input type="text" name="name" placeholder="John Smith" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Business Email</label>
+                            <input type="email" name="email" placeholder="you@company.com" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Company <span class="form-opt">(optional)</span></label>
+                            <input type="text" name="organization" placeholder="Acme Corp">
+                        </div>
+                        <div class="form-field">
+                            <label>Support Type</label>
+                            <select name="category" required>
+                                <option value="">Select type…</option>
+                                <option>Vulnerability remediation</option>
+                                <option>Penetration testing</option>
+                                <option>Incident response</option>
+                                <option>Security consulting</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label>Priority Level</label>
+                        <select name="priority" required>
+                            <option value="">Select priority…</option>
+                            <option value="critical">Critical — respond within 1 hour</option>
+                            <option value="high">High — respond within 4 hours</option>
+                            <option value="medium">Medium — respond within 24 hours</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Message</label>
+                        <textarea name="message" placeholder="Describe your security issue or what you need help with…" required></textarea>
+                    </div>
+                    <input type="hidden" name="target" value="{{ target }}">
+                    <input type="hidden" name="score" value="{{ score }}">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send Request
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+            &nbsp;&middot;&nbsp; All rights reserved
+        </div>
+
+    </div>
 </div>
-</div>
 
-<!-- ================= RISK CHART ================= -->
-<div class="panel glass">
-<h3>Risk Distribution</h3>
-<canvas id="riskChart"></canvas>
-</div>
-
-<!-- ================= THREAT MONITOR ================= -->
-<div class="panel glass">
-<h3>Threat Monitoring</h3>
-<div class="pulse-indicator"></div>
-<p>Attack surface actively monitored</p>
-</div>
-
-<!-- ================= COMPLIANCE ================= -->
-<div class="panel glass">
-<h3>OWASP Alignment</h3>
-<div class="progress">
-<div class="bar" style="width: {{ score }}%"></div>
-</div>
-<p>{{ score }}% compliance</p>
-</div>
-
-
-<!-- =====================================================
-   SECURITY RECOMMENDATIONS
-   ===================================================== -->
-<<div class="panel full glass">
-
-<h3>Security Remediation Intelligence</h3>
-
-{% if total == 0 %}
-<p class="clean">No remediation required.</p>
-
-{% else %}
-<div class="recommendations">
-
-{% for r in results %}
-<div class="rec-item
-{% if r.severity|lower=='high' %}rec-high
-{% elif r.severity|lower=='medium' %}rec-medium
-{% else %}rec-low{% endif %}">
-
-<h4>{{ r.type }}</h4>
-<p class="impact">{{ r.detail }}</p>
-
-<div class="fix">
-
-{% if "header" in r.type|lower %}
-<ul>
-<li>Enable Strict-Transport-Security</li>
-<li>Implement Content-Security-Policy</li>
-<li>Add X-Frame-Options & X-Content-Type-Options</li>
-<li>Configure secure cookies</li>
-</ul>
-
-{% elif "sql" in r.type|lower %}
-<ul>
-<li>Use parameterized queries / prepared statements</li>
-<li>Implement ORM protections</li>
-<li>Sanitize all user input</li>
-<li>Deploy database firewall rules</li>
-</ul>
-
-{% elif "xss" in r.type|lower %}
-<ul>
-<li>Encode output before rendering</li>
-<li>Implement CSP headers</li>
-<li>Validate all input</li>
-<li>Use modern templating frameworks</li>
-</ul>
-
-{% elif "crawl" in r.type|lower %}
-<ul>
-<li>Restrict sensitive endpoints</li>
-<li>Disable directory listing</li>
-<li>Implement robots and access control</li>
-</ul>
-
-{% else %}
-<ul>
-<li>Review configuration</li>
-<li>Follow OWASP remediation guidance</li>
-<li>Apply security hardening</li>
-</ul>
-{% endif %}
-
-</div>
-</div>
-{% endfor %}
-
-</div>
-{% endif %}
-</div>
-
-
-<!-- =====================================================
-   VULNERABILITY TABLE
-   ===================================================== -->
-<div class="panel full glass">
-<h3>Detected Vulnerabilities</h3>
-
-{% if total == 0 %}
-<p class="clean">System secure. No issues detected.</p>
-{% else %}
-
-<table>
-<thead>
-<tr>
-<th>Issue</th>
-<th>Description</th>
-<th>Severity</th>
-<th>Recommended Fix</th>
-</tr>
-</thead>
-
-<tbody>
-{% for r in results %}
-<tr>
-
-<td>{{ r.type }}</td>
-<td>{{ r.detail }}</td>
-
-<td>
-<span class="
-{% if r.severity=='High' %}sev-high
-{% elif r.severity=='Medium' %}sev-medium
-{% else %}sev-low{% endif %}
-">
-{{ r.severity }}
-</span>
-</td>
-
-<td>
-{% if "header" in r.type|lower %}
-Configure secure HTTP headers.
-{% elif "sql" in r.type|lower %}
-Use parameterized queries and sanitize input.
-{% elif "xss" in r.type|lower %}
-Encode output and validate user input.
-{% else %}
-Apply secure configuration best practices.
-{% endif %}
-</td>
-
-</tr>
-{% endfor %}
-</tbody>
-</table>
-
-{% endif %}
-</div>
-
-
-<!-- =====================================================
-   CONTACT CYBERSECURITY EXPERT
-   ===================================================== -->
-<div class="panel full glass">
-<h3>Consult a Cybersecurity Expert</h3>
-
-<p>
-Need professional help fixing vulnerabilities or securing your infrastructure?
-Our certified security specialists provide remediation, penetration testing,
-and incident response support.
-</p>
-
-<div class="contact-grid">
-
-<div>
-<p><strong>Phone:</strong> +255 748 348 996</p>
-<p><strong>Email:</strong> security@mulikascans.com</p>
-<p><strong>Support:</strong> 24/7 response team</p>
-</div>
-
-<form method="POST" action="/contact-expert">
-
-<input type="text" name="name" placeholder="Full name" required>
-<input type="email" name="email" placeholder="Business email" required>
-<input type="text" name="organization" placeholder="Company">
-
-<select name="category" required>
-<option value="">Support type</option>
-<option>Vulnerability remediation</option>
-<option>Penetration testing</option>
-<option>Incident response</option>
-<option>Security consulting</option>
-</select>
-
-<textarea name="message"
-placeholder="Describe your security issue..."
-required></textarea>
-
-<input type="hidden" name="target" value="{{ target }}">
-<input type="hidden" name="score" value="{{ score }}">
-
-<button class="btn-primary">Request Expert Assistance</button>
-
-</form>
-</div>
-
-</div>
-
-</section>
-</div>
-
-
-<!-- =====================================================
-   CHART + SCORE RING SCRIPT
-   ===================================================== -->
 <script>
-const riskData = {{ [high, medium, low] | tojson }};
-const ctx = document.getElementById('riskChart');
+const mobOpen    = document.getElementById('mob-open');
+const mobClose   = document.getElementById('mob-close');
+const mobDrawer  = document.getElementById('mob-drawer');
+const mobOverlay = document.getElementById('mob-overlay');
 
-if(ctx){
-new Chart(ctx,{
-type:'doughnut',
-data:{
-labels:['High','Medium','Low'],
-datasets:[{data:riskData,borderWidth:0}]
-},
-options:{
-plugins:{legend:{labels:{color:"#fff"}}}
-}
-});
-}
+function openDrawer()  { mobDrawer.classList.add('open'); mobOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classList.remove('open'); document.body.style.overflow=''; }
 
-document.querySelectorAll('.score-ring').forEach(el=>{
-const score = Number(el.dataset.score)||0;
-el.style.background =
-`conic-gradient(#22c55e ${score*3.6}deg,#1e293b 0deg)`;
-});
+mobOpen.addEventListener('click', openDrawer);
+mobClose.addEventListener('click', closeDrawer);
+mobOverlay.addEventListener('click', closeDrawer);
 </script>
-
-<footer style="text-align:center;padding:20px;color:#64748b;font-size:12px;border-top:1px solid #1e293b;margin-top:40px;">© 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener" style="color:#22d3ee;">IklwaLabs</a>. All rights reserved. · A product by IklwaLabs</footer>
 </body>
 </html>

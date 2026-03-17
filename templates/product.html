@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    {% include '_head_meta.html' %}
     <title>MulikaScans | Professional Web Vulnerability Scanner</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,7 +28,27 @@
         <a href="/scan" class="nav-cta">Launch Scanner</a>
     </div>
 
+    <!-- Hamburger — mobile only -->
+    <button type="button" class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+    </button>
+
 </header>
+
+<!-- Mobile nav overlay -->
+<div class="mobile-nav-overlay" id="mobile-nav" role="dialog" aria-modal="true">
+    <button type="button" class="mob-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    <a href="#features"     onclick="closeMobileNav()">Features</a>
+    <a href="#how-it-works" onclick="closeMobileNav()">How it Works</a>
+    <a href="#benefits"     onclick="closeMobileNav()">Benefits</a>
+    <a href="#pricing"      onclick="closeMobileNav()">Pricing</a>
+    {% if current_user %}
+    <a href="/dashboard"    onclick="closeMobileNav()">Dashboard</a>
+    {% else %}
+    <a href="/login"        onclick="closeMobileNav()">Sign In</a>
+    {% endif %}
+    <a href="/scan" class="mob-cta">Launch Scanner</a>
+</div>
 
 <!-- Hero Section -->
 <section class="prod-hero animate fade-in">
@@ -196,40 +217,164 @@ into their security posture.
 
 </section>
 <section id="pricing" class="prod-section animate">
-    <h2 class="prod-highlight animate">Pricing Plans</h2>
-    <div class="prod-grid">
-        <div class="prod-card animate-step">
-            <h3>Basic</h3>
-            <p class="price">$29/month</p>
-            <ul>
-                <li>Scan 5 web apps/month</li>
-                <li>Basic vulnerability reports</li>
-                <li>Email support</li>
-            </ul>
-            <a href="/pricing/basic" class="prod-primary-btn">Choose Plan</a>
-        </div>
-        <div class="prod-card animate-step">
-            <h3>Pro</h3>
-            <p class="price">$79/month</p>
-            <ul>
-                <li>Scan 20 web apps/month</li>
-                <li>Detailed vulnerability reports</li>
-                <li>Priority email support</li>
-            </ul>
-            <a href="/pricing/pro" class="prod-primary-btn">Choose Plan</a>
-        </div>
-        <div class="prod-card animate-step">
-            <h3>Enterprise</h3>
-            <p class="price">Custom</p>
-            <ul>
-                <li>Unlimited scans</li>
-                <li>Dedicated security consultant</li>
-                <li>24/7 Support</li>
-            </ul>
-            <a href="/pricing/enterprise" class="prod-primary-btn">Contact Us</a>
-        </div>
+    <h2 class="prod-highlight animate">Simple, Transparent Pricing</h2>
+    <p class="prod-subheading animate">Start free. Upgrade as your security programme grows. No hidden fees.</p>
+
+    <!-- Billing toggle -->
+    <div class="lp-billing-toggle">
+        <span class="lp-toggle-label" id="lp-lbl-monthly">Monthly</span>
+        <label class="lp-toggle-switch">
+            <input type="checkbox" id="lp-billing-toggle">
+            <span class="lp-toggle-slider"></span>
+        </label>
+        <span class="lp-toggle-label" id="lp-lbl-annual">Annual <span class="lp-save-badge">Save 17%</span></span>
     </div>
+
+    <!-- Plan cards -->
+    <div class="lp-pricing-grid">
+
+        <!-- Free -->
+        <div class="lp-plan-card animate-step">
+            <div class="lp-plan-name">Free</div>
+            <div class="lp-plan-price">
+                <span class="lp-price-monthly">$0</span>
+                <span class="lp-price-annual" style="display:none;">$0</span>
+                <span class="lp-price-period">/mo</span>
+            </div>
+            <p class="lp-plan-tagline">For individuals exploring web security.</p>
+            <ul class="lp-plan-features">
+                <li><i class="fas fa-check"></i> 2 scans / month</li>
+                <li><i class="fas fa-check"></i> Quick scan only</li>
+                <li><i class="fas fa-check"></i> Up to 10 pages per scan</li>
+                <li><i class="fas fa-check"></i> On-screen results</li>
+                <li class="lp-plan-no"><i class="fas fa-times"></i> PDF / JSON export</li>
+                <li class="lp-plan-no"><i class="fas fa-times"></i> API access</li>
+            </ul>
+            <a href="/register" class="lp-plan-btn lp-plan-btn-outline">Get Started Free</a>
+        </div>
+
+        <!-- Basic -->
+        <div class="lp-plan-card animate-step">
+            <div class="lp-plan-name">Basic</div>
+            <div class="lp-plan-price">
+                <span class="lp-price-monthly">$14</span>
+                <span class="lp-price-annual" style="display:none;">$140</span>
+                <span class="lp-price-period lp-period-toggle">/mo</span>
+            </div>
+            <p class="lp-annual-equiv" style="display:none;">~$12/mo, billed annually</p>
+            <p class="lp-plan-tagline">For freelancers &amp; small teams.</p>
+            <ul class="lp-plan-features">
+                <li><i class="fas fa-check"></i> 15 scans / month</li>
+                <li><i class="fas fa-check"></i> Quick &amp; Full scans</li>
+                <li><i class="fas fa-check"></i> Up to 100 pages per scan</li>
+                <li><i class="fas fa-check"></i> PDF, JSON, CSV export</li>
+                <li><i class="fas fa-check"></i> 9 scanner modules</li>
+                <li><i class="fas fa-check"></i> Email support (48h)</li>
+                <li class="lp-plan-no"><i class="fas fa-times"></i> API access</li>
+            </ul>
+            <a href="/pricing" class="lp-plan-btn lp-plan-btn-solid">Start Basic</a>
+        </div>
+
+        <!-- Pro -->
+        <div class="lp-plan-card lp-plan-card-pro animate-step">
+            <div class="lp-plan-popular">MOST POPULAR</div>
+            <div class="lp-plan-name">Pro</div>
+            <div class="lp-plan-price">
+                <span class="lp-price-monthly">$45</span>
+                <span class="lp-price-annual" style="display:none;">$450</span>
+                <span class="lp-price-period lp-period-toggle">/mo</span>
+            </div>
+            <p class="lp-annual-equiv" style="display:none;">~$37/mo, billed annually</p>
+            <p class="lp-plan-tagline">For security professionals &amp; teams.</p>
+            <ul class="lp-plan-features">
+                <li><i class="fas fa-check"></i> 50 scans / month</li>
+                <li><i class="fas fa-check"></i> All scan types incl. Compliance</li>
+                <li><i class="fas fa-check"></i> Up to 500 pages per scan</li>
+                <li><i class="fas fa-check"></i> All 25+ scanner modules</li>
+                <li><i class="fas fa-check"></i> REST API access</li>
+                <li><i class="fas fa-check"></i> Scheduled scans</li>
+                <li><i class="fas fa-check"></i> Priority support (24h)</li>
+                <li><i class="fas fa-check"></i> Up to 5 team members</li>
+            </ul>
+            <a href="/pricing" class="lp-plan-btn lp-plan-btn-solid">Start Pro</a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="lp-plan-card animate-step">
+            <div class="lp-plan-name">Enterprise</div>
+            <div class="lp-plan-price"><span>Custom</span></div>
+            <p class="lp-plan-tagline">For organisations at scale.</p>
+            <ul class="lp-plan-features">
+                <li><i class="fas fa-check"></i> Unlimited scans &amp; pages</li>
+                <li><i class="fas fa-check"></i> All Pro features</li>
+                <li><i class="fas fa-check"></i> White-label reports</li>
+                <li><i class="fas fa-check"></i> Unlimited team members</li>
+                <li><i class="fas fa-check"></i> Dedicated account manager</li>
+                <li><i class="fas fa-check"></i> 24/7 priority support + SLA</li>
+            </ul>
+            <a href="mailto:support@mulikascans.com?subject=Enterprise%20Enquiry" class="lp-plan-btn lp-plan-btn-outline">Contact Sales</a>
+        </div>
+
+    </div>
+
+    <p class="lp-pricing-footer">
+        Full feature comparison and payment options on the <a href="/pricing">pricing page</a>.
+    </p>
 </section>
+
+<style>
+/* ── Landing page pricing section ── */
+.prod-subheading{text-align:center;color:#64748b;font-size:15px;margin-top:-8px;margin-bottom:0;}
+.lp-billing-toggle{display:flex;align-items:center;gap:14px;justify-content:center;margin:28px 0 40px;}
+.lp-toggle-label{color:#94a3b8;font-size:14px;font-weight:500;}
+.lp-toggle-switch{position:relative;width:52px;height:28px;flex-shrink:0;}
+.lp-toggle-switch input{opacity:0;width:0;height:0;}
+.lp-toggle-slider{position:absolute;inset:0;background:#1e293b;border-radius:28px;cursor:pointer;transition:.3s;border:1px solid #334155;}
+.lp-toggle-slider::before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#64748b;border-radius:50%;transition:.3s;}
+#lp-billing-toggle:checked + .lp-toggle-slider{background:#0e7490;}
+#lp-billing-toggle:checked + .lp-toggle-slider::before{transform:translateX(24px);background:#22d3ee;}
+.lp-save-badge{background:#22d3ee;color:#03091a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;}
+
+.lp-pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;max-width:1100px;margin:0 auto;}
+.lp-plan-card{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:28px;position:relative;transition:border-color .25s,transform .25s;}
+.lp-plan-card:hover{border-color:#334155;transform:translateY(-4px);}
+.lp-plan-card-pro{border-color:#22d3ee;box-shadow:0 0 32px rgba(34,211,238,.14);}
+.lp-plan-popular{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#22d3ee;color:#03091a;font-size:11px;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:.8px;white-space:nowrap;}
+.lp-plan-name{font-size:17px;font-weight:700;color:#f8fafc;margin-bottom:8px;}
+.lp-plan-price{font-size:40px;font-weight:800;color:#22d3ee;line-height:1;margin-bottom:4px;}
+.lp-price-period{font-size:15px;color:#64748b;font-weight:400;}
+.lp-annual-equiv{color:#94a3b8;font-size:12px;margin:2px 0 0;}
+.lp-plan-tagline{color:#64748b;font-size:13px;margin:10px 0 18px;}
+.lp-plan-features{list-style:none;padding:0;margin:0 0 22px;font-size:13.5px;color:#94a3b8;}
+.lp-plan-features li{padding:5px 0;display:flex;align-items:center;gap:9px;}
+.lp-plan-features .fa-check{color:#22d3ee;font-size:12px;}
+.lp-plan-no{color:#475569!important;}
+.lp-plan-no .fa-times{color:#334155;}
+.lp-plan-btn{display:block;width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;transition:all .2s;border:none;font-family:inherit;}
+.lp-plan-btn-solid{background:#22d3ee;color:#03091a;}
+.lp-plan-btn-solid:hover{background:#06b6d4;text-decoration:none;color:#03091a;}
+.lp-plan-btn-outline{background:transparent;color:#22d3ee;border:1px solid #22d3ee;}
+.lp-plan-btn-outline:hover{background:rgba(34,211,238,.08);text-decoration:none;color:#22d3ee;}
+.lp-pricing-footer{text-align:center;margin-top:28px;font-size:13px;color:#475569;}
+.lp-pricing-footer a{color:#22d3ee;}
+@media(max-width:600px){.lp-pricing-grid{grid-template-columns:1fr;}}
+</style>
+
+<script>
+(function(){
+    const tog  = document.getElementById('lp-billing-toggle');
+    if (!tog) return;
+    tog.addEventListener('change', function(){
+        const annual = this.checked;
+        document.querySelectorAll('#pricing .lp-price-monthly').forEach(el => el.style.display = annual ? 'none' : '');
+        document.querySelectorAll('#pricing .lp-price-annual').forEach(el  => el.style.display = annual ? '' : 'none');
+        document.querySelectorAll('#pricing .lp-annual-equiv').forEach(el  => el.style.display = annual ? '' : 'none');
+        document.querySelectorAll('#pricing .lp-period-toggle').forEach(el => el.textContent = annual ? '/yr' : '/mo');
+        document.getElementById('lp-lbl-monthly').style.color = annual ? '#475569' : '#f8fafc';
+        document.getElementById('lp-lbl-annual').style.color  = annual ? '#f8fafc' : '#475569';
+    });
+})();
+</script>
 
 <!-- Footer -->
 <footer class="prod-footer">
@@ -313,7 +458,34 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<script>
+/* ── Hamburger / mobile nav ── */
+const hamburger  = document.getElementById('nav-hamburger');
+const mobileNav  = document.getElementById('mobile-nav');
+const mobClose   = document.getElementById('mob-close');
 
+function openMobileNav() {
+    mobileNav.style.display = 'flex';
+    requestAnimationFrame(() => mobileNav.classList.add('open'));
+    hamburger.classList.add('open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileNav() {
+    mobileNav.classList.remove('open');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    setTimeout(() => { mobileNav.style.display = ''; }, 250);
+}
+
+hamburger.addEventListener('click', openMobileNav);
+mobClose.addEventListener('click', closeMobileNav);
+
+/* Close on Escape */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileNav(); });
+</script>
 
 </body>
 </html>

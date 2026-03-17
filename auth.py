@@ -1,29 +1,26 @@
 """
 MulikaScans — Production Authentication System
-JWT tokens, bcrypt passwords, 2FA (TOTP), email verification,
-password reset, rate limiting, RBAC decorators.
+Supabase Auth, 2FA (TOTP), rate limiting, RBAC decorators.
 """
 
 import os
 import re
-import uuid
 import secrets
 import pyotp
 import qrcode
 import io
 import base64
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from functools import wraps
 
-import jwt
-import bcrypt
 from flask import (Blueprint, render_template, request, redirect,
-                   session, jsonify, url_for, current_app, make_response)
-from flask_mail import Message
+                   session, jsonify, url_for, current_app, make_response, g)
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from models import db, User, Subscription
+from supabase_service import get_supabase
+from supabase_auth.errors import AuthApiError
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -50,52 +47,15 @@ def validate_password(password: str):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# JWT Helpers
+# Cookie Helpers
 # ─────────────────────────────────────────────────────────────────────────────
-def _jwt_secret():
-    return os.environ.get("JWT_SECRET_KEY", "fallback-dev-secret")
-
-
-def generate_access_token(user_id: int, role: str) -> str:
-    expires = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 900))
-    payload = {
-        "sub": user_id,
-        "role": role,
-        "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(seconds=expires),
-        "iat": datetime.now(timezone.utc),
-    }
-    return jwt.encode(payload, _jwt_secret(), algorithm="HS256")
-
-
-def generate_refresh_token(user_id: int) -> str:
-    expires = int(os.environ.get("JWT_REFRESH_TOKEN_EXPIRES", 604800))
-    payload = {
-        "sub": user_id,
-        "type": "refresh",
-        "exp": datetime.now(timezone.utc) + timedelta(seconds=expires),
-        "iat": datetime.now(timezone.utc),
-        "jti": str(uuid.uuid4()),
-    }
-    return jwt.encode(payload, _jwt_secret(), algorithm="HS256")
-
-
-def decode_token(token: str) -> dict | None:
-    try:
-        return jwt.decode(token, _jwt_secret(), algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
-
-
 def _set_auth_cookies(response, access_token: str, refresh_token: str):
-    """Store tokens in HttpOnly cookies."""
+    """Store Supabase tokens in HttpOnly cookies."""
     is_prod = os.environ.get("FLASK_ENV") == "production"
     response.set_cookie(
         "access_token", access_token,
         httponly=True, secure=is_prod, samesite="Lax",
-        max_age=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 900))
+        max_age=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 3600))
     )
     response.set_cookie(
         "refresh_token", refresh_token,
@@ -112,18 +72,52 @@ def _clear_auth_cookies(response):
 # ─────────────────────────────────────────────────────────────────────────────
 # Current User Helper
 # ─────────────────────────────────────────────────────────────────────────────
-def get_current_user() -> User | None:
+def get_current_user():
+    """Return the authenticated user for this request.
+
+    Result is cached in Flask's ``g`` so that multiple callers within the
+    same request context (decorators, context processor, route handler) share
+    a single Supabase token-verification round-trip.
+    """
+    if hasattr(g, "_current_user_resolved"):
+        return g._current_user  # type: ignore[attr-defined]
+
+    user = _resolve_current_user()
+    g._current_user = user
+    g._current_user_resolved = True
+    return user
+
+
+def _resolve_current_user():
     token = request.cookies.get("access_token")
     if not token:
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
-    if not token:
-        return None
-    payload = decode_token(token)
-    if not payload or payload.get("type") != "access":
-        return None
-    return db.session.get(User, payload["sub"])
+    if token:
+        try:
+            sb = get_supabase()
+            sb_response = sb.auth.get_user(token)
+            if sb_response and sb_response.user:
+                sb_uid = sb_response.user.id
+                user = User.query.filter_by(supabase_uid=sb_uid).first()
+                if not user:
+                    # Try matching by email (for users created before migration)
+                    user = User.query.filter_by(email=sb_response.user.email).first()
+                    if user:
+                        user.supabase_uid = sb_uid
+                        db.session.commit()
+                if user:
+                    return user
+        except Exception:
+            pass
+
+    # Fallback to Flask session
+    user_id = session.get("_uid")
+    if user_id:
+        return db.session.get(User, user_id)
+
+    return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -136,7 +130,7 @@ def login_required(f):
         if not user:
             if request.is_json:
                 return jsonify({"error": "Authentication required"}), 401
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login", next=request.path))
         return f(*args, **kwargs)
     return decorated
 
@@ -205,48 +199,16 @@ def _send_email(subject: str, recipients: list, body_html: str):
         if not mail:
             current_app.logger.warning("Flask-Mail not configured — email not sent")
             return
+        if not current_app.config.get("MAIL_USERNAME"):
+            current_app.logger.warning(
+                f"MAIL_USERNAME not set — skipping email to {recipients}"
+            )
+            return
         msg = MailMessage(subject, recipients=recipients, html=body_html)
         mail.send(msg)
+        current_app.logger.info(f"Email sent: '{subject}' → {recipients}")
     except Exception as e:
-        current_app.logger.warning(f"Email send failed: {e}")
-
-
-def send_verification_email(user: User):
-    token = user.verification_token
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
-    link = f"{frontend_url}/verify-email/{token}"
-    html = f"""
-    <div style="font-family:sans-serif;max-width:600px;margin:auto;background:#0f172a;color:#e5e7eb;padding:40px;border-radius:12px;">
-        <h2 style="color:#22d3ee;">Welcome to MulikaScans</h2>
-        <p>Thank you for registering. Please verify your email address to activate your account.</p>
-        <a href="{link}" style="display:inline-block;background:#22d3ee;color:#0f172a;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:20px 0;">
-            Verify Email Address
-        </a>
-        <p style="color:#64748b;font-size:12px;">This link expires in 24 hours. If you did not create an account, ignore this email.</p>
-        <hr style="border-color:#1e293b;">
-        <p style="color:#64748b;font-size:12px;">© 2026 MulikaScans by IklwaLabs. All rights reserved.</p>
-    </div>
-    """
-    _send_email("Verify your MulikaScans account", [user.email], html)
-
-
-def send_password_reset_email(user: User):
-    token = user.reset_token
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
-    link = f"{frontend_url}/reset-password/{token}"
-    html = f"""
-    <div style="font-family:sans-serif;max-width:600px;margin:auto;background:#0f172a;color:#e5e7eb;padding:40px;border-radius:12px;">
-        <h2 style="color:#22d3ee;">Password Reset Request</h2>
-        <p>We received a request to reset your MulikaScans password. Click the button below to reset it.</p>
-        <a href="{link}" style="display:inline-block;background:#22d3ee;color:#0f172a;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:20px 0;">
-            Reset Password
-        </a>
-        <p style="color:#64748b;font-size:12px;">This link expires in 1 hour. If you did not request a password reset, ignore this email.</p>
-        <hr style="border-color:#1e293b;">
-        <p style="color:#64748b;font-size:12px;">© 2026 MulikaScans by IklwaLabs. All rights reserved.</p>
-    </div>
-    """
-    _send_email("Reset your MulikaScans password", [user.email], html)
+        current_app.logger.error(f"Email send FAILED to {recipients}: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -260,7 +222,6 @@ def register():
         password = request.form.get("password", "")
         username = request.form.get("username", "").strip() or None
 
-        # Validate
         if not email or "@" not in email:
             return render_template("auth/register.html", error="Invalid email address.")
 
@@ -274,29 +235,48 @@ def register():
         if username and User.query.filter_by(username=username).first():
             return render_template("auth/register.html", error="Username already taken.", email=email)
 
-        # Hash password
-        password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        # Register with Supabase Auth
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+        try:
+            sb = get_supabase()
+            sb_response = sb.auth.sign_up({
+                "email": email,
+                "password": password,
+                "options": {"email_redirect_to": frontend_url + "/verify-email/success"}
+            })
+            sb_user = sb_response.user
+        except AuthApiError as e:
+            current_app.logger.error(f"Supabase sign_up error: {e}")
+            return render_template("auth/register.html", error="Registration failed. Please try again.", email=email)
 
-        # Create user
+        if not sb_user:
+            return render_template("auth/register.html", error="Registration failed. Please try again.", email=email)
+
+        # Create our app User record linked to Supabase
+        email_verified = sb_user.email_confirmed_at is not None
         user = User(
             email=email,
             username=username,
-            password_hash=password_hash,
+            password_hash=None,           # Supabase manages passwords
+            supabase_uid=sb_user.id,
             role="free",
-            email_verified=False,
-            verification_token=secrets.token_urlsafe(32),
+            email_verified=email_verified,
             monthly_scan_limit=2,
         )
         db.session.add(user)
-
-        # Create free subscription record
         sub = Subscription(user=user, plan="free", status="active")
         db.session.add(sub)
         db.session.commit()
 
-        # Send verification email
-        send_verification_email(user)
+        # If Supabase already confirmed email (e.g. email confirm disabled in dashboard), auto-login
+        if email_verified and sb_response.session:
+            session.clear()
+            session["_uid"] = user.id
+            resp = make_response(redirect("/dashboard"))
+            _set_auth_cookies(resp, sb_response.session.access_token, sb_response.session.refresh_token)
+            return resp
 
+        # Otherwise show "check your email" page
         return render_template("auth/register_success.html", email=email)
 
     return render_template("auth/register.html")
@@ -305,15 +285,8 @@ def register():
 # ─────────────────────────────────────────────────────────────────────────────
 # Email Verification
 # ─────────────────────────────────────────────────────────────────────────────
-@auth_bp.route("/verify-email/<token>")
-def verify_email(token):
-    user = User.query.filter_by(verification_token=token).first()
-    if not user:
-        return render_template("auth/verify_email.html", success=False,
-                               error="Invalid or expired verification link.")
-    user.email_verified = True
-    user.verification_token = None
-    db.session.commit()
+@auth_bp.route("/verify-email/success")
+def verify_email_success():
     return render_template("auth/verify_email.html", success=True)
 
 
@@ -321,53 +294,74 @@ def verify_email(token):
 @limiter.limit("3 per hour")
 def resend_verification():
     email = request.form.get("email", "").strip().lower()
-    user = User.query.filter_by(email=email).first()
-    if user and not user.email_verified:
-        user.verification_token = secrets.token_urlsafe(32)
-        db.session.commit()
-        send_verification_email(user)
-    return render_template("auth/verify_email_notice.html",
-                           email=email, resent=True)
+    try:
+        sb = get_supabase()
+        sb.auth.resend({"type": "signup", "email": email})
+    except Exception as e:
+        current_app.logger.warning(f"Supabase resend verification error for {email}: {e}")
+    return render_template("auth/verify_email_notice.html", email=email, resent=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Login
 # ─────────────────────────────────────────────────────────────────────────────
 @auth_bp.route("/login", methods=["GET", "POST"])
-@limiter.limit("5 per 15 minutes")
+@limiter.limit("60 per 15 minutes")
 def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
 
-        user = User.query.filter_by(email=email).first()
+        try:
+            sb = get_supabase()
+            sb_response = sb.auth.sign_in_with_password({"email": email, "password": password})
+            sb_user = sb_response.user
+            sb_session = sb_response.session
+        except AuthApiError:
+            return render_template("auth/login.html", error="Invalid email or password.")
 
-        if not user or not bcrypt.checkpw(password.encode(), user.password_hash.encode()):
-            return render_template("auth/login.html",
-                                   error="Invalid email or password.")
+        if not sb_user or not sb_session:
+            return render_template("auth/login.html", error="Invalid email or password.")
 
-        if not user.email_verified:
+        # Check email verification
+        if not sb_user.email_confirmed_at:
             return render_template("auth/login.html",
                                    error="Please verify your email before logging in.",
                                    show_resend=True, email=email)
 
+        # Look up (or create on first Supabase login) our app User
+        user = User.query.filter_by(supabase_uid=sb_user.id).first()
+        if not user:
+            user = User.query.filter_by(email=email).first()
+            if user:
+                user.supabase_uid = sb_user.id
+                db.session.commit()
+
+        if not user:
+            return render_template("auth/login.html", error="Account not found. Please register.")
+
         # 2FA check
         if user.two_factor_enabled:
             session["2fa_user_id"] = user.id
+            session["supabase_access_token"] = sb_session.access_token
+            session["supabase_refresh_token"] = sb_session.refresh_token
             return redirect(url_for("auth.verify_2fa"))
 
-        # Issue tokens
         user.last_login = datetime.now(timezone.utc)
         db.session.commit()
 
-        access_token = generate_access_token(user.id, user.role)
-        refresh_token = generate_refresh_token(user.id)
+        session.clear()
+        session["_uid"] = user.id
 
-        resp = make_response(redirect("/dashboard"))
-        _set_auth_cookies(resp, access_token, refresh_token)
+        next_url = request.args.get("next") or request.form.get("next") or "/dashboard"
+        if not next_url.startswith("/") or "//" in next_url:
+            next_url = "/dashboard"
+
+        resp = make_response(redirect(next_url))
+        _set_auth_cookies(resp, sb_session.access_token, sb_session.refresh_token)
         return resp
 
-    return render_template("auth/login.html")
+    return render_template("auth/login.html", next=request.args.get("next", ""))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -391,15 +385,19 @@ def verify_2fa():
             return render_template("auth/2fa_verify.html",
                                    error="Invalid or expired code.")
 
-        session.pop("2fa_user_id", None)
         user.last_login = datetime.now(timezone.utc)
         db.session.commit()
 
-        access_token = generate_access_token(user.id, user.role)
-        refresh_token = generate_refresh_token(user.id)
+        # Regenerate session to prevent session fixation attacks
+        session.clear()
+        session["_uid"] = user.id
+
+        access_token = session.pop("supabase_access_token", None)
+        refresh_token_val = session.pop("supabase_refresh_token", None)
 
         resp = make_response(redirect("/dashboard"))
-        _set_auth_cookies(resp, access_token, refresh_token)
+        if access_token and refresh_token_val:
+            _set_auth_cookies(resp, access_token, refresh_token_val)
         return resp
 
     return render_template("auth/2fa_verify.html")
@@ -458,7 +456,7 @@ def disable_2fa():
     user.two_factor_secret = None
     user.two_factor_enabled = False
     db.session.commit()
-    return redirect("/dashboard")
+    return redirect("/profile")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -466,9 +464,13 @@ def disable_2fa():
 # ─────────────────────────────────────────────────────────────────────────────
 @auth_bp.route("/logout")
 def logout():
-    session.clear()
+    session.clear()  # clears _uid and any 2fa state
     resp = make_response(redirect("/"))
     _clear_auth_cookies(resp)
+    # Ensure the browser does not cache this response or any page visited before logout
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
     return resp
 
 
@@ -481,20 +483,21 @@ def refresh_token():
     if not token:
         return jsonify({"error": "Refresh token required"}), 401
 
-    payload = decode_token(token)
-    if not payload or payload.get("type") != "refresh":
-        return jsonify({"error": "Invalid or expired refresh token"}), 401
+    try:
+        sb = get_supabase()
+        sb_response = sb.auth.refresh_session(token)
+        if not sb_response or not sb_response.session:
+            return jsonify({"error": "Invalid or expired refresh token"}), 401
+        new_session = sb_response.session
+    except Exception:
+        return jsonify({"error": "Token refresh failed"}), 401
 
-    user = db.session.get(User, payload["sub"])
-    if not user:
-        return jsonify({"error": "User not found"}), 401
-
-    access_token = generate_access_token(user.id, user.role)
-    resp = jsonify({"message": "Token refreshed"})
     is_prod = os.environ.get("FLASK_ENV") == "production"
+    resp = jsonify({"message": "Token refreshed"})
     resp.set_cookie(
-        "access_token", access_token, httponly=True, secure=is_prod, samesite="Lax",
-        max_age=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 900))
+        "access_token", new_session.access_token,
+        httponly=True, secure=is_prod, samesite="Lax",
+        max_age=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 3600))
     )
     return resp
 
@@ -507,12 +510,12 @@ def refresh_token():
 def forgot_password():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
-        user = User.query.filter_by(email=email).first()
-        if user:
-            user.reset_token = secrets.token_urlsafe(32)
-            user.reset_token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
-            db.session.commit()
-            send_password_reset_email(user)
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+        try:
+            sb = get_supabase()
+            sb.auth.reset_password_for_email(email, {"redirect_to": frontend_url + "/reset-password"})
+        except Exception as e:
+            current_app.logger.error(f"Supabase reset_password_for_email error: {e}")
         # Always return success to prevent email enumeration
         return render_template("auth/forgot_password.html", sent=True, email=email)
     return render_template("auth/forgot_password.html")
@@ -521,59 +524,128 @@ def forgot_password():
 # ─────────────────────────────────────────────────────────────────────────────
 # Password Reset — Confirm
 # ─────────────────────────────────────────────────────────────────────────────
-@auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
-def reset_password(token):
-    user = User.query.filter_by(reset_token=token).first()
-
-    if not user or not user.reset_token_expiry:
-        return render_template("auth/reset_password.html", invalid=True)
-
-    if datetime.now(timezone.utc) > user.reset_token_expiry:
-        return render_template("auth/reset_password.html", expired=True)
-
+@auth_bp.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
     if request.method == "POST":
+        access_token = request.form.get("recovery_access_token", "").strip()
+        refresh_token_val = request.form.get("recovery_refresh_token", "").strip()
         password = request.form.get("password", "")
         confirm = request.form.get("confirm_password", "")
 
+        if not access_token:
+            return render_template("auth/reset_password.html", invalid=True)
+
         if password != confirm:
             return render_template("auth/reset_password.html",
-                                   token=token, error="Passwords do not match.")
+                                   token="supabase", error="Passwords do not match.")
 
         valid, err = validate_password(password)
         if not valid:
-            return render_template("auth/reset_password.html",
-                                   token=token, error=err)
+            return render_template("auth/reset_password.html", token="supabase", error=err)
 
-        user.password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-        user.reset_token = None
-        user.reset_token_expiry = None
-        db.session.commit()
+        try:
+            sb = get_supabase()
+            sb.auth.set_session(access_token, refresh_token_val)
+            sb.auth.update_user({"password": password})
+        except Exception as e:
+            current_app.logger.error(f"Supabase password reset error: {e}")
+            return render_template("auth/reset_password.html", invalid=True)
+
         return render_template("auth/reset_password.html", success=True)
 
-    return render_template("auth/reset_password.html", token=token)
+    return render_template("auth/reset_password.html", token="supabase")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Google OAuth2 — Skeleton (Authlib)
+# Google OAuth — Supabase
 # ─────────────────────────────────────────────────────────────────────────────
 @auth_bp.route("/oauth/google")
 def oauth_google():
-    # TODO: Configure Authlib Google OAuth2
-    # from authlib.integrations.flask_client import OAuth
-    # oauth = OAuth(current_app)
-    # google = oauth.register('google', ...)
-    # return google.authorize_redirect(url_for('auth.oauth_google_callback', _external=True))
-    return render_template("auth/login.html",
-                           error="Google OAuth is coming soon. Please use email login.")
+    """Redirect the user to Google via Supabase OAuth.
+
+    We construct the URL manually (without PKCE) so Supabase returns tokens
+    in the hash fragment that the callback JS can read directly.
+    """
+    from urllib.parse import urlencode
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
+    supabase_url = os.environ.get("SUPABASE_URL", "https://nfyspkcmkaigqmnqdwte.supabase.co")
+    params = urlencode({
+        "provider": "google",
+        "redirect_to": frontend_url + "/oauth/google/callback",
+    })
+    return redirect(f"{supabase_url}/auth/v1/authorize?{params}")
 
 
 @auth_bp.route("/oauth/google/callback")
 def oauth_google_callback():
-    # TODO: Handle Google OAuth callback
-    # token = google.authorize_access_token()
-    # user_info = token.get('userinfo')
-    # ...
-    return redirect("/dashboard")
+    """Landing page after Google auth.
+    Supabase returns tokens in the URL hash fragment; JS reads them and
+    POSTs them to /oauth/google/session for server-side cookie setup.
+    """
+    return render_template("auth/oauth_callback.html")
+
+
+@auth_bp.route("/oauth/google/session", methods=["POST"])
+def oauth_google_session():
+    """Receive tokens from the OAuth callback JS, verify with Supabase,
+    create/link our app User, set auth cookies, return redirect URL.
+    """
+    data = request.get_json(silent=True) or {}
+    access_token = data.get("access_token", "").strip()
+    refresh_token_val = data.get("refresh_token", "").strip()
+
+    if not access_token:
+        return jsonify({"error": "No access token provided"}), 400
+
+    try:
+        sb = get_supabase()
+        sb_response = sb.auth.get_user(access_token)
+        sb_user = sb_response.user if sb_response else None
+    except Exception as e:
+        current_app.logger.error(f"Google OAuth session verification error: {e}")
+        return jsonify({"error": "Token verification failed"}), 401
+
+    if not sb_user:
+        return jsonify({"error": "Could not verify Google user"}), 401
+
+    # Find or create local User record
+    user = User.query.filter_by(supabase_uid=sb_user.id).first()
+    if not user:
+        user = User.query.filter_by(email=sb_user.email).first()
+        if user:
+            # Link existing account to Supabase
+            user.supabase_uid = sb_user.id
+        else:
+            # Brand-new user via Google — create app record
+            meta = sb_user.user_metadata or {}
+            raw_name = meta.get("full_name") or meta.get("name") or ""
+            username = re.sub(r"[^a-z0-9_]", "", raw_name.lower().replace(" ", "_"))[:30] or None
+            if username and User.query.filter_by(username=username).first():
+                username = None  # Skip if already taken
+
+            user = User(
+                email=sb_user.email,
+                username=username,
+                password_hash=None,
+                supabase_uid=sb_user.id,
+                role="free",
+                email_verified=True,   # Google accounts are pre-verified
+                monthly_scan_limit=2,
+                profile_picture=meta.get("avatar_url"),
+            )
+            db.session.add(user)
+            db.session.add(Subscription(user=user, plan="free", status="active"))
+
+    user.last_login = datetime.now(timezone.utc)
+    user.email_verified = True
+    db.session.commit()
+
+    session.clear()
+    session["_uid"] = user.id
+
+    resp = jsonify({"redirect": "/dashboard"})
+    _set_auth_cookies(resp, access_token, refresh_token_val)
+    return resp
 
 
 # ─────────────────────────────────────────────────────────────────────────────

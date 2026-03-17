@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>Profile | MulikaScans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='results.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Profile page extras */
+        .profile-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+        @media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+
+        /* Card */
+        .pcard { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 28px; margin-bottom: 20px; }
+        .pcard-title { font-size: .875rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .pcard-title i { color: #22d3ee; }
+
+        /* Avatar */
+        .avatar-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px; }
+        .avatar { width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #22d3ee); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 800; color: #03091a; margin-bottom: 14px; position: relative; overflow: hidden; flex-shrink: 0; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .avatar-badge { position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; background: #22c55e; border: 2px solid #060e1e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .6rem; color: #fff; }
+        .avatar-name { font-size: 1.05rem; font-weight: 700; color: #f1f5f9; }
+        .avatar-email { font-size: .8rem; color: #64748b; margin-top: 4px; word-break: break-all; }
+
+        /* Picture upload area */
+        .pic-drop {
+            width: 100%;
+            border: 1.5px dashed #1e2d45;
+            border-radius: 10px;
+            padding: 20px 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .pic-drop:hover, .pic-drop.drag-over { border-color: #22d3ee; background: rgba(34,211,238,.04); }
+        .pic-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .pic-drop-icon { font-size: 1.4rem; color: #3d5470; margin-bottom: 8px; }
+        .pic-drop p { font-size: .8rem; color: #64748b; margin: 0; line-height: 1.5; }
+        .pic-drop p strong { color: #22d3ee; }
+        .pic-drop small { font-size: .72rem; color: #3d5470; }
+        .pic-preview-wrap { display: none; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .pic-preview-wrap img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #22d3ee; }
+        .pic-preview-name { font-size: .78rem; color: #94a3b8; }
+
+        /* Plan badge */
+        .plan-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700; margin-top: 10px; }
+        .plan-free     { background: rgba(100,116,139,.12); color: #94a3b8; }
+        .plan-basic    { background: rgba(14,165,233,.12); color: #38bdf8; }
+        .plan-pro      { background: rgba(139,92,246,.12); color: #a78bfa; }
+        .plan-enterprise { background: rgba(234,179,8,.12); color: #facc15; }
+        .plan-admin    { background: rgba(239,68,68,.12); color: #f87171; }
+
+        /* Stats row */
+        .profile-stat { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
+        .profile-stat:last-child { border-bottom: none; }
+        .profile-stat span:first-child { color: #64748b; }
+        .profile-stat span:last-child { color: #e2e8f0; font-weight: 600; }
+
+        /* Form fields */
+        .pfield { margin-bottom: 16px; }
+        .pfield label { display: block; font-size: .78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; }
+        .pfield-wrap { position: relative; display: flex; align-items: center; }
+        .pfield-wrap i.fi { position: absolute; left: 13px; color: #3d5470; font-size: .8rem; pointer-events: none; }
+        .pfield-wrap input { width: 100%; height: 44px; padding: 0 14px 0 38px; background: rgba(255,255,255,.04); border: 1.5px solid #1e2d45; border-radius: 8px; color: #e2e8f0; font-size: .875rem; font-family: inherit; outline: none; box-sizing: border-box; transition: border-color .15s, box-shadow .15s; }
+        .pfield-wrap input:focus { border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34,211,238,.08); }
+        .pfield-wrap input::placeholder { color: #3d5470; }
+        .pfield-wrap input:disabled { opacity: .45; cursor: not-allowed; }
+        .pfield-hint { font-size: .75rem; color: #3d5470; margin-top: 5px; }
+
+        /* Password toggle */
+        .pw-eye { position: absolute; right: 12px; background: transparent; border: none; color: #3d5470; cursor: pointer; font-size: .85rem; padding: 4px; line-height: 1; }
+        .pw-eye:hover { color: #94a3b8; }
+
+        /* Password strength */
+        .pw-str-wrap { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+        .pw-str-track { flex: 1; height: 3px; background: #1e2d45; border-radius: 2px; overflow: hidden; }
+        .pw-str-bar { height: 100%; width: 0; transition: width .3s, background .3s; border-radius: 2px; }
+        .pw-str-lbl { font-size: .7rem; font-weight: 700; min-width: 60px; text-align: right; }
+
+        /* Buttons */
+        .pbtn { height: 42px; padding: 0 20px; border-radius: 8px; font-size: .875rem; font-weight: 700; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background .15s; border: none; }
+        .pbtn-primary { background: #22d3ee; color: #03091a; }
+        .pbtn-primary:hover { background: #38bdf8; }
+        .pbtn-danger  { background: rgba(239,68,68,.12); color: #f87171; border: 1.5px solid rgba(239,68,68,.2); }
+        .pbtn-danger:hover  { background: rgba(239,68,68,.2); }
+        .pbtn-outline { background: rgba(255,255,255,.04); color: #94a3b8; border: 1.5px solid #1e2d45; }
+        .pbtn-outline:hover { border-color: #22d3ee; color: #22d3ee; }
+
+        /* Alert */
+        .palert { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 8px; font-size: .85rem; margin-bottom: 20px; line-height: 1.5; }
+        .palert-ok  { background: rgba(34,197,94,.07); border: 1px solid rgba(34,197,94,.2); color: #86efac; }
+        .palert-err { background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2); color: #fca5a5; }
+        .palert i { flex-shrink: 0; margin-top: 1px; }
+
+        /* 2FA block */
+        .tfa-status { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 10px; margin-bottom: 18px; }
+        .tfa-on  { background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.18); }
+        .tfa-off { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); }
+        .tfa-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .tfa-dot-on  { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,.5); }
+        .tfa-dot-off { background: #475569; }
+        .tfa-info strong { display: block; font-size: .875rem; font-weight: 700; color: #f1f5f9; }
+        .tfa-info span { font-size: .8rem; color: #64748b; }
+
+        /* Section divider */
+        .pdivider { border: none; border-top: 1px solid rgba(255,255,255,.07); margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<!-- Mobile nav overlay -->
+<div class="mob-overlay" id="mob-overlay"></div>
+<nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-head">
+        <span class="mob-drawer-logo">MULIKASCANS</span>
+        <button class="mob-drawer-close" id="mob-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+    </div>
+    <nav>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile" class="active"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="mob-drawer-user">
+        <div class="mob-email">{{ user.email }}</div>
+        <div class="mob-plan">{{ user.role }} plan</div>
+    </div>
+</nav>
+
+<!-- Sidebar -->
+<aside class="soc-sidebar">
+    <div class="soc-logo">MULIKASCANS</div>
+    <nav class="soc-menu">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/scan"><i class="fas fa-search"></i> New Scan</a>
+        <a href="/scans"><i class="fas fa-history"></i> Scan History</a>
+        <a href="/threats"><i class="fas fa-exclamation-triangle"></i> Threats</a>
+        <a href="/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+        <a href="/compliance"><i class="fas fa-clipboard-check"></i> Compliance</a>
+        <a href="/incidents"><i class="fas fa-bell"></i> Incidents</a>
+        <a href="/profile" class="active"><i class="fas fa-user-circle"></i> Profile</a>
+        <a href="/pricing"><i class="fas fa-star"></i> Upgrade Plan</a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="sidebar-email">{{ user.email }}</div>
+        <div class="sidebar-plan">{{ user.role }} plan</div>
+    </div>
+</aside>
+
+<!-- Main -->
+<div class="soc-main">
+
+    <!-- Mobile topbar -->
+    <div class="mob-topbar">
+        <span class="mob-topbar-logo">MULIKASCANS</span>
+        <div class="mob-topbar-right">
+            <span>Profile</span>
+            <button type="button" class="mob-hamburger" id="mob-open" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <header class="soc-topbar">
+        <div class="scan-target">My Profile</div>
+        <div class="live-alert">MulikaScans Active</div>
+    </header>
+
+    <div class="page-content">
+
+        {% if success %}
+        <div class="palert palert-ok"><i class="fas fa-check-circle"></i> {{ success }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="palert palert-err"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+        {% endif %}
+
+        <div class="profile-grid">
+
+            <!-- ── Left column: avatar + stats ── -->
+            <div>
+
+                <!-- Avatar card -->
+                <div class="pcard">
+                    <div class="avatar-wrap">
+                        <div class="avatar">
+                            {% if user.profile_picture %}
+                                {% if user.profile_picture.startswith('http') %}
+                                <img src="{{ user.profile_picture }}" alt="Profile picture">
+                                {% else %}
+                                <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="Profile picture">
+                                {% endif %}
+                            {% else %}
+                                {{ (user.username or user.email)[0].upper() }}
+                            {% endif %}
+                            <div class="avatar-badge"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="avatar-name">{{ user.username or 'No name set' }}</div>
+                        <div class="avatar-email">{{ user.email }}</div>
+                        <div class="plan-badge plan-{{ user.role }}">
+                            {{ user.role|capitalize }} Plan
+                        </div>
+                    </div>
+
+                    <!-- Upload form -->
+                    <form method="POST" action="/profile" enctype="multipart/form-data" id="pic-form">
+                        <input type="hidden" name="action" value="upload_picture">
+                        <div class="pic-drop" id="pic-drop">
+                            <input type="file" name="picture" id="pic-input"
+                                   accept=".jpg,.jpeg,.png,.webp,.gif"
+                                   onchange="previewPic(this)">
+                            <div class="pic-drop-icon"><i class="fas fa-camera"></i></div>
+                            <p><strong>Click to upload</strong> or drag &amp; drop</p>
+                            <small>JPG, PNG, WEBP or GIF &middot; max 2 MB</small>
+                        </div>
+                        <div class="pic-preview-wrap" id="pic-preview-wrap">
+                            <img id="pic-preview-img" src="" alt="Preview">
+                            <span class="pic-preview-name" id="pic-preview-name"></span>
+                        </div>
+                        <button type="submit" class="pbtn pbtn-primary" id="pic-submit-btn"
+                                style="display:none;width:100%;justify-content:center;">
+                            <i class="fas fa-upload"></i> Upload Picture
+                        </button>
+                    </form>
+
+                    {% if user.profile_picture %}
+                    <form method="POST" action="/profile" style="margin-top:8px;">
+                        <input type="hidden" name="action" value="remove_picture">
+                        <button type="submit" class="pbtn pbtn-danger"
+                                style="width:100%;justify-content:center;">
+                            <i class="fas fa-trash-alt"></i> Remove Picture
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <!-- Account stats -->
+                <div class="pcard">
+                    <div class="pcard-title"><i class="fas fa-chart-bar"></i> Account Stats</div>
+                    <div class="profile-stat">
+                        <span>Member since</span>
+                        <span>{{ user.created_at.strftime('%b %Y') if user.created_at else '—' }}</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span>Total scans</span>
+                        <span>{{ total_scans }}</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span>Scans this month</span>
+                        <span>{{ user.scan_count_this_month }}</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span>Monthly limit</span>
+                        <span>{{ user.monthly_scan_limit }}</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span>Email verified</span>
+                        <span style="color:{% if user.email_verified %}#22c55e{% else %}#f87171{% endif %};">
+                            {% if user.email_verified %}<i class="fas fa-check-circle"></i> Yes{% else %}<i class="fas fa-times-circle"></i> No{% endif %}
+                        </span>
+                    </div>
+                    <div class="profile-stat">
+                        <span>Two-factor auth</span>
+                        <span style="color:{% if user.two_factor_enabled %}#22c55e{% else %}#f87171{% endif %};">
+                            {% if user.two_factor_enabled %}<i class="fas fa-shield-alt"></i> On{% else %}<i class="fas fa-times-circle"></i> Off{% endif %}
+                        </span>
+                    </div>
+                    <div style="margin-top:18px;">
+                        <a href="/pricing" class="pbtn pbtn-outline" style="width:100%;justify-content:center;text-decoration:none;">
+                            <i class="fas fa-arrow-up"></i> Upgrade Plan
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── Right column: forms ── -->
+            <div>
+
+                <!-- Profile info -->
+                <div class="pcard">
+                    <div class="pcard-title"><i class="fas fa-user"></i> Personal Information</div>
+                    <form method="POST" action="/profile">
+                        <input type="hidden" name="action" value="update_profile">
+                        <div class="pfield">
+                            <label for="username">Full Name</label>
+                            <div class="pfield-wrap">
+                                <i class="fas fa-user fi"></i>
+                                <input type="text" id="username" name="username"
+                                       value="{{ user.username or '' }}"
+                                       placeholder="Your full name"
+                                       maxlength="80" autocomplete="name">
+                            </div>
+                        </div>
+                        <div class="pfield">
+                            <label for="email">Email Address</label>
+                            <div class="pfield-wrap">
+                                <i class="fas fa-envelope fi"></i>
+                                <input type="email" id="email" value="{{ user.email }}" disabled>
+                            </div>
+                            <p class="pfield-hint">Email cannot be changed. Contact support if you need to update it.</p>
+                        </div>
+                        <div class="pfield">
+                            <label for="phone_number">Phone Number <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#3d5470;">(optional)</span></label>
+                            <div class="pfield-wrap">
+                                <i class="fas fa-phone fi"></i>
+                                <input type="tel" id="phone_number" name="phone_number"
+                                       value="{{ user.phone_number or '' }}"
+                                       placeholder="+255 700 000 000"
+                                       maxlength="30" autocomplete="tel">
+                            </div>
+                        </div>
+                        <button type="submit" class="pbtn pbtn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Change password -->
+                <div class="pcard">
+                    <div class="pcard-title"><i class="fas fa-lock"></i> Change Password</div>
+                    <form method="POST" action="/profile">
+                        <input type="hidden" name="action" value="change_password">
+                        <div class="pfield">
+                            <label for="current_password">Current Password</label>
+                            <div class="pfield-wrap">
+                                <i class="fas fa-lock fi"></i>
+                                <input type="password" id="current_password" name="current_password"
+                                       placeholder="••••••••" required autocomplete="current-password">
+                                <button type="button" class="pw-eye" onclick="togglePw('current_password',this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <div class="pfield">
+                            <label for="new_password">New Password</label>
+                            <div class="pfield-wrap">
+                                <i class="fas fa-lock fi"></i>
+                                <input type="password" id="new_password" name="new_password"
+                                       placeholder="Min. 8 chars — uppercase, number &amp; symbol"
+                                       required autocomplete="new-password"
+                                       oninput="checkStrength(this.value)">
+                                <button type="button" class="pw-eye" onclick="togglePw('new_password',this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <div class="pw-str-wrap">
+                                <div class="pw-str-track"><div class="pw-str-bar" id="str-bar"></div></div>
+                                <span class="pw-str-lbl" id="str-lbl"></span>
+                            </div>
+                        </div>
+                        <div class="pfield">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <div class="pfield-wrap">
+                                <i class="fas fa-lock fi"></i>
+                                <input type="password" id="confirm_password" name="confirm_password"
+                                       placeholder="••••••••" required autocomplete="new-password">
+                                <button type="button" class="pw-eye" onclick="togglePw('confirm_password',this)"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <button type="submit" class="pbtn pbtn-primary">
+                            <i class="fas fa-key"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Two-factor authentication -->
+                <div class="pcard">
+                    <div class="pcard-title"><i class="fas fa-shield-alt"></i> Two-Factor Authentication</div>
+
+                    {% if user.two_factor_enabled %}
+                    <div class="tfa-status tfa-on">
+                        <div class="tfa-dot tfa-dot-on"></div>
+                        <div class="tfa-info">
+                            <strong>2FA is enabled</strong>
+                            <span>Your account is protected with a TOTP authenticator app.</span>
+                        </div>
+                    </div>
+                    <p style="font-size:.85rem;color:#64748b;margin-bottom:18px;line-height:1.6;">
+                        You will be prompted for a one-time code from your authenticator app each time you sign in.
+                        Disable only if you are setting up a new device.
+                    </p>
+                    <form method="POST" action="/2fa/disable"
+                          onsubmit="return confirm('Disable two-factor authentication? Your account will be less secure.')">
+                        <button type="submit" class="pbtn pbtn-danger">
+                            <i class="fas fa-shield-alt"></i> Disable 2FA
+                        </button>
+                    </form>
+
+                    {% else %}
+                    <div class="tfa-status tfa-off">
+                        <div class="tfa-dot tfa-dot-off"></div>
+                        <div class="tfa-info">
+                            <strong>2FA is not enabled</strong>
+                            <span>Add an extra layer of security to your account.</span>
+                        </div>
+                    </div>
+                    <p style="font-size:.85rem;color:#64748b;margin-bottom:18px;line-height:1.6;">
+                        Two-factor authentication adds a second verification step at login using an authenticator app
+                        such as Google Authenticator or Authy.
+                    </p>
+                    <a href="/2fa/setup" class="pbtn pbtn-primary" style="text-decoration:none;">
+                        <i class="fas fa-mobile-alt"></i> Enable 2FA
+                    </a>
+                    {% endif %}
+
+                    <hr class="pdivider">
+
+                    <!-- Danger zone -->
+                    <div class="pcard-title" style="margin-bottom:14px;"><i class="fas fa-exclamation-triangle" style="color:#f87171;"></i> Danger Zone</div>
+                    <p style="font-size:.85rem;color:#64748b;margin-bottom:14px;line-height:1.6;">
+                        Deleting your account is permanent. All your scans, results, and data will be removed and cannot be recovered.
+                    </p>
+                    <a href="/contact" class="pbtn pbtn-danger" style="text-decoration:none;">
+                        <i class="fas fa-trash-alt"></i> Request Account Deletion
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* Mobile drawer */
+const mobOpen    = document.getElementById('mob-open');
+const mobClose   = document.getElementById('mob-close');
+const mobDrawer  = document.getElementById('mob-drawer');
+const mobOverlay = document.getElementById('mob-overlay');
+function openDrawer()  { mobDrawer.classList.add('open');  mobOverlay.classList.add('open');  document.body.style.overflow = 'hidden'; }
+function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+mobOpen.addEventListener('click', openDrawer);
+mobClose.addEventListener('click', closeDrawer);
+mobOverlay.addEventListener('click', closeDrawer);
+
+/* Password toggle */
+function togglePw(id, btn) {
+    const inp  = document.getElementById(id);
+    const ic   = btn.querySelector('i');
+    const show = inp.type === 'password';
+    inp.type     = show ? 'text' : 'password';
+    ic.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+/* Password strength */
+function checkStrength(pw) {
+    const bar   = document.getElementById('str-bar');
+    const label = document.getElementById('str-lbl');
+    let s = 0;
+    if (pw.length >= 8)           s++;
+    if (/[A-Z]/.test(pw))         s++;
+    if (/[a-z]/.test(pw))         s++;
+    if (/\d/.test(pw))            s++;
+    if (/[^A-Za-z0-9]/.test(pw)) s++;
+    const lvl = [
+        { w:'0%',   c:'transparent', t:'' },
+        { w:'25%',  c:'#ef4444',     t:'Weak' },
+        { w:'50%',  c:'#f97316',     t:'Fair' },
+        { w:'75%',  c:'#eab308',     t:'Good' },
+        { w:'90%',  c:'#22c55e',     t:'Strong' },
+        { w:'100%', c:'#22d3ee',     t:'Very strong' },
+    ][s] || { w:'0%', c:'transparent', t:'' };
+    bar.style.width = lvl.w; bar.style.background = lvl.c;
+    label.textContent = lvl.t; label.style.color = lvl.c;
+}
+
+/* Profile picture preview & drag-drop */
+function previewPic(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+        alert('File is too large. Maximum size is 2 MB.');
+        input.value = '';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        document.getElementById('pic-preview-img').src = e.target.result;
+        document.getElementById('pic-preview-name').textContent = file.name;
+        document.getElementById('pic-preview-wrap').style.display = 'flex';
+        document.getElementById('pic-drop').style.display = 'none';
+        document.getElementById('pic-submit-btn').style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+}
+
+/* Drag-and-drop highlight */
+(function () {
+    const drop = document.getElementById('pic-drop');
+    if (!drop) return;
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+    drop.addEventListener('drop', e => {
+        e.preventDefault();
+        drop.classList.remove('drag-over');
+        const dt = e.dataTransfer;
+        if (dt && dt.files.length) {
+            const inp = document.getElementById('pic-input');
+            inp.files = dt.files;
+            previewPic(inp);
+        }
+    });
+})();
+</script>
+</body>
+</html>
