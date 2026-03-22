@@ -1,7 +1,7 @@
 """
-MulikaScans — Flutterwave Payment Integration
-Checkout sessions, webhook handler, billing dashboard.
-Mobile money (M-Pesa, Airtel, Tigo) + card payments for Tanzania & East Africa.
+MulikaScans — PesaPal Payment Integration
+Checkout sessions, IPN webhook handler, billing dashboard.
+Mobile money (M-Pesa, Airtel, Tigo) + card payments for East Africa.
 """
 
 import os
@@ -11,12 +11,11 @@ from flask import (Blueprint, request, jsonify, redirect,
 
 from models import db, User, Subscription, Payment
 from auth import login_required, get_current_user
-from flutterwave_service import (
+from pesapal_service import (
     PLAN_CONFIG, PaymentError,
-    create_subscription_checkout, verify_transaction,
-    cancel_flw_subscription, get_payment_history,
-    get_user_flw_subscriptions, parse_payment_method,
-    extract_meta, validate_amount,
+    create_subscription_checkout, is_payment_completed,
+    get_transaction_status, parse_payment_method,
+    extract_plan_from_reference, validate_amount,
 )
 
 payments_bp = Blueprint("payments", __name__)
@@ -32,7 +31,7 @@ def pricing():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Create Checkout — redirects to Flutterwave hosted page
+# Create Checkout — redirects to PesaPal hosted page
 # ─────────────────────────────────────────────────────────────────────────────
 @payments_bp.route("/api/v1/subscriptions/checkout", methods=["POST"])
 @login_required
@@ -52,10 +51,16 @@ def create_checkout():
         billing_cycle = "monthly"
 
     try:
-        checkout_url, tx_ref = create_subscription_checkout(user, plan, billing_cycle)
-        return jsonify({"checkout_url": checkout_url, "tx_ref": tx_ref})
+        redirect_url, merchant_ref, order_tracking_id = create_subscription_checkout(
+            user, plan, billing_cycle
+        )
+        return jsonify({
+            "checkout_url": redirect_url,
+            "tx_ref": merchant_ref,
+            "order_tracking_id": order_tracking_id,
+        })
     except PaymentError as e:
-        current_app.logger.warning(f"Checkout error for user {user.id}: {e}")
+        current_app.logger.warning(f"PesaPal checkout error for user {user.id}: {e}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         current_app.logger.error(f"Unexpected checkout error: {e}")
@@ -63,113 +68,119 @@ def create_checkout():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Payment Callback — Flutterwave redirects here after payment
+# Payment Callback — PesaPal redirects here after payment
 # ─────────────────────────────────────────────────────────────────────────────
 @payments_bp.route("/payment/callback")
 @login_required
 def payment_callback():
-    tx_ref = request.args.get("tx_ref", "")
-    transaction_id = request.args.get("transaction_id", "")
-    status = request.args.get("status", "")
+    # PesaPal sends: OrderTrackingId, OrderMerchantReference, OrderNotificationType
+    order_tracking_id = request.args.get("OrderTrackingId", "")
+    merchant_ref = request.args.get("OrderMerchantReference", "")
 
-    if status == "cancelled":
-        return redirect("/pricing?cancelled=1")
-
-    if status != "successful" or not transaction_id:
+    if not order_tracking_id:
         return render_template("payment/failed.html",
                                reason="Payment was not completed. No charge has been made.")
 
     # Server-side verification — CRITICAL: never trust client redirect params alone
     try:
-        tx_data = verify_transaction(transaction_id)
+        completed, tx_data = is_payment_completed(order_tracking_id)
     except Exception as e:
-        current_app.logger.error(f"FLW verify error: {e}")
-        tx_data = None
+        current_app.logger.error(f"PesaPal verify error: {e}")
+        completed, tx_data = False, None
 
-    if not tx_data:
+    if tx_data is None:
         return render_template("payment/failed.html",
                                reason="We could not verify your payment. If charged, contact support@mulikascans.com with your reference.")
 
-    user_id, plan, billing_cycle = extract_meta(tx_data)
+    status_desc = (tx_data.get("payment_status_description") or "").lower()
+
+    if status_desc in ("failed", "invalid", "reversed"):
+        return render_template("payment/failed.html",
+                               reason="Your payment was not successful. No charge has been made.")
+
+    if status_desc == "pending" or not completed:
+        return render_template("payment/pending.html",
+                               tx_ref=merchant_ref, transaction_id=order_tracking_id)
+
+    # Payment completed — extract plan from our merchant reference
+    ref = merchant_ref or tx_data.get("merchant_reference", "")
+    user_id, plan, billing_cycle = extract_plan_from_reference(ref)
     billing_cycle = billing_cycle or "monthly"
 
     if not user_id or not plan:
-        current_app.logger.warning(f"FLW callback: missing meta in tx {transaction_id}")
+        current_app.logger.warning(f"PesaPal callback: missing plan in ref={ref}")
         return render_template("payment/failed.html",
                                reason="Payment verified but subscription activation failed. Contact support.")
 
     if not validate_amount(tx_data, plan, billing_cycle):
-        current_app.logger.warning(f"FLW callback: amount mismatch tx={transaction_id}")
+        current_app.logger.warning(f"PesaPal callback: amount mismatch tracking={order_tracking_id}")
         return render_template("payment/failed.html",
                                reason="Payment amount mismatch. Contact support@mulikascans.com.")
 
-    if tx_data.get("status") == "pending":
-        return render_template("payment/pending.html",
-                               tx_ref=tx_ref, transaction_id=transaction_id)
-
-    _activate_subscription(user_id, plan, billing_cycle, tx_data, tx_ref)
+    _activate_subscription(user_id, plan, billing_cycle, tx_data, ref, order_tracking_id)
     cfg = PLAN_CONFIG.get(f"{plan}_{billing_cycle}", {})
     return render_template("billing_success.html",
                            plan=plan.title(), billing_cycle=billing_cycle,
-                           amount=cfg.get("amount", 0), tx_ref=tx_ref)
+                           amount=cfg.get("amount", 0), tx_ref=ref)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Payment Status Polling (for mobile money pending state)
 # ─────────────────────────────────────────────────────────────────────────────
-@payments_bp.route("/api/v1/payment/status/<transaction_id>")
+@payments_bp.route("/api/v1/payment/status/<order_tracking_id>")
 @login_required
-def payment_status(transaction_id):
+def payment_status(order_tracking_id):
     try:
-        tx_data = verify_transaction(transaction_id)
+        completed, tx_data = is_payment_completed(order_tracking_id)
     except Exception:
         return jsonify({"status": "error"}), 500
 
-    if not tx_data:
+    if tx_data is None:
         return jsonify({"status": "pending"})
 
-    user_id, plan, billing_cycle = extract_meta(tx_data)
-    if tx_data.get("status") == "successful" and user_id and plan:
-        _activate_subscription(user_id, plan, billing_cycle or "monthly", tx_data,
-                               tx_data.get("tx_ref", ""))
+    if completed:
+        ref = tx_data.get("merchant_reference", "")
+        user_id, plan, billing_cycle = extract_plan_from_reference(ref)
+        if user_id and plan:
+            _activate_subscription(user_id, plan, billing_cycle or "monthly",
+                                   tx_data, ref, order_tracking_id)
         return jsonify({"status": "successful", "redirect": "/billing/success"})
 
-    return jsonify({"status": tx_data.get("status", "pending")})
+    status_desc = (tx_data.get("payment_status_description") or "pending").lower()
+    return jsonify({"status": status_desc})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Flutterwave Webhook Handler
+# PesaPal IPN Webhook Handler
 # ─────────────────────────────────────────────────────────────────────────────
-@payments_bp.route("/api/webhooks/flutterwave", methods=["POST"])
-def flutterwave_webhook():
-    import hmac as _hmac
-    secret_hash = os.environ.get("FLW_WEBHOOK_SECRET_HASH", "")
-    if not secret_hash:
-        current_app.logger.error(
-            "FLW_WEBHOOK_SECRET_HASH is not configured — webhook rejected for safety"
-        )
-        return jsonify({"error": "Webhook not configured"}), 503
-
-    signature = request.headers.get("verif-hash", "")
-    # Constant-time comparison to prevent timing attacks
-    if not _hmac.compare_digest(signature, secret_hash):
-        current_app.logger.warning("Flutterwave webhook: invalid verif-hash from %s",
-                                   request.remote_addr)
-        return jsonify({"error": "Invalid signature"}), 401
-
+@payments_bp.route("/api/webhooks/pesapal", methods=["POST"])
+def pesapal_webhook():
     payload = request.get_json(force=True) or {}
-    event = payload.get("event", "")
-    data = payload.get("data", {})
+    order_tracking_id = payload.get("OrderTrackingId", "")
+    merchant_ref = payload.get("OrderMerchantReference", "")
 
-    current_app.logger.info(f"FLW webhook: {event}")
+    current_app.logger.info(f"PesaPal IPN: tracking={order_tracking_id} ref={merchant_ref}")
 
-    if event == "charge.completed":
-        if data.get("status") == "successful":
-            _handle_successful_charge(data)
-        else:
-            _handle_failed_charge(data)
-    elif event == "subscription.cancelled":
-        _handle_subscription_cancelled(data)
+    if not order_tracking_id:
+        return jsonify({"status": "ok"}), 200
+
+    # Verify status server-side
+    try:
+        completed, tx_data = is_payment_completed(order_tracking_id)
+    except Exception as e:
+        current_app.logger.error(f"PesaPal IPN verify error: {e}")
+        return jsonify({"status": "ok"}), 200
+
+    if completed and tx_data:
+        ref = merchant_ref or tx_data.get("merchant_reference", "")
+        user_id, plan, billing_cycle = extract_plan_from_reference(ref)
+        if user_id and plan:
+            _activate_subscription(user_id, plan, billing_cycle or "monthly",
+                                   tx_data, ref, order_tracking_id)
+    elif tx_data:
+        status_desc = (tx_data.get("payment_status_description") or "").lower()
+        if status_desc in ("failed", "reversed"):
+            _handle_failed_payment(merchant_ref, tx_data)
 
     return jsonify({"status": "ok"}), 200
 
@@ -189,15 +200,6 @@ def billing_dashboard():
         .limit(20).all()
     )
 
-    flw_payments = []
-    flw_subscriptions = []
-    if os.environ.get("FLW_SECRET_KEY", "").startswith("FLWSECK"):
-        try:
-            flw_payments = get_payment_history(user.email)
-            flw_subscriptions = get_user_flw_subscriptions(user.email)
-        except Exception as e:
-            current_app.logger.warning(f"FLW API fetch failed: {e}")
-
     active_sub = (Subscription.query
                   .filter_by(user_id=user.id, status="active")
                   .order_by(Subscription.created_at.desc()).first())
@@ -206,8 +208,8 @@ def billing_dashboard():
         "billing.html",
         user=user, limits=limits,
         local_payments=local_payments,
-        flw_payments=flw_payments,
-        flw_subscriptions=flw_subscriptions,
+        flw_payments=[],          # kept for template compatibility
+        flw_subscriptions=[],     # kept for template compatibility
         active_sub=active_sub,
     )
 
@@ -223,13 +225,6 @@ def cancel_subscription():
     if not sub:
         return jsonify({"error": "No active subscription found."}), 404
 
-    cancelled_flw = False
-    if sub.flw_subscription_id:
-        try:
-            cancelled_flw = cancel_flw_subscription(sub.flw_subscription_id)
-        except Exception as e:
-            current_app.logger.error(f"FLW cancel error: {e}")
-
     sub.status = "cancelled"
     sub.cancelled_at = datetime.now(timezone.utc)
     user.subscription_status = "cancelled"
@@ -237,8 +232,28 @@ def cancel_subscription():
 
     return jsonify({
         "message": "Subscription cancelled. You retain access until the end of your billing period.",
-        "flw_cancelled": cancelled_flw,
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin: Register PesaPal IPN (run once after deployment, then add ID to .env)
+# ─────────────────────────────────────────────────────────────────────────────
+@payments_bp.route("/admin/register-ipn")
+@login_required
+def admin_register_ipn():
+    from auth import get_current_user as _gcr
+    u = _gcr()
+    if not u or u.role != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    try:
+        from pesapal_service import register_ipn
+        ipn_id = register_ipn()
+        return jsonify({
+            "ipn_id": ipn_id,
+            "message": f"Add PESAPAL_IPN_ID={ipn_id} to your production .env then restart the app.",
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -254,11 +269,17 @@ def billing_success():
 # ─────────────────────────────────────────────────────────────────────────────
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
-def _activate_subscription(user_id, plan, billing_cycle, tx_data, tx_ref):
+def _activate_subscription(user_id, plan, billing_cycle, tx_data, merchant_ref, order_tracking_id):
     key = f"{plan}_{billing_cycle}"
     cfg = PLAN_CONFIG.get(key, {})
     user = db.session.get(User, user_id)
     if not user:
+        return
+
+    # Idempotency — don't activate twice for the same tracking ID
+    existing = Payment.query.filter_by(flw_transaction_id=order_tracking_id,
+                                       status="succeeded").first()
+    if existing:
         return
 
     user.role = cfg.get("role", plan)
@@ -269,41 +290,31 @@ def _activate_subscription(user_id, plan, billing_cycle, tx_data, tx_ref):
     payment_method = parse_payment_method(tx_data)
 
     Subscription.query.filter_by(user_id=user_id, status="active").update({"status": "superseded"})
-    sub = Subscription(user_id=user_id, plan=plan, billing_cycle=billing_cycle,
-                       flw_subscription_id=str(tx_data.get("id", "")), status="active")
+    sub = Subscription(
+        user_id=user_id, plan=plan, billing_cycle=billing_cycle,
+        flw_subscription_id=order_tracking_id,  # store PesaPal order_tracking_id
+        status="active",
+    )
     db.session.add(sub)
     db.session.flush()
 
-    amount_cents = int((tx_data.get("amount") or 0) * 100)
+    amount_cents = int(float(tx_data.get("amount") or 0) * 100)
     payment = Payment(
         user_id=user_id, subscription_id=sub.id,
-        flw_tx_ref=tx_ref, flw_transaction_id=str(tx_data.get("id", "")),
-        payment_method=payment_method, amount_cents=amount_cents,
-        currency=(tx_data.get("currency") or "USD").lower(), status="succeeded",
+        flw_tx_ref=merchant_ref,
+        flw_transaction_id=order_tracking_id,
+        payment_method=payment_method,
+        amount_cents=amount_cents,
+        currency=(tx_data.get("currency") or "USD").lower(),
+        status="succeeded",
     )
     db.session.add(payment)
     db.session.commit()
     current_app.logger.info(f"Activated: user={user_id} plan={plan}/{billing_cycle}")
 
 
-def _handle_successful_charge(data):
-    meta = data.get("meta", {}) or {}
-    try:
-        user_id = int(meta.get("user_id", 0))
-    except (TypeError, ValueError):
-        return
-    plan = meta.get("plan", "")
-    billing_cycle = meta.get("billing_cycle", "monthly")
-    if user_id and plan:
-        _activate_subscription(user_id, plan, billing_cycle, data, data.get("tx_ref", ""))
-
-
-def _handle_failed_charge(data):
-    meta = data.get("meta", {}) or {}
-    try:
-        user_id = int(meta.get("user_id", 0))
-    except (TypeError, ValueError):
-        return
+def _handle_failed_payment(merchant_ref, tx_data):
+    user_id, plan, billing_cycle = extract_plan_from_reference(merchant_ref)
     if not user_id:
         return
     user = db.session.get(User, user_id)
@@ -312,28 +323,14 @@ def _handle_failed_charge(data):
     sub = Subscription.query.filter_by(user_id=user_id, status="active").first()
     if sub:
         sub.status = "past_due"
-    amount_cents = int((data.get("amount") or 0) * 100)
+    amount_cents = int(float(tx_data.get("amount") or 0) * 100)
     db.session.add(Payment(
-        user_id=user_id, flw_tx_ref=data.get("tx_ref", ""),
-        flw_transaction_id=str(data.get("id", "")),
-        payment_method=parse_payment_method(data),
+        user_id=user_id,
+        flw_tx_ref=merchant_ref,
+        flw_transaction_id=tx_data.get("order_tracking_id", ""),
+        payment_method=parse_payment_method(tx_data),
         amount_cents=amount_cents,
-        currency=(data.get("currency") or "USD").lower(), status="failed",
+        currency=(tx_data.get("currency") or "USD").lower(),
+        status="failed",
     ))
-    db.session.commit()
-
-
-def _handle_subscription_cancelled(data):
-    flw_sub_id = str(data.get("id", ""))
-    sub = Subscription.query.filter_by(flw_subscription_id=flw_sub_id).first()
-    if not sub:
-        return
-    sub.status = "cancelled"
-    sub.cancelled_at = datetime.now(timezone.utc)
-    user = db.session.get(User, sub.user_id)
-    if user:
-        user.role = "free"
-        user.monthly_scan_limit = 2
-        user.subscription_status = "cancelled"
-        user.subscription_id = None
     db.session.commit()
