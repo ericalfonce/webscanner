@@ -422,11 +422,13 @@ document.querySelectorAll('.plan-cta').forEach(btn => {
         const plan  = this.dataset.plan;
         const cycle = this.dataset.cycle || 'monthly';
         {% if current_user %}
-        this.textContent = 'Redirecting…';
-        this.disabled = true;
+        const btn = this;
+        const origText = btn.textContent;
+        btn.textContent = 'Redirecting…';
+        btn.disabled = true;
         fetch('/api/v1/subscriptions/checkout', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
             body: JSON.stringify({plan: plan, billing_cycle: cycle})
         })
         .then(r => r.json())
@@ -435,11 +437,11 @@ document.querySelectorAll('.plan-cta').forEach(btn => {
                 window.location.href = data.checkout_url;
             } else {
                 alert(data.error || 'Could not start checkout. Please try again.');
-                this.disabled = false;
-                this.textContent = 'Start ' + plan.charAt(0).toUpperCase() + plan.slice(1);
+                btn.disabled = false;
+                btn.textContent = origText;
             }
         })
-        .catch(() => { alert('Network error. Please try again.'); this.disabled = false; });
+        .catch(() => { alert('Network error. Please try again.'); btn.disabled = false; btn.textContent = origText; });
         {% else %}
         window.location.href = '/register';
         {% endif %}
