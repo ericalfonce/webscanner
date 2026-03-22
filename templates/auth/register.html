@@ -72,7 +72,7 @@
             {% endif %}
 
             <form method="POST" action="/register" novalidate>
-
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="auth-field-group">
                     <label for="username">Full Name <span class="auth-optional">(optional)</span></label>
                     <div class="auth-input-wrap">

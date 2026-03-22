@@ -21,6 +21,7 @@ load_dotenv()
 from flask import Flask, render_template, request, redirect, jsonify, url_for, session
 from flask_mail import Mail
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from models import db, User, Scan, Vulnerability, ScanSchedule
 from auth import (auth_bp, limiter, login_required, require_role,
@@ -37,6 +38,7 @@ from supabase_auth.errors import AuthApiError
 # Extensions (defined before create_app so they are in scope when called)
 # ─────────────────────────────────────────────────────────────────────────────
 _mail = Mail()
+_csrf = CSRFProtect()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -78,11 +80,22 @@ def create_app():
     Migrate(app, db)
     _mail.init_app(app)
     limiter.init_app(app)
+    _csrf.init_app(app)
+
+    # Exempt OAuth session endpoint — it is called from client-side JS
+    # after a Supabase redirect and cannot carry a form CSRF token.
+    from flask_wtf.csrf import CSRFProtect
+    _csrf.exempt("auth.oauth_google_session")
+    _csrf.exempt("auth.oauth_google_callback")
 
     # Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(payments_bp)
     app.register_blueprint(admin_bp)
+
+    @app.errorhandler(CSRFError)
+    def csrf_error(e):
+        return render_template("errors/403.html", reason=e.description), 403
 
     return app
 

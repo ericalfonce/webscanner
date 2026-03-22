@@ -74,6 +74,7 @@
                 {% if show_resend %}
                     &mdash;
                     <form method="POST" action="/resend-verification" class="resend-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="email" value="{{ email|default('') }}">
                         <button class="resend-link" type="submit">Resend verification email</button>
                     </form>
@@ -83,6 +84,7 @@
             {% endif %}
 
             <form method="POST" action="/login{% if next %}?next={{ next }}{% endif %}" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="auth-field-group">
                     <label for="email">Email Address</label>
                     <div class="auth-input-wrap">
@@ -127,7 +129,7 @@
             <div class="auth-divider">OR CONTINUE WITH</div>
 
             <div class="auth-alt-row">
-                <a class="auth-alt-btn" href="/oauth/google">
+                <a class="auth-alt-btn" href="/oauth/google{% if next %}?next={{ next }}{% endif %}">
                     <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
                         <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>

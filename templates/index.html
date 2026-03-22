@@ -99,7 +99,7 @@
         </div>
         {% else %}
         <form method="POST" action="/scan" onsubmit="showLoader()">
-
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <!-- URL input -->
             <div class="scan-input-bar">
                 <span class="url-prefix"><i class="fas fa-globe" style="margin-right:8px;"></i>Target URL</span>

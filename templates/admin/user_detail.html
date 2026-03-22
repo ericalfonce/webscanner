@@ -253,6 +253,7 @@
                 <div class="action-section">
                     <h4>Change Plan / Role</h4>
                     <form method="POST" action="/admin/users/{{ target.id }}/action">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="change_role">
                         <div class="btn-group">
                             <select name="role" class="role-select">
@@ -273,6 +274,7 @@
                     <div class="btn-group">
                         {% if not target.email_verified %}
                         <form method="POST" action="/admin/users/{{ target.id }}/action">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="action" value="verify_email">
                             <button type="submit" class="btn btn-green">
                                 <i class="fas fa-check"></i> Mark Verified
@@ -280,6 +282,7 @@
                         </form>
                         {% else %}
                         <form method="POST" action="/admin/users/{{ target.id }}/action">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="action" value="unverify_email">
                             <button type="submit" class="btn btn-amber">
                                 <i class="fas fa-times"></i> Revoke Verification
@@ -293,6 +296,7 @@
                 <div class="action-section">
                     <h4>Scan Usage</h4>
                     <form method="POST" action="/admin/users/{{ target.id }}/action">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="reset_scans">
                         <button type="submit" class="btn btn-slate">
                             <i class="fas fa-redo"></i> Reset Monthly Scan Count
@@ -305,6 +309,7 @@
                 <div class="action-section">
                     <h4>Two-Factor Authentication</h4>
                     <form method="POST" action="/admin/users/{{ target.id }}/action">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="disable_2fa">
                         <button type="submit" class="btn btn-amber">
                             <i class="fas fa-unlock"></i> Disable 2FA
@@ -317,6 +322,7 @@
                 <div class="action-section">
                     <h4>Password Reset</h4>
                     <form method="POST" action="/admin/users/{{ target.id }}/action" id="resetForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="reset_password_token">
                         <button type="submit" class="btn btn-slate">
                             <i class="fas fa-key"></i> Generate Reset Link
@@ -340,6 +346,7 @@
                 </p>
                 <form method="POST" action="/admin/users/{{ target.id }}/action"
                       onsubmit="return confirm('PERMANENTLY delete {{ target.email }} and all their data? This cannot be undone.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="delete">
                     <button type="submit" class="btn btn-red">
                         <i class="fas fa-trash-alt"></i> Delete User Permanently

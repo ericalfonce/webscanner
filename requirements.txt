@@ -11,6 +11,9 @@ psycopg2-binary>=2.9.9
 # Environment
 python-dotenv>=1.0.0
 
+# CSRF Protection
+flask-wtf>=1.2.0
+
 # Authentication
 supabase>=2.10.0
 pyotp>=2.9.0

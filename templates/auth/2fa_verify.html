@@ -140,6 +140,7 @@
             {% endif %}
 
             <form method="POST" action="/2fa/verify" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="auth-field-group">
                     <label for="code">Authentication Code</label>
                     <input type="text" id="code" name="code"

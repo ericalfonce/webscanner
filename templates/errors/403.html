@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_head_meta.html' %}
+    <title>403 Forbidden | MulikaScans</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+<div class="auth-card" style="text-align:center;">
+    <div class="auth-logo">MulikaScans</div>
+    <div style="font-size:80px;color:#334155;margin:20px 0;"><i class="fas fa-ban"></i></div>
+    <h1 style="color:#f8fafc;font-size:28px;">403 — Forbidden</h1>
+    <p style="color:#64748b;margin-bottom:24px;">{{ reason|default('Access denied. This request could not be completed.') }}</p>
+    <a href="/" class="auth-btn"><i class="fas fa-home"></i> Go Home</a>
+    <div class="iklwa-badge" style="margin-top:28px;">
+        &copy; 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+    </div>
+</div>
+</body>
+</html>

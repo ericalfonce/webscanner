@@ -216,6 +216,7 @@
 
                     <!-- Upload form -->
                     <form method="POST" action="/profile" enctype="multipart/form-data" id="pic-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="upload_picture">
                         <div class="pic-drop" id="pic-drop">
                             <input type="file" name="picture" id="pic-input"
@@ -237,6 +238,7 @@
 
                     {% if user.profile_picture %}
                     <form method="POST" action="/profile" style="margin-top:8px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="remove_picture">
                         <button type="submit" class="pbtn pbtn-danger"
                                 style="width:100%;justify-content:center;">
@@ -293,6 +295,7 @@
                 <div class="pcard">
                     <div class="pcard-title"><i class="fas fa-user"></i> Personal Information</div>
                     <form method="POST" action="/profile">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="update_profile">
                         <div class="pfield">
                             <label for="username">Full Name</label>
@@ -332,6 +335,7 @@
                 <div class="pcard">
                     <div class="pcard-title"><i class="fas fa-lock"></i> Change Password</div>
                     <form method="POST" action="/profile">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="change_password">
                         <div class="pfield">
                             <label for="current_password">Current Password</label>
@@ -390,6 +394,7 @@
                     </p>
                     <form method="POST" action="/2fa/disable"
                           onsubmit="return confirm('Disable two-factor authentication? Your account will be less secure.')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="pbtn pbtn-danger">
                             <i class="fas fa-shield-alt"></i> Disable 2FA
                         </button>

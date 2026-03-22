@@ -127,6 +127,7 @@
         <div class="inline-section">
             <p class="section-title">Launch a Scan</p>
             <form method="POST" action="/scan" class="scan-form" onsubmit="showLoader()">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="scan-form-field">
                     <label>Target URL</label>
                     <input type="text" name="url" placeholder="https://example.com" required autocomplete="off">

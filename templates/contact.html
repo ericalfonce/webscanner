@@ -154,7 +154,7 @@
                 {% endif %}
 
                 <form id="contact-form" action="/contact" method="POST" onsubmit="handleSubmit(event)" novalidate>
-
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="auth-field-row">
                         <div class="auth-field-group">
                             <label for="name">Full Name</label>

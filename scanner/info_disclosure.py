@@ -4,6 +4,7 @@ Detects exposed sensitive files, directory listings, stack traces, etc.
 """
 
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin, urlparse
 
 SENSITIVE_PATHS = [
@@ -141,12 +142,12 @@ ERROR_SIGNATURES = [
 ]
 
 
-def check_info_disclosure(url, timeout=8):
+def check_info_disclosure(url, timeout=5):
     findings = []
     headers = {"User-Agent": "MulikaScans/1.0 (Security Scanner)"}
     base_url = _base_url(url)
 
-    for path, description in SENSITIVE_PATHS:
+    def _check_path(path, description):
         test_url = urljoin(base_url, path)
         try:
             resp = requests.get(test_url, timeout=timeout,
@@ -154,7 +155,7 @@ def check_info_disclosure(url, timeout=8):
             if resp.status_code in (200, 301, 302, 403):
                 severity = _path_severity(path, resp.status_code, resp.text)
                 if severity:
-                    findings.append({
+                    return {
                         "name": f"Sensitive File Exposed: {path}",
                         "type": "Information Disclosure",
                         "severity": severity,
@@ -173,9 +174,23 @@ def check_info_disclosure(url, timeout=8):
                         "references": [
                             "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/",
                         ],
-                    })
+                    }
         except requests.RequestException:
             pass
+        return None
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {
+            executor.submit(_check_path, path, desc): path
+            for path, desc in SENSITIVE_PATHS
+        }
+        for future in as_completed(futures, timeout=45):
+            try:
+                result = future.result()
+                if result:
+                    findings.append(result)
+            except Exception:
+                pass
 
     # Check for directory listing on target URL
     try:
