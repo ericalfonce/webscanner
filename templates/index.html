@@ -165,6 +165,80 @@
 
             </div>
 
+            <!-- Authenticated Scanning (Basic+) -->
+            {% if user and user.role in ('basic','pro','enterprise','admin') %}
+            <details class="auth-section" id="auth-section">
+                <summary class="auth-toggle">
+                    <i class="fas fa-lock-open"></i> Authenticated Scanning
+                    <span class="auth-badge">Optional</span>
+                    <i class="fas fa-chevron-down auth-chevron"></i>
+                </summary>
+                <div class="auth-fields">
+                    <p class="auth-hint">Supply session credentials so the scanner can access pages behind login. Your credentials are used only for this scan and never stored.</p>
+                    <div class="auth-row">
+                        <div class="auth-field">
+                            <label for="auth_cookie"><i class="fas fa-cookie-bite"></i> Session Cookie</label>
+                            <input type="text" id="auth_cookie" name="auth_cookie"
+                                   placeholder="sessionid=abc123; csrftoken=xyz"
+                                   autocomplete="off" spellcheck="false">
+                            <span class="auth-field-hint">Paste your browser's Cookie header value</span>
+                        </div>
+                    </div>
+                    <div class="auth-row">
+                        <div class="auth-field">
+                            <label for="auth_header_name"><i class="fas fa-key"></i> Auth Header Name</label>
+                            <input type="text" id="auth_header_name" name="auth_header_name"
+                                   placeholder="Authorization"
+                                   autocomplete="off">
+                        </div>
+                        <div class="auth-field">
+                            <label for="auth_header_value">Header Value</label>
+                            <input type="text" id="auth_header_value" name="auth_header_value"
+                                   placeholder="Bearer eyJhbGciOiJIUzI1NiJ9..."
+                                   autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                </div>
+            </details>
+            {% else %}
+            <div class="auth-locked">
+                <i class="fas fa-lock"></i>
+                <span>Authenticated scanning available on <a href="/pricing">Basic and above</a></span>
+            </div>
+            {% endif %}
+
+            <!-- OpenAPI / Swagger Import (Pro+) -->
+            {% if user and user.role in ('pro','enterprise','admin') %}
+            <details class="auth-section" id="swagger-section">
+                <summary class="auth-toggle">
+                    <i class="fas fa-file-code"></i> Import OpenAPI / Swagger Spec
+                    <span class="auth-badge auth-badge-pro">Pro</span>
+                    <i class="fas fa-chevron-down auth-chevron"></i>
+                </summary>
+                <div class="auth-fields">
+                    <p class="auth-hint">Upload an OpenAPI 2.x/3.x spec to auto-discover all API endpoints and add them to the scan target list.</p>
+                    <div class="auth-row">
+                        <div class="auth-field">
+                            <label for="spec_url"><i class="fas fa-link"></i> Spec URL</label>
+                            <input type="text" id="spec_url_input" name="spec_url_display"
+                                   placeholder="https://api.example.com/openapi.json"
+                                   autocomplete="off">
+                            <span class="auth-field-hint">Or upload a file below</span>
+                        </div>
+                        <div class="auth-field">
+                            <label for="spec_file"><i class="fas fa-upload"></i> Spec File (JSON/YAML)</label>
+                            <input type="file" id="spec_file_input" name="spec_file_upload"
+                                   accept=".json,.yaml,.yml">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-outline swagger-parse-btn" onclick="parseSwagger()">
+                        <i class="fas fa-search"></i> Parse &amp; Preview Endpoints
+                    </button>
+                    <div id="swagger-result" class="swagger-result" style="display:none"></div>
+                </div>
+            </details>
+            {% endif %}
+
             <!-- Legal -->
             <div class="legal-notice">
                 <i class="fas fa-triangle-exclamation"></i>
@@ -326,11 +400,179 @@
     color: var(--muted-2);
     margin: 0;
 }
+
+/* ── Authenticated scanning & Swagger import ── */
+.auth-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.auth-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+.auth-toggle::-webkit-details-marker { display: none; }
+.auth-toggle i:first-child { color: var(--cyan); width: 14px; }
+.auth-chevron { margin-left: auto; font-size: 11px; color: var(--muted); transition: transform .2s; }
+details[open] .auth-chevron { transform: rotate(180deg); }
+.auth-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(14,165,233,.12);
+    color: var(--cyan);
+    letter-spacing: .03em;
+}
+.auth-badge-pro {
+    background: rgba(139,92,246,.12);
+    color: #a78bfa;
+}
+.auth-fields {
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+}
+.auth-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 10px 0 12px;
+    line-height: 1.6;
+}
+.auth-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.auth-field {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.auth-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+.auth-field input[type="text"],
+.auth-field input[type="file"] {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    outline: none;
+    transition: border-color .15s;
+}
+.auth-field input:focus { border-color: var(--cyan); }
+.auth-field-hint {
+    font-size: 11px;
+    color: var(--muted);
+}
+.auth-locked {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+.auth-locked i { color: var(--muted); }
+.auth-locked a { color: var(--cyan); }
+.swagger-parse-btn {
+    margin-top: 4px;
+    font-size: 12px;
+    padding: 6px 14px;
+}
+.swagger-result {
+    margin-top: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text);
+    max-height: 160px;
+    overflow-y: auto;
+}
+.swagger-result .ep { font-family: monospace; color: var(--cyan); font-size: 11px; padding: 2px 0; }
+.swagger-result .sw-meta { color: var(--muted); margin-bottom: 6px; }
 </style>
 
 <script>
 function showLoader() {
     document.getElementById('loader-overlay').style.display = 'flex';
+}
+
+async function parseSwagger() {
+    const urlInput = document.getElementById('spec_url_input');
+    const fileInput = document.getElementById('spec_file_input');
+    const resultDiv = document.getElementById('swagger-result');
+    const btn = document.querySelector('.swagger-parse-btn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parsing…';
+    resultDiv.style.display = 'none';
+
+    try {
+        let resp;
+        if (fileInput && fileInput.files.length > 0) {
+            const fd = new FormData();
+            fd.append('spec_file', fileInput.files[0]);
+            resp = await fetch('/api/swagger-parse', { method: 'POST', body: fd });
+        } else if (urlInput && urlInput.value.trim()) {
+            resp = await fetch('/api/swagger-parse', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spec_url: urlInput.value.trim() })
+            });
+        } else {
+            alert('Enter a spec URL or select a spec file.');
+            return;
+        }
+
+        const data = await resp.json();
+        if (!resp.ok) { resultDiv.innerHTML = `<span style="color:var(--red)">${data.error}</span>`; resultDiv.style.display='block'; return; }
+
+        let html = `<div class="sw-meta"><b>${data.count}</b> endpoint${data.count !== 1 ? 's' : ''} found`;
+        if (data.base_url) html += ` &bull; Base: <code>${data.base_url}</code>`;
+        html += '</div>';
+        html += data.endpoints.map(ep => `<div class="ep">${ep}</div>`).join('');
+        resultDiv.innerHTML = html;
+        resultDiv.style.display = 'block';
+
+        // Pre-fill the target URL with the base URL if it's empty
+        const urlField = document.querySelector('input[name="url"]');
+        if (urlField && !urlField.value && data.base_url) {
+            urlField.value = data.base_url;
+        }
+    } catch (e) {
+        resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+        resultDiv.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Parse &amp; Preview Endpoints';
+    }
 }
 </script>
 </body>

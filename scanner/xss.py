@@ -92,7 +92,8 @@ def _inject_param(url, param, payload):
     return urlunparse(parsed._replace(query=new_query))
 
 
-def test_xss(url, timeout=8, quick_mode=False):
+def test_xss(url, timeout=8, quick_mode=False, session=None):
+    _req = session if session is not None else requests
     findings = []
     parsed = urlparse(url)
     qs = parse_qs(parsed.query, keep_blank_values=True)

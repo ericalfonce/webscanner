@@ -27,7 +27,8 @@ def _inject_param(url, param, payload):
     return urlunparse(parsed._replace(query=new_query))
 
 
-def check_open_redirect(url, timeout=8):
+def check_open_redirect(url, timeout=8, session=None):
+    _req = session if session is not None else requests
     findings = []
     parsed = urlparse(url)
     qs = parse_qs(parsed.query, keep_blank_values=True)
@@ -40,7 +41,7 @@ def check_open_redirect(url, timeout=8):
         for payload in REDIRECT_PAYLOADS:
             test_url = _inject_param(url, param, payload)
             try:
-                resp = requests.get(test_url, timeout=timeout,
+                resp = _req.get(test_url, timeout=timeout,
                                     allow_redirects=False, headers=headers)
                 location = resp.headers.get("Location", "")
                 if "evil.example.com" in location:

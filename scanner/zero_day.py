@@ -91,7 +91,7 @@ def _get(session, url, timeout=10):
         return None
 
 
-def detect_zero_day(url: str, timeout: int = 10) -> list:
+def detect_zero_day(url: str, timeout: int = 10, session=None) -> list:
     """
     Runs behavioral anomaly detection. Returns findings for suspicious
     server behaviors that may indicate unknown or zero-day vulnerabilities.
@@ -101,11 +101,17 @@ def detect_zero_day(url: str, timeout: int = 10) -> list:
     params  = list(parse_qs(parsed.query, keep_blank_values=True).keys())
     base    = f"{parsed.scheme}://{parsed.netloc}"
 
-    session = requests.Session()
-    session.headers.update({
+    # Build internal scan session, seeding auth credentials if provided
+    _scan_session = requests.Session()
+    _scan_session.headers.update({
         "User-Agent": "Mozilla/5.0 (Security Scanner)",
         "Accept": "application/json, text/html, */*",
     })
+    if session is not None:
+        _scan_session.cookies.update(session.cookies)
+        _scan_session.headers.update({k: v for k, v in session.headers.items()
+                                       if k.lower() not in ('user-agent', 'accept')})
+    session = _scan_session
 
     # ── 1. Baseline measurement ────────────────────────────────────────────────
     baseline = _get(session, url, timeout)

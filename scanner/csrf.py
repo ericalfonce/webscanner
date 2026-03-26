@@ -22,12 +22,13 @@ def _form_has_csrf_token(form) -> bool:
     return False
 
 
-def check_csrf(url, timeout=8):
+def check_csrf(url, timeout=8, session=None):
+    _req = session if session is not None else requests
     findings = []
     headers = {"User-Agent": "MulikaScans/1.0 (Security Scanner)"}
 
     try:
-        resp = requests.get(url, timeout=timeout, headers=headers)
+        resp = _req.get(url, timeout=timeout, headers=headers)
         soup = BeautifulSoup(resp.text, "html.parser")
 
         forms = soup.find_all("form")

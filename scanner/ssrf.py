@@ -44,7 +44,8 @@ def _inject_param(url, param, payload):
     return urlunparse(parsed._replace(query=new_query))
 
 
-def check_ssrf(url, timeout=8):
+def check_ssrf(url, timeout=8, session=None):
+    _req = session if session is not None else requests
     findings = []
     parsed = urlparse(url)
     qs = parse_qs(parsed.query, keep_blank_values=True)
@@ -57,7 +58,7 @@ def check_ssrf(url, timeout=8):
         for canary in SSRF_CANARIES:
             test_url = _inject_param(url, param, canary)
             try:
-                resp = requests.get(test_url, timeout=timeout,
+                resp = _req.get(test_url, timeout=timeout,
                                     allow_redirects=True, headers=headers)
                 body = resp.text
                 for indicator in SSRF_INDICATORS:

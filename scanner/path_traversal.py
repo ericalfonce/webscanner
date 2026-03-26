@@ -49,7 +49,8 @@ def _inject_param(url: str, param: str, payload: str) -> str:
     return urlunparse(parsed._replace(query=new_query))
 
 
-def test_path_traversal(url: str, timeout: int = 8, quick_mode: bool = False) -> list:
+def test_path_traversal(url: str, timeout: int = 8, quick_mode: bool = False, session=None) -> list:
+    _req = session if session is not None else requests
     findings = []
     parsed = urlparse(url)
     all_params = list(parse_qs(parsed.query, keep_blank_values=True).keys())

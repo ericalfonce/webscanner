@@ -13,7 +13,7 @@ import uuid
 import socket
 import ipaddress
 from datetime import datetime, timezone
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -540,6 +540,22 @@ def scan():
 
         max_pages = get_page_limit(user)
 
+        # ── Authenticated scanning (Basic+ only) ──────────────────────────────
+        auth_cookies = {}
+        auth_headers = {}
+        if has_feature(user, "authenticated_scanning"):
+            raw_cookie = (request.form.get("auth_cookie") or "").strip()
+            raw_header_name = (request.form.get("auth_header_name") or "").strip()
+            raw_header_value = (request.form.get("auth_header_value") or "").strip()
+            if raw_cookie:
+                for part in raw_cookie.split(";"):
+                    part = part.strip()
+                    if "=" in part:
+                        k, v = part.split("=", 1)
+                        auth_cookies[k.strip()] = v.strip()
+            if raw_header_name and raw_header_value:
+                auth_headers[raw_header_name] = raw_header_value
+
         # Create scan record and persist results to DB
         scan_started_at = datetime.now(timezone.utc)  # keep local ref — SQLite strips tz on reload
         scan_record = Scan(
@@ -548,13 +564,16 @@ def scan():
             scan_type=scan_type,
             status="running",
             started_at=scan_started_at,
-            scan_config={"max_pages": max_pages, "timeout": 8},
+            scan_config={"max_pages": max_pages, "timeout": 8,
+                         "authenticated": bool(auth_cookies or auth_headers)},
         )
         db.session.add(scan_record)
         db.session.commit()
 
         try:
-            findings = run_scan(target, scan_type=scan_type, max_pages=max_pages)
+            findings = run_scan(target, scan_type=scan_type, max_pages=max_pages,
+                                auth_cookies=auth_cookies or None,
+                                auth_headers=auth_headers or None)
             counts = severity_counts(findings)
 
             for f in findings:
@@ -979,6 +998,257 @@ def export_html(scan_id):
     response = app.response_class(response=html, status=200, mimetype="text/html")
     response.headers["Content-Disposition"] = f'attachment; filename="mulikascans_report_{scan_id}.html"'
     return response
+
+
+@app.route("/export/pdf/<int:scan_id>")
+@login_required
+def export_pdf(scan_id):
+    """PDF report export — Basic+ only."""
+    user = get_current_user()
+    if not has_feature(user, "pdf_export"):
+        return jsonify({"error": "PDF export requires a Basic plan or higher.", "upgrade_url": "/pricing"}), 402
+
+    scan_record = Scan.query.filter_by(id=scan_id, user_id=user.id).first_or_404()
+    _sev_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3, "Info": 4}
+    vulns = sorted(
+        [v for v in scan_record.vulnerabilities.all() if not v.false_positive],
+        key=lambda v: _sev_order.get(v.severity, 5)
+    )
+
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=2*cm, rightMargin=2*cm,
+                            topMargin=2*cm, bottomMargin=2*cm)
+
+    styles = getSampleStyleSheet()
+    # Custom styles
+    title_style   = ParagraphStyle("title",   parent=styles["Title"],  fontSize=22, spaceAfter=4, textColor=colors.HexColor("#0ea5e9"))
+    h2_style      = ParagraphStyle("h2",      parent=styles["Heading2"], fontSize=13, spaceBefore=14, spaceAfter=4, textColor=colors.HexColor("#1e293b"))
+    body_style    = ParagraphStyle("body",    parent=styles["Normal"],  fontSize=9,  spaceAfter=4, leading=13, textColor=colors.HexColor("#334155"))
+    meta_style    = ParagraphStyle("meta",    parent=styles["Normal"],  fontSize=8,  textColor=colors.HexColor("#64748b"), spaceAfter=2)
+    label_style   = ParagraphStyle("label",   parent=styles["Normal"],  fontSize=8,  textColor=colors.HexColor("#64748b"), fontName="Helvetica-Bold")
+
+    SEV_COLORS = {
+        "Critical": colors.HexColor("#ef4444"),
+        "High":     colors.HexColor("#f97316"),
+        "Medium":   colors.HexColor("#eab308"),
+        "Low":      colors.HexColor("#22c55e"),
+        "Info":     colors.HexColor("#94a3b8"),
+    }
+
+    story = []
+
+    # ── Cover ─────────────────────────────────────────────────────────────────
+    story.append(Paragraph("MulikaScans Security Report", title_style))
+    story.append(Paragraph(f"Target: {scan_record.target_url}", meta_style))
+    story.append(Paragraph(
+        f"Scan #{scan_record.id} &bull; {scan_record.scan_type.upper()} &bull; "
+        f"Score: {scan_record.security_score()}/100 &bull; "
+        f"{scan_record.started_at.strftime('%Y-%m-%d %H:%M UTC') if scan_record.started_at else ''}",
+        meta_style
+    ))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0"), spaceAfter=12))
+
+    # ── Summary table ─────────────────────────────────────────────────────────
+    story.append(Paragraph("Vulnerability Summary", h2_style))
+    summary_data = [
+        ["Severity", "Count"],
+        ["Critical", str(scan_record.critical_count)],
+        ["High",     str(scan_record.high_count)],
+        ["Medium",   str(scan_record.medium_count)],
+        ["Low",      str(scan_record.low_count)],
+        ["Info",     str(scan_record.info_count)],
+        ["Total",    str(scan_record.total_vulnerabilities)],
+    ]
+    tbl = Table(summary_data, colWidths=[5*cm, 3*cm])
+    tbl.setStyle(TableStyle([
+        ("BACKGROUND",  (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+        ("TEXTCOLOR",   (0, 0), (-1, 0), colors.white),
+        ("FONTNAME",    (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE",    (0, 0), (-1, -1), 9),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#f8fafc"), colors.white]),
+        ("GRID",        (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
+        ("ALIGN",       (1, 0), (1, -1), "CENTER"),
+        ("TOPPADDING",  (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    story.append(tbl)
+    story.append(Spacer(1, 16))
+
+    # ── Findings ──────────────────────────────────────────────────────────────
+    if vulns:
+        story.append(Paragraph("Detailed Findings", h2_style))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0"), spaceAfter=8))
+
+        for i, v in enumerate(vulns, 1):
+            sev_color = SEV_COLORS.get(v.severity, colors.HexColor("#94a3b8"))
+            sev_text  = f'<font color="#{"%02x%02x%02x" % (int(sev_color.red*255), int(sev_color.green*255), int(sev_color.blue*255))}">[{v.severity or "Info"}]</font>'
+
+            story.append(Paragraph(
+                f"{i}. {sev_text} <b>{v.name}</b>"
+                + (f" — CVSS {v.cvss_score:.1f}" if v.cvss_score else "")
+                + (f" — {v.cwe_id}" if v.cwe_id else ""),
+                body_style
+            ))
+            if v.url_affected:
+                story.append(Paragraph(f"URL: {v.url_affected}", meta_style))
+            if v.parameter:
+                story.append(Paragraph(f"Parameter: {v.parameter}", meta_style))
+            if v.description:
+                story.append(Paragraph(v.description[:600], body_style))
+            if v.evidence:
+                story.append(Paragraph(f"<b>Evidence:</b> {v.evidence[:200]}", meta_style))
+            if v.remediation:
+                story.append(Paragraph(f"<b>Remediation:</b> {v.remediation[:400]}", meta_style))
+            story.append(Spacer(1, 8))
+    else:
+        story.append(Paragraph("No vulnerabilities detected.", body_style))
+
+    # ── Footer note ───────────────────────────────────────────────────────────
+    story.append(Spacer(1, 20))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph(
+        f"Generated by MulikaScans on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. "
+        "Only scan systems you own or have explicit authorisation to test.",
+        ParagraphStyle("footer", parent=styles["Normal"], fontSize=7, textColor=colors.HexColor("#94a3b8"), spaceAfter=0)
+    ))
+
+    doc.build(story)
+    buf.seek(0)
+    response = app.response_class(response=buf.read(), status=200, mimetype="application/pdf")
+    response.headers["Content-Disposition"] = f'attachment; filename="mulikascans_report_{scan_id}.pdf"'
+    return response
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Vulnerability Management — False Positive / Status
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route("/api/vulns/<int:vuln_id>/status", methods=["POST"])
+@login_required
+def update_vuln_status(vuln_id):
+    """
+    Mark a vulnerability as false positive / accepted_risk / open.
+    Body: {"status": "false_positive"|"accepted_risk"|"open"}
+    """
+    user = get_current_user()
+    data = request.get_json() or {}
+    new_status = data.get("status", "").strip()
+
+    ALLOWED = {"false_positive", "accepted_risk", "open", "confirmed", "fixed"}
+    if new_status not in ALLOWED:
+        return jsonify({"error": f"Invalid status. Allowed: {', '.join(ALLOWED)}"}), 400
+
+    # Look up the vuln and verify ownership via the scan
+    from models import Vulnerability as _Vuln
+    vuln = _Vuln.query.join(Scan).filter(
+        _Vuln.id == vuln_id,
+        Scan.user_id == user.id
+    ).first_or_404()
+
+    vuln.status = new_status
+    vuln.false_positive = (new_status == "false_positive")
+    db.session.commit()
+
+    return jsonify({"ok": True, "vuln_id": vuln_id, "status": new_status,
+                    "false_positive": vuln.false_positive})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenAPI / Swagger Import — extract endpoints for scanning
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route("/api/swagger-parse", methods=["POST"])
+@login_required
+def swagger_parse():
+    """
+    Parse an uploaded OpenAPI/Swagger spec (JSON or YAML) and return
+    a list of endpoint URLs to scan. Accepts multipart file upload
+    or a JSON body with {"spec_url": "..."} to fetch remotely.
+
+    Returns: {"base_url": str, "endpoints": [str, ...], "count": int}
+    """
+    user = get_current_user()
+
+    spec_data = None
+
+    # Option A: file upload
+    uploaded = request.files.get("spec_file")
+    if uploaded and uploaded.filename:
+        try:
+            content = uploaded.read().decode("utf-8", errors="replace")
+            if uploaded.filename.endswith((".yaml", ".yml")):
+                try:
+                    import yaml
+                    spec_data = yaml.safe_load(content)
+                except ImportError:
+                    return jsonify({"error": "YAML support requires PyYAML. Upload a JSON spec instead."}), 400
+            else:
+                spec_data = json.loads(content)
+        except Exception as e:
+            return jsonify({"error": f"Could not parse spec file: {e}"}), 400
+
+    # Option B: URL to fetch
+    if not spec_data:
+        body = request.get_json() or {}
+        spec_url = (body.get("spec_url") or request.form.get("spec_url") or "").strip()
+        if spec_url:
+            safe, reason = _is_safe_target(spec_url)
+            if not safe:
+                return jsonify({"error": reason}), 400
+            try:
+                import requests as _requests_lib
+                r = _requests_lib.get(spec_url, timeout=10, headers={"User-Agent": "MulikaScans/1.0"})
+                r.raise_for_status()
+                spec_data = r.json()
+            except Exception as e:
+                return jsonify({"error": f"Could not fetch spec: {e}"}), 400
+
+    if not spec_data:
+        return jsonify({"error": "Provide spec_file (multipart) or spec_url (JSON body)."}), 400
+
+    # ── Parse OpenAPI 2.x (Swagger) or 3.x ──────────────────────────────────
+    endpoints = []
+    base_url = ""
+
+    try:
+        # OpenAPI 3.x
+        if "openapi" in spec_data:
+            servers = spec_data.get("servers", [{}])
+            base_url = (servers[0].get("url", "") if servers else "").rstrip("/")
+            for path in spec_data.get("paths", {}):
+                full = base_url + path if base_url else path
+                endpoints.append(full)
+
+        # Swagger 2.x
+        elif "swagger" in spec_data:
+            host     = spec_data.get("host", "")
+            basepath = spec_data.get("basePath", "").rstrip("/")
+            schemes  = spec_data.get("schemes", ["https"])
+            scheme   = schemes[0] if schemes else "https"
+            base_url = f"{scheme}://{host}{basepath}" if host else basepath
+            for path in spec_data.get("paths", {}):
+                full = base_url + path if base_url else path
+                endpoints.append(full)
+        else:
+            return jsonify({"error": "Unrecognised spec format. Expected OpenAPI 2.x or 3.x."}), 400
+
+    except Exception as e:
+        return jsonify({"error": f"Spec parsing error: {e}"}), 400
+
+    # Deduplicate and cap at 200 endpoints
+    endpoints = list(dict.fromkeys(endpoints))[:200]
+
+    return jsonify({
+        "base_url": base_url,
+        "endpoints": endpoints,
+        "count": len(endpoints),
+    })
 
 
 # ─────────────────────────────────────────────────────────────────────────────

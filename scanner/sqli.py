@@ -106,7 +106,8 @@ def _fingerprint_db(body_lower):
     return "unknown"
 
 
-def test_sqli(url, timeout=10, quick_mode=False):
+def test_sqli(url, timeout=10, quick_mode=False, session=None):
+    _req = session if session is not None else requests
     findings = []
     parsed = urlparse(url)
     qs = parse_qs(parsed.query, keep_blank_values=True)

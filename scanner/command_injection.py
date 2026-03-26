@@ -50,7 +50,8 @@ def _inject_param(url: str, param: str, payload: str) -> str:
     return urlunparse(parsed._replace(query=new_query))
 
 
-def test_command_injection(url: str, timeout: int = 10, quick_mode: bool = False) -> list:
+def test_command_injection(url: str, timeout: int = 10, quick_mode: bool = False, session=None) -> list:
+    _req = session if session is not None else requests
     findings = []
     parsed = urlparse(url)
     params = list(parse_qs(parsed.query, keep_blank_values=True).keys())

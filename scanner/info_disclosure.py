@@ -142,7 +142,8 @@ ERROR_SIGNATURES = [
 ]
 
 
-def check_info_disclosure(url, timeout=5):
+def check_info_disclosure(url, timeout=5, session=None):
+    _req = session if session is not None else requests
     findings = []
     headers = {"User-Agent": "MulikaScans/1.0 (Security Scanner)"}
     base_url = _base_url(url)
@@ -150,7 +151,7 @@ def check_info_disclosure(url, timeout=5):
     def _check_path(path, description):
         test_url = urljoin(base_url, path)
         try:
-            resp = requests.get(test_url, timeout=timeout,
+            resp = _req.get(test_url, timeout=timeout,
                                 allow_redirects=False, headers=headers)
             if resp.status_code in (200, 301, 302, 403):
                 severity = _path_severity(path, resp.status_code, resp.text)
@@ -194,7 +195,7 @@ def check_info_disclosure(url, timeout=5):
 
     # Check for directory listing on target URL
     try:
-        resp = requests.get(url, timeout=timeout, headers=headers)
+        resp = _req.get(url, timeout=timeout, headers=headers)
         body_lower = resp.text.lower()
 
         if "index of /" in body_lower or "directory listing" in body_lower:

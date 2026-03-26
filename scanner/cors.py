@@ -14,7 +14,8 @@ ORIGIN_PROBES = [
 ]
 
 
-def check_cors(url: str, timeout: int = 8) -> list:
+def check_cors(url: str, timeout: int = 8, session=None) -> list:
+    _req = session if session is not None else requests
     findings = []
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0 (Security Scanner)"})

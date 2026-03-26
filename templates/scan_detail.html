@@ -110,9 +110,9 @@
                     <i class="fas fa-redo"></i> Rescan
                 </a>
                 {% if current_user and current_user.role in ('basic', 'pro', 'enterprise', 'admin') %}
-                <button type="button" class="btn-primary" onclick="window.print()">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </button>
+                <a href="/export/pdf/{{ scan.id }}" class="btn-primary">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
                 <a href="/export/json/{{ scan.id }}" class="btn-outline">
                     <i class="fas fa-file-code"></i> JSON
                 </a>
@@ -228,7 +228,7 @@
         {% else %}
         <div class="vuln-list">
             {% for v in vulns %}
-            <div class="vuln-item" data-sev="{{ v.severity|lower if v.severity else 'info' }}">
+            <div class="vuln-item {% if v.false_positive %}vuln-fp{% endif %}" id="vuln-{{ v.id }}" data-sev="{{ v.severity|lower if v.severity else 'info' }}">
                 <div class="vuln-header">
                     <div class="vuln-title-row">
                         {% set sev = v.severity or 'Info' %}
@@ -252,6 +252,25 @@
                         {% if v.cwe_id %}
                         <span class="cwe-badge">{{ v.cwe_id }}</span>
                         {% endif %}
+                        {% if v.false_positive %}
+                        <span class="fp-badge"><i class="fas fa-eye-slash"></i> False Positive</span>
+                        {% elif v.status == 'accepted_risk' %}
+                        <span class="fp-badge fp-badge-accepted"><i class="fas fa-check-circle"></i> Accepted Risk</span>
+                        {% endif %}
+                        <div class="vuln-actions">
+                            <div class="vuln-status-menu">
+                                <button type="button" class="vuln-status-btn" onclick="toggleStatusMenu({{ v.id }})" title="Change status">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <div class="status-dropdown" id="sdrop-{{ v.id }}" style="display:none">
+                                    <button type="button" onclick="setVulnStatus({{ v.id }}, 'open')"><i class="fas fa-dot-circle"></i> Mark Open</button>
+                                    <button type="button" onclick="setVulnStatus({{ v.id }}, 'confirmed')"><i class="fas fa-check"></i> Confirmed</button>
+                                    <button type="button" onclick="setVulnStatus({{ v.id }}, 'false_positive')"><i class="fas fa-eye-slash"></i> False Positive</button>
+                                    <button type="button" onclick="setVulnStatus({{ v.id }}, 'accepted_risk')"><i class="fas fa-shield-alt"></i> Accept Risk</button>
+                                    <button type="button" onclick="setVulnStatus({{ v.id }}, 'fixed')"><i class="fas fa-wrench"></i> Mark Fixed</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {% if v.description %}
                     <p class="vuln-detail">{{ v.description }}</p>
@@ -296,7 +315,7 @@
                         <div class="expert-contact-icon"><i class="fas fa-envelope"></i></div>
                         <div>
                             <div class="expert-contact-label">Email</div>
-                            <div class="expert-contact-value">security@mulikascans.com</div>
+                            <div class="expert-contact-value">noreply@mulikascans.com</div>
                         </div>
                     </div>
                     <div class="expert-contact-item">
@@ -499,6 +518,69 @@
     .soc-main { margin-left: 0 !important; }
     .page-content { padding: 0 !important; }
 }
+
+/* ── False positive / status badges ── */
+.fp-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(239,68,68,.1);
+    color: #f87171;
+    margin-left: 4px;
+}
+.fp-badge-accepted {
+    background: rgba(234,179,8,.1);
+    color: #facc15;
+}
+.vuln-fp {
+    opacity: .55;
+    border-left: 3px solid rgba(239,68,68,.3) !important;
+}
+.vuln-actions {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.vuln-status-menu { position: relative; display: inline-block; }
+.vuln-status-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--muted);
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.vuln-status-btn:hover { color: var(--text); border-color: var(--cyan); }
+.status-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    min-width: 160px;
+    z-index: 100;
+    overflow: hidden;
+}
+.status-dropdown button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 14px;
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: background .1s;
+}
+.status-dropdown button:hover { background: var(--bg2); color: var(--cyan); }
+.status-dropdown button i { width: 12px; color: var(--muted); }
 </style>
 
 <script>
@@ -511,6 +593,49 @@ function closeDrawer() { mobDrawer.classList.remove('open'); mobOverlay.classLis
 mobOpen.addEventListener('click', openDrawer);
 mobClose.addEventListener('click', closeDrawer);
 mobOverlay.addEventListener('click', closeDrawer);
+
+function toggleStatusMenu(id) {
+    const d = document.getElementById('sdrop-' + id);
+    const allDrops = document.querySelectorAll('.status-dropdown');
+    allDrops.forEach(el => { if (el.id !== 'sdrop-' + id) el.style.display = 'none'; });
+    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.vuln-status-menu')) {
+        document.querySelectorAll('.status-dropdown').forEach(el => el.style.display = 'none');
+    }
+});
+
+async function setVulnStatus(id, status) {
+    document.getElementById('sdrop-' + id).style.display = 'none';
+    const card = document.getElementById('vuln-' + id);
+    try {
+        const r = await fetch('/api/vulns/' + id + '/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        const data = await r.json();
+        if (!r.ok) { alert(data.error || 'Failed'); return; }
+
+        // Update badge
+        const titleRow = card.querySelector('.vuln-title-row');
+        titleRow.querySelectorAll('.fp-badge').forEach(b => b.remove());
+        card.classList.remove('vuln-fp');
+
+        if (status === 'false_positive') {
+            card.classList.add('vuln-fp');
+            titleRow.insertAdjacentHTML('beforeend',
+                '<span class="fp-badge"><i class="fas fa-eye-slash"></i> False Positive</span>');
+        } else if (status === 'accepted_risk') {
+            titleRow.insertAdjacentHTML('beforeend',
+                '<span class="fp-badge fp-badge-accepted"><i class="fas fa-check-circle"></i> Accepted Risk</span>');
+        } else if (status === 'fixed') {
+            titleRow.insertAdjacentHTML('beforeend',
+                '<span class="fp-badge" style="background:rgba(34,197,94,.1);color:#4ade80"><i class="fas fa-check"></i> Fixed</span>');
+        }
+    } catch(e) { alert('Error: ' + e.message); }
+}
 </script>
 </body>
 </html>

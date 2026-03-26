@@ -8,7 +8,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
 
-def crawl(url, max_pages=50, timeout=8):
+def crawl(url, max_pages=50, timeout=8, session=None):
+    _req = session if session is not None else requests
     """
     Crawl the target URL and return a list of discovered in-scope URLs.
     Respects max_pages limit (plan-dependent).
@@ -25,7 +26,7 @@ def crawl(url, max_pages=50, timeout=8):
         visited.add(current)
 
         try:
-            resp = requests.get(current, timeout=timeout,
+            resp = _req.get(current, timeout=timeout,
                                 allow_redirects=True, headers=headers)
             soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -52,7 +53,7 @@ def extract_forms(url, timeout=8):
     forms = []
     headers = {"User-Agent": "MulikaScans/1.0 (Security Scanner)"}
     try:
-        resp = requests.get(url, timeout=timeout, headers=headers)
+        resp = _req.get(url, timeout=timeout, headers=headers)
         soup = BeautifulSoup(resp.text, "html.parser")
         for form in soup.find_all("form"):
             action = str(form.get("action") or "")

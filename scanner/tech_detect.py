@@ -75,7 +75,8 @@ HTML_SIGS = [
 ]
 
 
-def fingerprint(url: str, timeout: int = 8) -> list:
+def fingerprint(url: str, timeout: int = 8, session=None) -> list:
+    _req = session if session is not None else requests
     """
     Returns a list of detected technologies as info-level findings.
     Also checks for admin panel exposure and version disclosure.

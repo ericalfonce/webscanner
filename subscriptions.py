@@ -57,7 +57,7 @@ PLAN_LIMITS = {
         "scheduled_scans": False,
         "scan_comparison": True,
         "custom_headers": True,
-        "authenticated_scanning": False,
+        "authenticated_scanning": True,
         "compliance_report": False,
         "vulnerability_retest": True,
         "priority_queue": False,

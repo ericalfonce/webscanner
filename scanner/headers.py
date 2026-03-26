@@ -109,12 +109,13 @@ DANGEROUS_HEADERS = {
 }
 
 
-def check_headers(url, timeout=8):
+def check_headers(url, timeout=8, session=None):
+    _req = session if session is not None else requests
     findings = []
     headers = {"User-Agent": "MulikaScans/1.0 (Security Scanner)"}
 
     try:
-        resp = requests.get(url, timeout=timeout, allow_redirects=True, headers=headers)
+        resp = _req.get(url, timeout=timeout, allow_redirects=True, headers=headers)
         resp_headers = resp.headers
 
         # Check missing security headers
