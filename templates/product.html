@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){var t=localStorage.getItem('ms-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
     {% include '_head_meta.html' %}
     <title>MulikaScans — Web Vulnerability Scanner</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +23,21 @@
         --sub:     #a1a1aa;
         --accent:  #0ea5e9;
         --accent2: #38bdf8;
+        --card-bg: rgba(255,255,255,.03);
     }
+    [data-theme="light"] {
+        --bg:      #f8fafc;
+        --bg2:     #f1f5f9;
+        --border:  rgba(0,0,0,.08);
+        --border2: rgba(0,0,0,.12);
+        --text:    #09090b;
+        --muted:   #52525b;
+        --sub:     #71717a;
+        --card-bg: rgba(0,0,0,.025);
+    }
+    [data-theme="light"] .nav { background: rgba(248,250,252,.95); }
+    [data-theme="light"] .mob-menu { background: rgba(248,250,252,.98); }
+    [data-theme="light"] .nav-btn-solid { background: var(--text); color: var(--bg); }
 
     html { scroll-behavior: smooth; }
 
@@ -68,6 +83,14 @@
         text-decoration: none; transition: opacity .15s;
     }
     .nav-btn-solid:hover { opacity: .88; }
+    .theme-toggle {
+        background: none; border: 1px solid var(--border2);
+        color: var(--muted); width: 32px; height: 32px;
+        border-radius: 7px; cursor: pointer; font-size: 13px;
+        display: flex; align-items: center; justify-content: center;
+        transition: color .15s, border-color .15s; flex-shrink: 0;
+    }
+    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,.22); }
     .hamburger {
         display: none; background: none; border: none;
         color: var(--muted); font-size: 18px; cursor: pointer;
@@ -433,6 +456,7 @@
         <a href="/contact">Contact</a>
     </div>
     <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Light mode"><i class="fas fa-sun"></i></button>
         {% if current_user %}
             <a href="/dashboard" class="nav-btn-ghost">Dashboard</a>
         {% else %}
@@ -787,7 +811,7 @@
         <div class="footer-col">
             <h4>Legal</h4>
             <a href="/privacy">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="/terms">Terms of Service</a>
         </div>
     </div>
     <div class="footer-bottom">
@@ -858,5 +882,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     });
 });
 </script>
+<script src="{{ url_for('static', filename='theme.js') }}"></script>
 </body>
 </html>

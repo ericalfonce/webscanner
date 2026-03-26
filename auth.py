@@ -620,6 +620,13 @@ def oauth_google():
     in the hash fragment that the callback JS can read directly.
     """
     from urllib.parse import urlencode
+    # Preserve next param so post-login redirect goes to the right page
+    next_url = request.args.get("next", "").strip()
+    if next_url and (not next_url.startswith("/") or "//" in next_url):
+        next_url = ""
+    if next_url:
+        session["oauth_next"] = next_url
+
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5000")
     supabase_url = os.environ.get("SUPABASE_URL", "https://nfyspkcmkaigqmnqdwte.supabase.co")
     params = urlencode({
@@ -693,10 +700,12 @@ def oauth_google_session():
     user.email_verified = True
     db.session.commit()
 
+    next_url = session.get("oauth_next", "")
     session.clear()
     session["_uid"] = user.id
 
-    resp = jsonify({"redirect": "/dashboard"})
+    redirect_to = next_url if next_url else "/dashboard"
+    resp = jsonify({"redirect": redirect_to})
     _set_auth_cookies(resp, access_token, refresh_token_val)
     return resp
 
