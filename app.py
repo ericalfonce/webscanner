@@ -191,14 +191,16 @@ def add_security_headers(response):
         response.headers.setdefault(
             "Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload"
         )
-    # Permissive but hardened CSP — allows inline styles (templates use them heavily)
+    # Hardened CSP — inline styles/scripts allowed (templates use them heavily),
+    # no unsafe-eval, explicit allowlists for all external resources.
     csp = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com fonts.googleapis.com; "
         "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdnjs.cloudflare.com; "
         "font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; "
         "img-src 'self' data: blob: https:; "
-        "connect-src 'self'; "
+        "connect-src 'self' https://nfyspkcmkaigqmnqdwte.supabase.co https://accounts.google.com; "
+        "frame-src https://accounts.google.com; "
         "frame-ancestors 'none';"
     )
     response.headers.setdefault("Content-Security-Policy", csp)
