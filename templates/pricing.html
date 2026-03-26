@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% include '_head_meta.html' %}
-    <title>Pricing | MulikaScans</title>
+    <title>Pricing — MulikaScans</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,944 +13,680 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-        --bg:       #030712;
-        --surface:  #0a0f1e;
-        --border:   #1a2540;
-        --border2:  #243050;
-        --cyan:     #06b6d4;
-        --cyan2:    #22d3ee;
-        --blue:     #3b82f6;
-        --text:     #f1f5f9;
-        --muted:    #64748b;
-        --sub:      #94a3b8;
+        --bg:      #08090c;
+        --bg2:     #0d1017;
+        --border:  rgba(255,255,255,.08);
+        --border2: rgba(255,255,255,.13);
+        --text:    #f4f4f5;
+        --muted:   #71717a;
+        --sub:     #a1a1aa;
+        --accent:  #0ea5e9;
+        --accent2: #38bdf8;
     }
 
     html { scroll-behavior: smooth; }
-
     body {
         font-family: 'Inter', sans-serif;
         background: var(--bg);
         color: var(--text);
         line-height: 1.6;
         overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Noise texture overlay ── */
-    body::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    /* ── Animated mesh background ── */
-    .mesh-bg {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        overflow: hidden;
-    }
-    .mesh-bg span {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(120px);
-        opacity: 0.12;
-        animation: drift 20s ease-in-out infinite alternate;
-    }
-    .mesh-bg span:nth-child(1) { width:600px;height:600px;background:#06b6d4;top:-200px;left:-100px;animation-duration:18s; }
-    .mesh-bg span:nth-child(2) { width:500px;height:500px;background:#6366f1;top:30%;right:-150px;animation-duration:22s;animation-delay:-8s; }
-    .mesh-bg span:nth-child(3) { width:400px;height:400px;background:#0ea5e9;bottom:-100px;left:30%;animation-duration:16s;animation-delay:-4s; }
-    @keyframes drift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(40px,30px) scale(1.1)} }
-
-    /* ── NAV ── */
+    /* ─── NAV ─────────────────────────────── */
     .nav {
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 40px;
-        height: 64px;
-        background: rgba(3,7,18,.8);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(255,255,255,.06);
-        transition: background .3s;
+        position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 40px; height: 60px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(8,9,12,.9);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
     }
-    .nav-logo {
-        font-size: 18px;
-        font-weight: 800;
-        background: linear-gradient(135deg,#22d3ee,#818cf8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -.3px;
+    .nav-logo { font-size: 16px; font-weight: 800; letter-spacing: -.3px; color: var(--text); text-decoration: none; }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { font-size: 13.5px; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .15s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
+    .nav-btn-ghost {
+        padding: 7px 16px; border: 1px solid var(--border2);
+        border-radius: 7px; font-size: 13px; font-weight: 500;
+        color: var(--sub); text-decoration: none; transition: all .15s;
     }
-    .nav-links { display: flex; align-items: center; gap: 32px; }
-    .nav-links a { color: var(--sub); font-size: 14px; font-weight: 500; text-decoration: none; transition: color .15s; }
-    .nav-links a:hover { color: var(--text); }
-    .nav-cta {
-        padding: 8px 20px;
-        background: rgba(255,255,255,.07);
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 8px;
-        color: var(--text) !important;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all .2s !important;
+    .nav-btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,.22); }
+    .nav-btn-solid {
+        padding: 7px 16px; background: var(--text); color: var(--bg);
+        border-radius: 7px; font-size: 13px; font-weight: 600;
+        text-decoration: none; transition: opacity .15s;
     }
-    .nav-cta:hover { background: rgba(255,255,255,.12) !important; }
-    .hamburger { display:none;background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;padding:4px; }
-    .mobile-menu {
-        display:none;
-        position:fixed;top:64px;left:0;right:0;
-        background:rgba(3,7,18,.98);
-        border-bottom:1px solid var(--border);
-        padding:16px 0;z-index:99;
-        flex-direction:column;
+    .nav-btn-solid:hover { opacity: .88; }
+    .hamburger { display: none; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+    .mob-menu {
+        display: none; position: fixed; top: 60px; left: 0; right: 0; z-index: 99;
+        background: rgba(8,9,12,.98); border-bottom: 1px solid var(--border);
+        padding: 16px 0; flex-direction: column;
     }
-    .mobile-menu.open { display:flex; }
-    .mobile-menu a { padding:12px 28px;color:var(--sub);font-size:15px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04); }
+    .mob-menu.open { display: flex; }
+    .mob-menu a { padding: 11px 28px; font-size: 14px; color: var(--muted); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .mob-menu a:last-child { border-bottom: none; }
+    @media(max-width:860px){ .nav-links{display:none;} .hamburger{display:block;} .nav{padding:0 20px;} }
 
-    @media(max-width:768px){
-        .nav { padding:0 20px; }
-        .nav-links { display:none; }
-        .hamburger { display:block; }
-    }
-
-    /* ── HERO ── */
+    /* ─── HERO ────────────────────────────── */
     .hero {
-        position: relative;
-        z-index: 1;
-        padding: 140px 24px 80px;
-        text-align: center;
+        padding: 128px 24px 80px;
+        display: flex; flex-direction: column; align-items: center;
+        text-align: center; position: relative; z-index: 1;
     }
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 16px;
-        background: rgba(6,182,212,.1);
-        border: 1px solid rgba(6,182,212,.25);
-        border-radius: 100px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--cyan2);
-        letter-spacing: .4px;
-        text-transform: uppercase;
-        margin-bottom: 28px;
-        animation: fadeUp .6s ease both;
-    }
-    .hero-badge i { font-size: 10px; }
-    .hero h1 {
-        font-size: clamp(36px, 6vw, 72px);
-        font-weight: 900;
-        letter-spacing: -2px;
-        line-height: 1.05;
-        color: var(--text);
-        margin-bottom: 20px;
-        animation: fadeUp .6s .1s ease both;
-    }
-    .hero h1 span {
-        background: linear-gradient(135deg,#22d3ee 0%,#818cf8 60%,#e879f9 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .hero p {
-        font-size: 18px;
-        color: var(--sub);
-        max-width: 520px;
-        margin: 0 auto 40px;
-        font-weight: 400;
-        animation: fadeUp .6s .2s ease both;
-    }
-
-    /* ── Trust strip ── */
-    .trust-strip {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 32px;
-        margin-bottom: 48px;
-        flex-wrap: wrap;
-        animation: fadeUp .6s .3s ease both;
-    }
-    .trust-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 500;
-    }
-    .trust-item i { color: var(--cyan); font-size: 14px; }
-
-    /* ── Billing Toggle ── */
-    .toggle-wrap {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-        margin-bottom: 64px;
-        animation: fadeUp .6s .35s ease both;
-    }
-    .toggle-label { font-size: 14px; font-weight: 600; color: var(--sub); transition: color .2s; }
-    .toggle-label.active { color: var(--text); }
-    .save-pill {
-        background: linear-gradient(135deg,#06b6d4,#6366f1);
-        color: #fff;
-        font-size: 10px;
-        font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 100px;
-        letter-spacing: .5px;
-        margin-left: 6px;
-        text-transform: uppercase;
-    }
-    .toggle-track {
-        position: relative;
-        width: 56px; height: 30px;
-        background: var(--border);
-        border-radius: 100px;
-        cursor: pointer;
-        border: 1px solid var(--border2);
-        transition: background .3s;
-    }
-    .toggle-track.on { background: rgba(6,182,212,.3); border-color: rgba(6,182,212,.5); }
-    .toggle-thumb {
-        position: absolute;
-        top: 3px; left: 3px;
-        width: 22px; height: 22px;
-        background: var(--muted);
-        border-radius: 50%;
-        transition: transform .25s cubic-bezier(.4,0,.2,1), background .25s;
-    }
-    .toggle-track.on .toggle-thumb { transform: translateX(26px); background: var(--cyan2); }
-    #billing-toggle { display: none; }
-
-    /* ── PLAN CARDS ── */
-    .plans-section { position:relative;z-index:1; padding: 0 24px 80px; }
-    .plans-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .plan-card {
-        position: relative;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 32px 28px;
-        transition: transform .3s cubic-bezier(.4,0,.2,1), border-color .3s, box-shadow .3s;
-        overflow: hidden;
-    }
-    .plan-card::before {
+    .hero::before {
         content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(255,255,255,.03) 0%, transparent 60%);
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 700px; height: 400px;
+        background: radial-gradient(ellipse at 50% 0%, rgba(14,165,233,.07) 0%, transparent 70%);
         pointer-events: none;
     }
-    .plan-card:hover {
-        transform: translateY(-6px);
-        border-color: var(--border2);
-        box-shadow: 0 24px 64px rgba(0,0,0,.5);
+    .hero-eyebrow {
+        display: inline-flex; align-items: center; gap: 7px;
+        font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+        color: var(--muted); border: 1px solid var(--border);
+        padding: 5px 14px; border-radius: 100px; margin-bottom: 28px;
     }
-    .plan-card-pro {
-        border-color: rgba(6,182,212,.4);
-        background: linear-gradient(145deg, #0a1628 0%, #0a0f1e 100%);
-        box-shadow: 0 0 0 1px rgba(6,182,212,.15), 0 32px 64px rgba(6,182,212,.08);
+    .hero-eyebrow span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+    .hero h1 {
+        font-size: clamp(38px, 6vw, 68px);
+        font-weight: 900; letter-spacing: -3px; line-height: 1.04;
+        color: var(--text); margin-bottom: 18px; max-width: 700px;
     }
-    .plan-card-pro:hover {
-        border-color: rgba(6,182,212,.7);
-        box-shadow: 0 0 0 1px rgba(6,182,212,.3), 0 32px 80px rgba(6,182,212,.15);
-    }
-    /* top glow line for pro */
-    .plan-card-pro::after {
-        content: '';
-        position: absolute;
-        top: 0; left: 20%; right: 20%;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, var(--cyan2), transparent);
+    .hero h1 em { font-style: normal; color: var(--accent2); }
+    .hero-desc {
+        font-size: 16px; color: var(--muted); max-width: 440px;
+        line-height: 1.75; margin-bottom: 0; font-weight: 400;
     }
 
-    .plan-badge {
-        position: absolute;
-        top: -1px; left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg,#06b6d4,#6366f1);
-        color: #fff;
-        font-size: 10px;
-        font-weight: 800;
-        padding: 4px 14px;
-        border-radius: 0 0 10px 10px;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        white-space: nowrap;
+    /* ─── SECTIONS ─────────────────────────── */
+    .section { padding: 80px 24px; }
+    .section-alt { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+        font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+        text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
     }
+    .section-title {
+        font-size: clamp(24px,3vw,36px); font-weight: 800;
+        letter-spacing: -1px; color: var(--text); margin-bottom: 10px;
+    }
+    .tc { text-align: center; }
+    .tc .section-desc { margin: 0 auto; }
 
-    .plan-icon {
-        width: 42px; height: 42px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        margin-bottom: 20px;
+    /* ─── BILLING TOGGLE ──────────────────── */
+    .toggle-row {
+        display: flex; align-items: center; justify-content: center;
+        gap: 14px; margin-top: 40px;
     }
-    .plan-icon-free  { background:rgba(100,116,139,.15); color:var(--muted); }
-    .plan-icon-basic { background:rgba(59,130,246,.15);  color:#60a5fa; }
-    .plan-icon-pro   { background:rgba(6,182,212,.15);   color:var(--cyan2); }
-    .plan-icon-ent   { background:rgba(168,85,247,.15);  color:#c084fc; }
+    .tl { font-size: 13px; font-weight: 500; color: var(--muted); transition: color .15s; }
+    .tl.on { color: var(--text); }
+    .save-tag {
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+        background: rgba(14,165,233,.1); color: var(--accent2);
+        padding: 2px 7px; border-radius: 4px; margin-left: 5px;
+    }
+    .tog-track {
+        position: relative; width: 44px; height: 24px;
+        background: rgba(255,255,255,.08); border-radius: 100px;
+        cursor: pointer; border: 1px solid var(--border2); transition: background .2s;
+    }
+    .tog-track.on { background: rgba(14,165,233,.25); border-color: rgba(14,165,233,.4); }
+    .tog-thumb {
+        position: absolute; top: 3px; left: 3px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: var(--muted); transition: transform .2s, background .2s;
+    }
+    .tog-track.on .tog-thumb { transform: translateX(20px); background: var(--accent2); }
+    #billing-tog { display: none; }
 
-    .plan-name { font-size: 15px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .plan-price {
-        display: flex;
-        align-items: flex-end;
-        gap: 4px;
-        margin-bottom: 6px;
-        line-height: 1;
+    /* ─── PRICING CARDS ───────────────────── */
+    .pricing-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 16px; margin-top: 56px;
     }
-    .price-dollar { font-size: 20px; font-weight: 700; color: var(--sub); align-self: flex-start; margin-top: 8px; }
-    .price-number { font-size: 52px; font-weight: 900; color: var(--text); letter-spacing: -2px; }
-    .price-custom { font-size: 38px; font-weight: 900; color: var(--text); letter-spacing: -1px; }
-    .price-period { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
-    .price-annual-note { font-size: 12px; color: var(--muted); margin-bottom: 16px; min-height: 18px; }
+    .price-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: 14px; padding: 28px 24px;
+        transition: border-color .2s; position: relative;
+    }
+    .price-card:hover { border-color: var(--border2); }
+    .price-card-featured {
+        border-color: rgba(14,165,233,.3);
+        background: rgba(14,165,233,.04);
+    }
+    .price-card-featured:hover { border-color: rgba(14,165,233,.55); }
+    .popular-badge {
+        position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+        background: var(--accent); color: #fff;
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+        padding: 3px 12px; border-radius: 100px; white-space: nowrap;
+    }
+    .price-name {
+        font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--muted); margin-bottom: 14px;
+    }
+    .price-amount {
+        font-size: 38px; font-weight: 900; letter-spacing: -1.5px;
+        color: var(--text); line-height: 1;
+    }
+    .price-amount sup { font-size: 18px; vertical-align: super; font-weight: 600; }
+    .price-amount-custom { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: var(--text); line-height: 1; }
+    .price-period { font-size: 12px; color: var(--muted); margin: 4px 0 16px; }
+    .price-desc {
+        font-size: 13px; color: var(--muted); margin-bottom: 20px;
+        padding-bottom: 18px; border-bottom: 1px solid var(--border); line-height: 1.55;
+    }
+    .price-feats { list-style: none; margin-bottom: 24px; }
+    .price-feats li {
+        font-size: 13px; color: var(--sub); padding: 4px 0;
+        display: flex; align-items: flex-start; gap: 9px;
+    }
+    .price-feats li.no { color: rgba(113,113,122,.4); }
+    .pf-check { color: var(--accent); font-size: 11px; margin-top: 2px; flex-shrink: 0; }
+    .pf-x     { color: rgba(113,113,122,.35); font-size: 11px; margin-top: 2px; flex-shrink: 0; }
+    .price-btn {
+        display: block; width: 100%; padding: 11px;
+        border-radius: 7px; font-size: 13.5px; font-weight: 600;
+        text-align: center; text-decoration: none; cursor: pointer;
+        border: none; transition: all .15s; font-family: inherit;
+    }
+    .pb-ghost   { background: transparent; color: var(--sub); border: 1px solid var(--border2); }
+    .pb-ghost:hover { color: var(--text); border-color: rgba(255,255,255,.22); }
+    .pb-primary { background: var(--text); color: var(--bg); }
+    .pb-primary:hover { opacity: .88; }
+    .pb-current { background: rgba(255,255,255,.04); color: var(--muted); cursor: not-allowed; }
+    .pb-sales   { background: rgba(14,165,233,.1); color: var(--accent2); border: 1px solid rgba(14,165,233,.2); }
+    .pb-sales:hover { background: rgba(14,165,233,.16); }
+    .pb-loading { opacity: .55; cursor: not-allowed; }
+    .price-note { text-align: center; margin-top: 24px; font-size: 12.5px; color: var(--muted); }
+    .price-note a { color: var(--accent); text-decoration: none; }
 
-    .plan-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
-
-    .plan-features { list-style: none; margin-bottom: 28px; }
-    .plan-features li {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        font-size: 13.5px;
-        color: var(--sub);
-        padding: 5px 0;
+    /* ─── COMPARE TABLE ───────────────────── */
+    .compare-wrap { overflow-x: auto; margin-top: 56px; border: 1px solid var(--border); border-radius: 14px; }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .compare-table th, .compare-table td {
+        padding: 13px 18px; border-bottom: 1px solid var(--border);
+        text-align: center; vertical-align: middle;
     }
-    .plan-features li.feat-no { color: rgba(100,116,139,.5); }
-    .feat-check { color: var(--cyan); font-size: 12px; margin-top: 2px; flex-shrink: 0; }
-    .feat-x     { color: rgba(100,116,139,.4); font-size: 12px; margin-top: 2px; flex-shrink: 0; }
-
-    .plan-btn {
-        display: block;
-        width: 100%;
-        padding: 13px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 700;
-        text-align: center;
-        text-decoration: none;
-        cursor: pointer;
-        border: none;
-        transition: all .2s cubic-bezier(.4,0,.2,1);
-        letter-spacing: .2px;
-    }
-    .btn-free { background:rgba(255,255,255,.06);color:var(--sub);border:1px solid var(--border2); }
-    .btn-free:hover { background:rgba(255,255,255,.1);color:var(--text); }
-    .btn-basic { background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3); }
-    .btn-basic:hover { background:rgba(59,130,246,.25);border-color:rgba(59,130,246,.5); }
-    .btn-pro {
-        background: linear-gradient(135deg,#06b6d4,#6366f1);
-        color: #fff;
-        box-shadow: 0 4px 20px rgba(6,182,212,.35);
-    }
-    .btn-pro:hover { transform:translateY(-1px);box-shadow:0 8px 30px rgba(6,182,212,.5); }
-    .btn-ent { background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.25); }
-    .btn-ent:hover { background:rgba(168,85,247,.2);border-color:rgba(168,85,247,.45); }
-    .btn-current { background:rgba(255,255,255,.04);color:var(--muted);cursor:not-allowed;border:1px solid var(--border); }
-
-    /* ── STATS BAR ── */
-    .stats-bar {
-        position: relative; z-index: 1;
-        background: var(--surface);
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        padding: 40px 24px;
-        margin-bottom: 0;
-    }
-    .stats-inner {
-        max-width: 960px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 32px;
-        text-align: center;
-    }
-    .stat-num {
-        font-size: 36px;
-        font-weight: 900;
-        letter-spacing: -1.5px;
-        background: linear-gradient(135deg,#22d3ee,#818cf8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; font-weight: 500; }
-
-    /* ── COMPARE TABLE ── */
-    .compare-section {
-        position: relative; z-index: 1;
-        padding: 80px 24px;
-    }
-    .section-header {
-        text-align: center;
-        margin-bottom: 48px;
-    }
-    .section-tag {
-        display: inline-block;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: var(--cyan);
-        margin-bottom: 12px;
-    }
-    .section-header h2 {
-        font-size: clamp(28px,4vw,42px);
-        font-weight: 800;
-        letter-spacing: -1px;
-        color: var(--text);
-    }
-    .section-header p { font-size: 16px; color: var(--muted); margin-top: 10px; }
-
-    .table-wrap { overflow-x: auto; max-width: 1100px; margin: 0 auto; border-radius: 16px; border: 1px solid var(--border); }
-    .compare-table { width:100%;border-collapse:collapse;font-size:13.5px; }
-    .compare-table th, .compare-table td { padding:13px 18px;border-bottom:1px solid var(--border);text-align:center; }
-    .compare-table th { background:rgba(10,15,30,.9);color:var(--muted);font-weight:700;font-size:13px;position:sticky;top:0; }
     .compare-table tr:last-child td { border-bottom: none; }
-    .compare-table tbody tr:hover td { background:rgba(255,255,255,.02); }
-    .feat-col { text-align:left!important;color:var(--sub);width:32%; }
-    .th-pro { background:rgba(6,182,212,.06)!important;color:var(--cyan2)!important; }
-    .td-pro { background:rgba(6,182,212,.03);color:var(--cyan2)!important; }
-    .section-row td { background:#050c1a!important;color:var(--muted);font-size:11px;font-weight:700;text-align:left!important;letter-spacing:1px;text-transform:uppercase;padding:9px 18px; }
-    .tc { color:var(--cyan2); }
-    .tx { color:var(--border2); }
-
-    /* ── FAQ ── */
-    .faq-section { position:relative;z-index:1;padding:80px 24px; background: var(--surface); }
-    .faq-grid { max-width: 780px; margin: 0 auto; }
-    .faq-item {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        margin-bottom: 10px;
-        overflow: hidden;
-        transition: border-color .2s;
+    .compare-table th {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .8px; color: var(--muted); background: var(--bg2);
     }
-    .faq-item:hover { border-color: var(--border2); }
+    .compare-table th.th-feat { text-align: left; }
+    .compare-table td.td-feat { text-align: left; color: var(--sub); }
+    .compare-table td.td-pro { background: rgba(14,165,233,.04); color: var(--accent2); }
+    .compare-table th.th-pro { background: rgba(14,165,233,.06); color: var(--accent2); }
+    .compare-table .section-row td {
+        background: var(--bg); color: var(--muted);
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .6px; text-align: left; padding: 10px 18px;
+        border-top: 1px solid var(--border);
+    }
+    .ci { color: var(--accent); font-size: 12px; }
+    .cx { color: rgba(113,113,122,.35); font-size: 12px; }
+    @media(max-width:640px){ .compare-table th, .compare-table td { padding: 10px 12px; font-size: 12px; } }
+
+    /* ─── FAQ ─────────────────────────────── */
+    .faq-list { max-width: 680px; margin: 56px auto 0; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item:first-child { border-top: 1px solid var(--border); }
     .faq-q {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 22px;
-        cursor: pointer;
-        user-select: none;
-        color: var(--text);
-        font-weight: 600;
-        font-size: 14px;
-        gap: 12px;
+        width: 100%; background: none; border: none; text-align: left;
+        padding: 20px 0; display: flex; justify-content: space-between; align-items: center;
+        font-size: 14.5px; font-weight: 600; color: var(--text);
+        cursor: pointer; font-family: inherit; gap: 16px; transition: color .15s;
     }
-    .faq-q i { color: var(--muted); font-size: 13px; transition: transform .25s; flex-shrink: 0; }
-    .faq-item.open .faq-q i { transform: rotate(180deg); color: var(--cyan); }
-    .faq-item.open { border-color: rgba(6,182,212,.3); }
+    .faq-q:hover { color: var(--accent2); }
+    .faq-icon { color: var(--muted); font-size: 12px; flex-shrink: 0; transition: transform .25s; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); color: var(--accent2); }
     .faq-a {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height .35s cubic-bezier(.4,0,.2,1), padding .25s;
+        font-size: 13.5px; color: var(--muted); line-height: 1.75;
+        max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease;
     }
-    .faq-a-inner { padding: 0 22px 18px; color: var(--muted); font-size: 14px; line-height: 1.7; }
-    .faq-item.open .faq-a { max-height: 300px; }
+    .faq-item.open .faq-a { max-height: 300px; padding-bottom: 20px; }
 
-    /* ── CTA BANNER ── */
-    .cta-banner {
-        position: relative; z-index: 1;
-        padding: 80px 24px;
-        text-align: center;
-        overflow: hidden;
+    /* ─── CTA ─────────────────────────────── */
+    .cta-section { padding: 88px 24px; text-align: center; border-top: 1px solid var(--border); }
+    .cta-section h2 {
+        font-size: clamp(28px,4vw,48px); font-weight: 900;
+        letter-spacing: -1.5px; color: var(--text); margin-bottom: 14px;
     }
-    .cta-inner {
-        position: relative;
-        max-width: 680px;
-        margin: 0 auto;
-        background: linear-gradient(135deg, rgba(6,182,212,.1) 0%, rgba(99,102,241,.1) 100%);
-        border: 1px solid rgba(6,182,212,.2);
-        border-radius: 24px;
-        padding: 60px 40px;
+    .cta-section p { font-size: 15px; color: var(--muted); margin-bottom: 32px; line-height: 1.7; }
+    .cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn-dark {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 12px 24px; background: var(--text); color: var(--bg);
+        border-radius: 8px; font-size: 14px; font-weight: 600;
+        text-decoration: none; transition: opacity .15s;
     }
-    .cta-inner::before {
-        content:'';position:absolute;inset:0;border-radius:24px;
-        background:radial-gradient(ellipse at top,rgba(6,182,212,.08),transparent 70%);
-        pointer-events:none;
+    .btn-dark:hover { opacity: .88; }
+    .btn-outline {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 12px 24px; background: transparent;
+        border: 1px solid var(--border2); color: var(--sub);
+        border-radius: 8px; font-size: 14px; font-weight: 500;
+        text-decoration: none; transition: all .15s;
     }
-    .cta-inner h2 { font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:12px; }
-    .cta-inner p { color:var(--muted);margin-bottom:28px;font-size:15px; }
-    .cta-btns { display:flex;gap:12px;justify-content:center;flex-wrap:wrap; }
-    .cta-btn-primary {
-        padding:13px 28px;
-        background:linear-gradient(135deg,#06b6d4,#6366f1);
-        color:#fff;font-weight:700;font-size:14px;
-        border-radius:10px;text-decoration:none;
-        box-shadow:0 4px 20px rgba(6,182,212,.3);
-        transition:all .2s;
-        display:inline-block;
-    }
-    .cta-btn-primary:hover { transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,182,212,.5); }
-    .cta-btn-ghost {
-        padding:13px 28px;
-        background:rgba(255,255,255,.07);
-        color:var(--text);font-weight:600;font-size:14px;
-        border-radius:10px;text-decoration:none;
-        border:1px solid rgba(255,255,255,.12);
-        transition:all .2s;
-        display:inline-block;
-    }
-    .cta-btn-ghost:hover { background:rgba(255,255,255,.12); }
+    .btn-outline:hover { color: var(--text); border-color: rgba(255,255,255,.22); }
 
-    /* ── FOOTER ── */
-    .footer {
-        position:relative;z-index:1;
-        padding:28px 40px;
-        background:var(--surface);
-        border-top:1px solid var(--border);
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        flex-wrap:wrap;
-        gap:12px;
+    /* ─── TRUST STRIP ─────────────────────── */
+    .trust-strip {
+        border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+        background: var(--bg2); padding: 18px 24px;
     }
-    .footer-logo { font-size:15px;font-weight:800;background:linear-gradient(135deg,#22d3ee,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
-    .footer p { color:var(--muted);font-size:13px; }
-    .footer a { color:var(--cyan);text-decoration:none;font-size:13px; }
-    .footer a:hover { text-decoration:underline; }
-
-    /* ── Animations ── */
-    @keyframes fadeUp {
-        from { opacity:0;transform:translateY(24px); }
-        to   { opacity:1;transform:translateY(0); }
+    .trust-list {
+        max-width: 900px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: center;
+        flex-wrap: wrap; gap: 28px;
     }
-    .reveal { opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease; }
-    .reveal.visible { opacity:1;transform:translateY(0); }
-    .reveal-delay-1 { transition-delay:.1s; }
-    .reveal-delay-2 { transition-delay:.2s; }
-    .reveal-delay-3 { transition-delay:.3s; }
-    .reveal-delay-4 { transition-delay:.4s; }
+    .trust-item { font-size: 12.5px; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .trust-item i { color: var(--accent); font-size: 11px; }
 
-    /* ── Misc ── */
+    /* ─── FOOTER ──────────────────────────── */
+    .footer { border-top: 1px solid var(--border); background: var(--bg2); padding: 48px 40px 32px; }
+    .footer-top {
+        max-width: 1100px; margin: 0 auto;
+        display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+        padding-bottom: 40px; border-bottom: 1px solid var(--border);
+    }
+    .footer-brand-name { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .footer-brand p { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 220px; margin-bottom: 18px; }
+    .footer-col h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 14px; }
+    .footer-col a { display: block; font-size: 13px; color: var(--muted); text-decoration: none; margin-bottom: 9px; transition: color .15s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom {
+        max-width: 1100px; margin: 24px auto 0;
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 8px; font-size: 12.5px; color: var(--muted);
+    }
+    .footer-bottom a { color: var(--muted); text-decoration: none; }
+    .footer-bottom a:hover { color: var(--text); }
     @media(max-width:768px){
-        .plans-grid { grid-template-columns:1fr;max-width:420px;margin:0 auto; }
-        .cta-inner { padding:40px 24px; }
-        .footer { flex-direction:column;text-align:center;padding:24px; }
-        .hero { padding:120px 20px 60px; }
-        .stats-inner { grid-template-columns:repeat(2,1fr); }
+        .footer-top { grid-template-columns: 1fr 1fr; }
+        .footer { padding: 32px 20px 24px; }
+        .footer-bottom { flex-direction: column; text-align: center; }
     }
+    @media(max-width:480px){ .footer-top { grid-template-columns: 1fr; } }
 
-    /* Spinner in button */
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .btn-loading::after {
-        content:'';display:inline-block;width:12px;height:12px;
-        border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
-        border-radius:50%;animation:spin .6s linear infinite;
-        margin-left:8px;vertical-align:middle;
-    }
+    /* ─── Scroll reveal ──────────────────── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    .d1{transition-delay:.06s;} .d2{transition-delay:.12s;} .d3{transition-delay:.18s;} .d4{transition-delay:.24s;}
 
-    /* Downgrade modal */
-    .modal-overlay {
-        display:none;position:fixed;inset:0;
-        background:rgba(0,0,0,.75);z-index:200;
-        align-items:center;justify-content:center;
-        backdrop-filter:blur(4px);
+    @media(max-width:768px){
+        .hero { padding: 100px 20px 64px; }
+        .hero h1 { letter-spacing: -2px; }
+        .pricing-grid { grid-template-columns: 1fr; }
     }
-    .modal-overlay.open { display:flex; }
-    .modal-box {
-        background:#0d1629;border:1px solid var(--border2);
-        border-radius:20px;padding:40px;max-width:440px;width:90%;text-align:center;
-        animation:fadeUp .25s ease;
-    }
-    .modal-box i { font-size:36px;color:#f59e0b;margin-bottom:14px; }
-    .modal-box h3 { font-size:20px;font-weight:800;margin-bottom:10px; }
-    .modal-box p { color:var(--muted);font-size:14px;margin-bottom:24px; }
-    .modal-btns { display:flex;gap:12px;justify-content:center; }
-    .modal-btn-cancel { background:rgba(255,255,255,.06);color:var(--sub);border:1px solid var(--border2);padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px; }
-    .modal-btn-cancel:hover { background:rgba(255,255,255,.1); }
-    .modal-btn-ok { background:#ef4444;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px; }
     </style>
 </head>
 <body>
 
-<!-- Ambient background -->
-<div class="mesh-bg"><span></span><span></span><span></span></div>
-
 <!-- NAV -->
 <nav class="nav">
-    <div class="nav-logo">MulikaScans</div>
-    <div class="nav-links" id="nav-links">
-        <a href="/">Home</a>
-        <a href="#plans">Plans</a>
-        <a href="#compare">Compare</a>
-        <a href="#faq">FAQ</a>
+    <a href="/" class="nav-logo">MulikaScans</a>
+    <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#how-it-works">How it works</a>
+        <a href="/pricing" class="active">Pricing</a>
+        <a href="/contact">Contact</a>
+    </div>
+    <div class="nav-actions">
         {% if current_user %}
-            <a href="/dashboard" class="nav-cta">Dashboard</a>
+            <a href="/dashboard" class="nav-btn-ghost">Dashboard</a>
         {% else %}
-            <a href="/login" class="nav-cta">Sign in</a>
+            <a href="/login"    class="nav-btn-ghost">Sign in</a>
+            <a href="/register" class="nav-btn-solid">Start free</a>
         {% endif %}
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    <button type="button" class="hamburger" id="hamburger" aria-label="Menu"><i class="fas fa-bars"></i></button>
 </nav>
-<div class="mobile-menu" id="mobile-menu">
-    <a href="/">Home</a>
-    <a href="#plans">Plans</a>
-    <a href="#compare">Compare</a>
-    <a href="#faq">FAQ</a>
-    {% if current_user %}<a href="/dashboard">Dashboard</a>{% else %}<a href="/login">Sign in</a>{% endif %}
+<div class="mob-menu" id="mob-menu">
+    <a href="/#features"     onclick="closeMob()">Features</a>
+    <a href="/#how-it-works" onclick="closeMob()">How it works</a>
+    <a href="/pricing"       onclick="closeMob()">Pricing</a>
+    {% if current_user %}
+    <a href="/dashboard"     onclick="closeMob()">Dashboard</a>
+    {% else %}
+    <a href="/login"         onclick="closeMob()">Sign in</a>
+    <a href="/register"      onclick="closeMob()">Get started free →</a>
+    {% endif %}
 </div>
 
 <!-- HERO -->
 <section class="hero">
-    <div class="hero-badge"><i class="fas fa-shield-halved"></i> Trusted by security professionals</div>
-    <h1>Security scanning,<br><span>priced to scale</span></h1>
-    <p>Start free and grow with your team. No hidden fees, no surprises — just powerful web security.</p>
+    <div class="hero-eyebrow"><span></span> Simple pricing</div>
+    <h1>Pay for what<br>you <em>actually</em> use</h1>
+    <p class="hero-desc">Start free, no credit card required. Upgrade when your security programme grows. Cancel anytime.</p>
+    <div class="toggle-row">
+        <span class="tl on" id="lbl-m">Monthly</span>
+        <div class="tog-track" id="tog-track">
+            <div class="tog-thumb"></div>
+        </div>
+        <span class="tl" id="lbl-a">Annual <span class="save-tag">Save 17%</span></span>
+    </div>
+</section>
 
-    <div class="trust-strip">
-        <div class="trust-item"><i class="fas fa-lock"></i> No credit card required</div>
+<!-- TRUST STRIP -->
+<div class="trust-strip">
+    <div class="trust-list">
+        <div class="trust-item"><i class="fas fa-lock"></i> No credit card to start</div>
         <div class="trust-item"><i class="fas fa-rotate-left"></i> Cancel anytime</div>
-        <div class="trust-item"><i class="fas fa-headset"></i> 24h support on Pro</div>
-        <div class="trust-item"><i class="fas fa-shield-check"></i> OWASP-aligned</div>
-    </div>
-
-    <!-- Billing Toggle -->
-    <div class="toggle-wrap" id="toggle-wrap">
-        <span class="toggle-label active" id="lbl-monthly">Monthly</span>
-        <label>
-            <input type="checkbox" id="billing-toggle">
-            <div class="toggle-track" id="toggle-track">
-                <div class="toggle-thumb"></div>
-            </div>
-        </label>
-        <span class="toggle-label" id="lbl-annual">Annual <span class="save-pill">Save 17%</span></span>
-    </div>
-</section>
-
-<!-- PLAN CARDS -->
-<section class="plans-section" id="plans">
-    <div class="plans-grid">
-
-        <!-- Free -->
-        <div class="plan-card reveal reveal-delay-1">
-            <div class="plan-icon plan-icon-free"><i class="fas fa-rocket"></i></div>
-            <div class="plan-name">Free</div>
-            <div class="plan-price">
-                <span class="price-dollar">$</span>
-                <span class="price-number price-monthly">0</span>
-                <span class="price-number price-annual" style="display:none">0</span>
-            </div>
-            <div class="price-period">per month</div>
-            <div class="price-annual-note price-annual-note-el" style="display:none">&nbsp;</div>
-            <div class="plan-desc">For individuals exploring web security.</div>
-            <ul class="plan-features">
-                <li><i class="fas fa-check feat-check"></i> 2 scans / month</li>
-                <li><i class="fas fa-check feat-check"></i> Quick scan only</li>
-                <li><i class="fas fa-check feat-check"></i> Up to 10 pages per scan</li>
-                <li><i class="fas fa-check feat-check"></i> On-screen results</li>
-                <li class="feat-no"><i class="fas fa-times feat-x"></i> PDF / JSON export</li>
-                <li class="feat-no"><i class="fas fa-times feat-x"></i> Full or Compliance scans</li>
-                <li class="feat-no"><i class="fas fa-times feat-x"></i> API access</li>
-            </ul>
-            {% if current_user and current_user.role == 'free' %}
-                <button class="plan-btn btn-current" disabled>Current Plan</button>
-            {% else %}
-                <a href="/register" class="plan-btn btn-free">Get Started Free</a>
-            {% endif %}
-        </div>
-
-        <!-- Basic -->
-        <div class="plan-card reveal reveal-delay-2">
-            <div class="plan-icon plan-icon-basic"><i class="fas fa-bolt"></i></div>
-            <div class="plan-name">Basic</div>
-            <div class="plan-price">
-                <span class="price-dollar">$</span>
-                <span class="price-number price-monthly">14</span>
-                <span class="price-number price-annual" style="display:none">140</span>
-            </div>
-            <div class="price-period"><span class="per-mo">per month</span><span class="per-yr" style="display:none">per year</span></div>
-            <div class="price-annual-note price-annual-note-el" style="display:none">~$12/mo, billed annually</div>
-            <div class="plan-desc">For freelancers &amp; small teams starting out.</div>
-            <ul class="plan-features">
-                <li><i class="fas fa-check feat-check"></i> 15 scans / month</li>
-                <li><i class="fas fa-check feat-check"></i> Quick &amp; Full scans</li>
-                <li><i class="fas fa-check feat-check"></i> Up to 100 pages per scan</li>
-                <li><i class="fas fa-check feat-check"></i> PDF, JSON, CSV export</li>
-                <li><i class="fas fa-check feat-check"></i> 9 scanner modules</li>
-                <li><i class="fas fa-check feat-check"></i> Email support (48h)</li>
-                <li class="feat-no"><i class="fas fa-times feat-x"></i> API access</li>
-            </ul>
-            {% if current_user %}
-                {% if current_user.role == 'basic' %}
-                    <button class="plan-btn btn-current" disabled>Current Plan</button>
-                {% elif current_user.role in ('pro', 'enterprise', 'admin') %}
-                    <button class="plan-btn btn-basic plan-cta" data-plan="basic">Downgrade to Basic</button>
-                {% else %}
-                    <button class="plan-btn btn-basic plan-cta" data-plan="basic">Get Basic</button>
-                {% endif %}
-            {% else %}
-                <button class="plan-btn btn-basic plan-cta" data-plan="basic">Get Basic</button>
-            {% endif %}
-        </div>
-
-        <!-- Pro -->
-        <div class="plan-card plan-card-pro reveal reveal-delay-3">
-            <div class="plan-badge">Most Popular</div>
-            <div class="plan-icon plan-icon-pro"><i class="fas fa-star"></i></div>
-            <div class="plan-name">Pro</div>
-            <div class="plan-price">
-                <span class="price-dollar">$</span>
-                <span class="price-number price-monthly">45</span>
-                <span class="price-number price-annual" style="display:none">450</span>
-            </div>
-            <div class="price-period"><span class="per-mo">per month</span><span class="per-yr" style="display:none">per year</span></div>
-            <div class="price-annual-note price-annual-note-el" style="display:none">~$37/mo, billed annually</div>
-            <div class="plan-desc">For security professionals &amp; growing teams.</div>
-            <ul class="plan-features">
-                <li><i class="fas fa-check feat-check"></i> 50 scans / month</li>
-                <li><i class="fas fa-check feat-check"></i> All scan types incl. Compliance</li>
-                <li><i class="fas fa-check feat-check"></i> Up to 500 pages per scan</li>
-                <li><i class="fas fa-check feat-check"></i> PDF, JSON, CSV, HTML export</li>
-                <li><i class="fas fa-check feat-check"></i> All 25+ scanner modules</li>
-                <li><i class="fas fa-check feat-check"></i> REST API access</li>
-                <li><i class="fas fa-check feat-check"></i> Scheduled scans</li>
-                <li><i class="fas fa-check feat-check"></i> Up to 5 team members</li>
-            </ul>
-            {% if current_user %}
-                {% if current_user.role == 'pro' %}
-                    <button class="plan-btn btn-current" disabled>Current Plan</button>
-                {% elif current_user.role in ('enterprise', 'admin') %}
-                    <button class="plan-btn btn-pro plan-cta" data-plan="pro">Downgrade to Pro</button>
-                {% else %}
-                    <button class="plan-btn btn-pro plan-cta" data-plan="pro">Get Pro</button>
-                {% endif %}
-            {% else %}
-                <button class="plan-btn btn-pro plan-cta" data-plan="pro">Get Pro</button>
-            {% endif %}
-        </div>
-
-        <!-- Enterprise -->
-        <div class="plan-card reveal reveal-delay-4">
-            <div class="plan-icon plan-icon-ent"><i class="fas fa-building"></i></div>
-            <div class="plan-name">Enterprise</div>
-            <div class="plan-price">
-                <span class="price-custom">Custom</span>
-            </div>
-            <div class="price-period">&nbsp;</div>
-            <div class="price-annual-note price-annual-note-el">&nbsp;</div>
-            <div class="plan-desc">For organisations that need scale, control, and SLAs.</div>
-            <ul class="plan-features">
-                <li><i class="fas fa-check feat-check"></i> Unlimited scans</li>
-                <li><i class="fas fa-check feat-check"></i> Unlimited pages &amp; depth</li>
-                <li><i class="fas fa-check feat-check"></i> All Pro features</li>
-                <li><i class="fas fa-check feat-check"></i> White-label reports</li>
-                <li><i class="fas fa-check feat-check"></i> Unlimited team members</li>
-                <li><i class="fas fa-check feat-check"></i> Dedicated account manager</li>
-                <li><i class="fas fa-check feat-check"></i> 24/7 support + SLA</li>
-            </ul>
-            {% if current_user and current_user.role == 'enterprise' %}
-                <button class="plan-btn btn-current" disabled>Current Plan</button>
-            {% else %}
-                <a href="mailto:support@mulikascans.com?subject=Enterprise%20Enquiry" class="plan-btn btn-ent">Contact Sales</a>
-            {% endif %}
-        </div>
-
-    </div>
-</section>
-
-<!-- STATS BAR -->
-<div class="stats-bar reveal">
-    <div class="stats-inner">
-        <div>
-            <div class="stat-num" data-target="2500">0</div>
-            <div class="stat-label">Scans completed</div>
-        </div>
-        <div>
-            <div class="stat-num" data-target="25">0</div>
-            <div class="stat-label">Scanner modules</div>
-        </div>
-        <div>
-            <div class="stat-num" data-target="108">0</div>
-            <div class="stat-label">Vulnerability checks</div>
-        </div>
-        <div>
-            <div class="stat-num" data-target="99">0</div>
-            <div class="stat-label">Uptime %</div>
-        </div>
+        <div class="trust-item"><i class="fas fa-shield-halved"></i> Payments via PesaPal</div>
+        <div class="trust-item"><i class="fas fa-headset"></i> Email support on all plans</div>
+        <div class="trust-item"><i class="fas fa-rotate"></i> Scans reset on the 1st</div>
     </div>
 </div>
 
-<!-- COMPARE TABLE -->
-<section class="compare-section" id="compare">
-    <div class="section-header reveal">
-        <div class="section-tag">Feature Matrix</div>
-        <h2>Compare all plans</h2>
-        <p>Everything you need to choose the right plan for your workflow.</p>
+<!-- PRICING CARDS -->
+<section class="section" id="plans">
+    <div class="wrap">
+        <div class="pricing-grid">
+
+            <!-- Free -->
+            <div class="price-card reveal d1">
+                <div class="price-name">Free</div>
+                <div class="price-amount"><sup>$</sup><span class="p-m">0</span><span class="p-a" style="display:none">0</span></div>
+                <div class="price-period"><span class="pp-m">forever free</span><span class="pp-a" style="display:none">forever free</span></div>
+                <p class="price-desc">Explore web security on your own terms — no commitment needed.</p>
+                <ul class="price-feats">
+                    <li><i class="fas fa-check pf-check"></i> 2 scans per month</li>
+                    <li><i class="fas fa-check pf-check"></i> Quick scan only</li>
+                    <li><i class="fas fa-check pf-check"></i> Up to 10 pages per scan</li>
+                    <li><i class="fas fa-check pf-check"></i> On-screen results</li>
+                    <li class="no"><i class="fas fa-xmark pf-x"></i> PDF / JSON export</li>
+                    <li class="no"><i class="fas fa-xmark pf-x"></i> Full or Compliance scans</li>
+                    <li class="no"><i class="fas fa-xmark pf-x"></i> API access</li>
+                </ul>
+                {% if current_user and current_user.role == 'free' %}
+                    <button class="price-btn pb-current" disabled>Current plan</button>
+                {% else %}
+                    <a href="/register" class="price-btn pb-ghost">Get started free</a>
+                {% endif %}
+            </div>
+
+            <!-- Basic -->
+            <div class="price-card reveal d2">
+                <div class="price-name">Basic</div>
+                <div class="price-amount"><sup>$</sup><span class="p-m">14</span><span class="p-a" style="display:none">140</span></div>
+                <div class="price-period">
+                    <span class="pp-m">per month</span>
+                    <span class="pp-a" style="display:none">per year &mdash; ~$12/mo</span>
+                </div>
+                <p class="price-desc">For freelancers and small teams running regular security checks.</p>
+                <ul class="price-feats">
+                    <li><i class="fas fa-check pf-check"></i> 15 scans per month</li>
+                    <li><i class="fas fa-check pf-check"></i> Quick &amp; Full scans</li>
+                    <li><i class="fas fa-check pf-check"></i> Up to 100 pages per scan</li>
+                    <li><i class="fas fa-check pf-check"></i> PDF, JSON, CSV export</li>
+                    <li><i class="fas fa-check pf-check"></i> 9 scanner modules</li>
+                    <li><i class="fas fa-check pf-check"></i> Email support (48h)</li>
+                    <li class="no"><i class="fas fa-xmark pf-x"></i> API access</li>
+                </ul>
+                {% if current_user %}
+                    {% if current_user.role == 'basic' %}
+                        <button class="price-btn pb-current" disabled>Current plan</button>
+                    {% elif current_user.role in ('pro','enterprise','admin') %}
+                        <button class="price-btn pb-ghost plan-cta" data-plan="basic">Downgrade to Basic</button>
+                    {% else %}
+                        <button class="price-btn pb-ghost plan-cta" data-plan="basic">Get Basic</button>
+                    {% endif %}
+                {% else %}
+                    <button class="price-btn pb-ghost plan-cta" data-plan="basic">Get Basic</button>
+                {% endif %}
+            </div>
+
+            <!-- Pro (featured) -->
+            <div class="price-card price-card-featured reveal d3">
+                <div class="popular-badge">Most popular</div>
+                <div class="price-name">Pro</div>
+                <div class="price-amount"><sup>$</sup><span class="p-m">45</span><span class="p-a" style="display:none">450</span></div>
+                <div class="price-period">
+                    <span class="pp-m">per month</span>
+                    <span class="pp-a" style="display:none">per year &mdash; ~$37/mo</span>
+                </div>
+                <p class="price-desc">For security professionals who need full coverage and scheduled automation.</p>
+                <ul class="price-feats">
+                    <li><i class="fas fa-check pf-check"></i> 50 scans per month</li>
+                    <li><i class="fas fa-check pf-check"></i> All scan types incl. Compliance</li>
+                    <li><i class="fas fa-check pf-check"></i> Up to 500 pages per scan</li>
+                    <li><i class="fas fa-check pf-check"></i> PDF, JSON, CSV, HTML export</li>
+                    <li><i class="fas fa-check pf-check"></i> All 25+ scanner modules</li>
+                    <li><i class="fas fa-check pf-check"></i> REST API access</li>
+                    <li><i class="fas fa-check pf-check"></i> Scheduled scans</li>
+                    <li><i class="fas fa-check pf-check"></i> Priority support (24h)</li>
+                    <li><i class="fas fa-check pf-check"></i> Up to 5 team members</li>
+                </ul>
+                {% if current_user %}
+                    {% if current_user.role == 'pro' %}
+                        <button class="price-btn pb-current" disabled>Current plan</button>
+                    {% elif current_user.role in ('enterprise','admin') %}
+                        <button class="price-btn pb-ghost plan-cta" data-plan="pro">Downgrade to Pro</button>
+                    {% else %}
+                        <button class="price-btn pb-primary plan-cta" data-plan="pro">Get Pro</button>
+                    {% endif %}
+                {% else %}
+                    <button class="price-btn pb-primary plan-cta" data-plan="pro">Get Pro</button>
+                {% endif %}
+            </div>
+
+            <!-- Enterprise -->
+            <div class="price-card reveal d4">
+                <div class="price-name">Enterprise</div>
+                <div class="price-amount-custom">Custom</div>
+                <div class="price-period">volume pricing</div>
+                <p class="price-desc">Unlimited scale, white-label reports, and a dedicated account manager.</p>
+                <ul class="price-feats">
+                    <li><i class="fas fa-check pf-check"></i> Unlimited scans &amp; pages</li>
+                    <li><i class="fas fa-check pf-check"></i> All Pro features</li>
+                    <li><i class="fas fa-check pf-check"></i> White-label reports</li>
+                    <li><i class="fas fa-check pf-check"></i> Unlimited team members</li>
+                    <li><i class="fas fa-check pf-check"></i> Dedicated account manager</li>
+                    <li><i class="fas fa-check pf-check"></i> 24/7 priority support + SLA</li>
+                    <li><i class="fas fa-check pf-check"></i> On-premise option</li>
+                </ul>
+                {% if current_user and current_user.role == 'enterprise' %}
+                    <button class="price-btn pb-current" disabled>Current plan</button>
+                {% else %}
+                    <a href="mailto:support@mulikascans.com?subject=Enterprise%20Enquiry" class="price-btn pb-sales">Contact sales</a>
+                {% endif %}
+            </div>
+
+        </div>
+        <p class="price-note">All prices in USD &mdash; M-Pesa, Airtel, Tigo Pesa, Visa &amp; Mastercard accepted via <a href="https://pesapal.com" target="_blank" rel="noopener">PesaPal</a>.</p>
     </div>
-    <div class="table-wrap reveal">
-        <table class="compare-table">
-            <thead>
-                <tr>
-                    <th class="feat-col">Feature</th>
-                    <th>Free</th>
-                    <th>Basic</th>
-                    <th class="th-pro">Pro ✦</th>
-                    <th>Enterprise</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="section-row"><td colspan="5"><i class="fas fa-search"></i> &nbsp;Scanning</td></tr>
-                <tr><td class="feat-col">Scans / month</td><td>2</td><td>15</td><td class="td-pro">50</td><td>Unlimited</td></tr>
-                <tr><td class="feat-col">Pages per scan</td><td>10</td><td>100</td><td class="td-pro">500</td><td>Unlimited</td></tr>
-                <tr><td class="feat-col">Crawl depth</td><td>2</td><td>5</td><td class="td-pro">10</td><td>Unlimited</td></tr>
-                <tr><td class="feat-col">Concurrent scans</td><td>1</td><td>2</td><td class="td-pro">5</td><td>20</td></tr>
-                <tr><td class="feat-col">Quick Scan</td><td><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">Full Scan</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-check tc"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">Compliance Scan</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-times tx"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">Scheduled scans</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-times tx"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">Scanner modules</td><td>3 basic</td><td>9 modules</td><td class="td-pro">All 25+</td><td>All 25+</td></tr>
-                <tr class="section-row"><td colspan="5"><i class="fas fa-file-alt"></i> &nbsp;Reporting</td></tr>
-                <tr><td class="feat-col">On-screen results</td><td><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">PDF export</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-check tc"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">JSON / CSV export</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-check tc"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">HTML report</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-times tx"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">CVSS scoring</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-check tc"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">White-label reports</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-times tx"></i></td><td class="td-pro"><i class="fas fa-times tx"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr class="section-row"><td colspan="5"><i class="fas fa-robot"></i> &nbsp;Automation &amp; API</td></tr>
-                <tr><td class="feat-col">REST API access</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-times tx"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr><td class="feat-col">Webhook notifications</td><td><i class="fas fa-times tx"></i></td><td><i class="fas fa-times tx"></i></td><td class="td-pro"><i class="fas fa-check tc"></i></td><td><i class="fas fa-check tc"></i></td></tr>
-                <tr class="section-row"><td colspan="5"><i class="fas fa-users"></i> &nbsp;Workspace</td></tr>
-                <tr><td class="feat-col">Team members</td><td>—</td><td>—</td><td class="td-pro">Up to 5</td><td>Unlimited</td></tr>
-                <tr><td class="feat-col">Scan history retention</td><td>30 days</td><td>90 days</td><td class="td-pro">1 year</td><td>Unlimited</td></tr>
-                <tr class="section-row"><td colspan="5"><i class="fas fa-headset"></i> &nbsp;Support</td></tr>
-                <tr><td class="feat-col">Support level</td><td>Community</td><td>Email (48h)</td><td class="td-pro">Priority (24h)</td><td>Dedicated + 24/7</td></tr>
-                <tr><td class="feat-col">Payment methods</td><td>—</td><td>M-Pesa, Card</td><td class="td-pro">M-Pesa, Card</td><td>Invoice</td></tr>
-            </tbody>
-        </table>
+</section>
+
+<!-- FEATURE COMPARISON -->
+<section class="section section-alt" id="compare">
+    <div class="wrap">
+        <div class="tc reveal">
+            <div class="section-label">Compare plans</div>
+            <div class="section-title">Everything, side by side</div>
+        </div>
+        <div class="compare-wrap reveal">
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th class="th-feat">Feature</th>
+                        <th>Free</th>
+                        <th>Basic</th>
+                        <th class="th-pro">Pro</th>
+                        <th>Enterprise</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="section-row"><td colspan="5">Scanning</td></tr>
+                    <tr><td class="td-feat">Scans per month</td><td>2</td><td>15</td><td class="td-pro">50</td><td>Unlimited</td></tr>
+                    <tr><td class="td-feat">Pages per scan</td><td>10</td><td>100</td><td class="td-pro">500</td><td>Unlimited</td></tr>
+                    <tr><td class="td-feat">Crawl depth</td><td>2</td><td>5</td><td class="td-pro">10</td><td>Unlimited</td></tr>
+                    <tr><td class="td-feat">Concurrent scans</td><td>1</td><td>2</td><td class="td-pro">5</td><td>20</td></tr>
+                    <tr><td class="td-feat">Quick scan</td><td><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">Full scan</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-check ci"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">Compliance scan (OWASP)</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-xmark cx"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">Scanner modules</td><td>3 basic</td><td>9 modules</td><td class="td-pro">All 25+</td><td>All 25+</td></tr>
+                    <tr><td class="td-feat">Scheduled scans</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-xmark cx"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr class="section-row"><td colspan="5">Reporting</td></tr>
+                    <tr><td class="td-feat">On-screen results</td><td><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">PDF export</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-check ci"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">JSON / CSV export</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-check ci"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">HTML report</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-xmark cx"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">White-label reports</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-xmark cx"></i></td><td class="td-pro"><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr class="section-row"><td colspan="5">Automation &amp; API</td></tr>
+                    <tr><td class="td-feat">REST API access</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-xmark cx"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr><td class="td-feat">Webhook notifications</td><td><i class="fas fa-xmark cx"></i></td><td><i class="fas fa-xmark cx"></i></td><td class="td-pro"><i class="fas fa-check ci"></i></td><td><i class="fas fa-check ci"></i></td></tr>
+                    <tr class="section-row"><td colspan="5">Workspace</td></tr>
+                    <tr><td class="td-feat">Team members</td><td>—</td><td>—</td><td class="td-pro">Up to 5</td><td>Unlimited</td></tr>
+                    <tr><td class="td-feat">Scan history</td><td>30 days</td><td>90 days</td><td class="td-pro">1 year</td><td>Unlimited</td></tr>
+                    <tr class="section-row"><td colspan="5">Support</td></tr>
+                    <tr><td class="td-feat">Support channel</td><td>Community</td><td>Email (48h)</td><td class="td-pro">Priority (24h)</td><td>Dedicated + SLA</td></tr>
+                    <tr><td class="td-feat">Payment methods</td><td>—</td><td>M-Pesa, Card</td><td class="td-pro">M-Pesa, Card</td><td>Invoice</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </section>
 
 <!-- FAQ -->
-<section class="faq-section" id="faq">
-    <div class="section-header reveal">
-        <div class="section-tag">FAQ</div>
-        <h2>Common questions</h2>
-    </div>
-    <div class="faq-grid">
-        <div class="faq-item reveal">
-            <div class="faq-q">Can I cancel anytime?<i class="fas fa-chevron-down"></i></div>
-            <div class="faq-a"><div class="faq-a-inner">Yes. Cancel from your billing dashboard at any time. You keep access until the end of the current billing period — no refunds for partial months.</div></div>
+<section class="section" id="faq">
+    <div class="wrap">
+        <div class="tc reveal">
+            <div class="section-label">FAQ</div>
+            <div class="section-title">Common questions</div>
         </div>
-        <div class="faq-item reveal">
-            <div class="faq-q">What payment methods do you accept?<i class="fas fa-chevron-down"></i></div>
-            <div class="faq-a"><div class="faq-a-inner">We accept M-Pesa (Vodacom), Airtel Money, Tigo Pesa, Visa/Mastercard, and bank transfer — processed securely by PesaPal. Your payment details never touch MulikaScans servers.</div></div>
-        </div>
-        <div class="faq-item reveal">
-            <div class="faq-q">What happens when I hit my scan limit?<i class="fas fa-chevron-down"></i></div>
-            <div class="faq-a"><div class="faq-a-inner">You'll see a clear message and a link to upgrade. Your existing scan history and results are never deleted. Scan counts reset on the 1st of each month.</div></div>
-        </div>
-        <div class="faq-item reveal">
-            <div class="faq-q">Can I change plans?<i class="fas fa-chevron-down"></i></div>
-            <div class="faq-a"><div class="faq-a-inner">Yes, upgrade or downgrade anytime from your billing dashboard. Upgrades take effect immediately. Downgrades take effect at the next billing date.</div></div>
-        </div>
-        <div class="faq-item reveal">
-            <div class="faq-q">Is there a free trial for paid plans?<i class="fas fa-chevron-down"></i></div>
-            <div class="faq-a"><div class="faq-a-inner">The Free plan is your trial — use it as long as you need. No credit card required to sign up.</div></div>
-        </div>
-        <div class="faq-item reveal">
-            <div class="faq-q">Do you offer refunds?<i class="fas fa-chevron-down"></i></div>
-            <div class="faq-a"><div class="faq-a-inner">We offer refunds within 7 days of first payment if you are unsatisfied. Contact support@mulikascans.com with your transaction reference.</div></div>
+        <div class="faq-list">
+            <div class="faq-item reveal">
+                <button class="faq-q">Can I cancel anytime?<i class="fas fa-plus faq-icon"></i></button>
+                <div class="faq-a">Yes. Cancel from your billing dashboard at any time. You keep access until the end of the current billing period — no refunds for partial months, but you'll never be charged again.</div>
+            </div>
+            <div class="faq-item reveal">
+                <button class="faq-q">What payment methods do you accept?<i class="fas fa-plus faq-icon"></i></button>
+                <div class="faq-a">We accept M-Pesa (Vodacom), Airtel Money, Tigo Pesa, Visa, and Mastercard — all processed securely through PesaPal. Your payment details never touch MulikaScans servers.</div>
+            </div>
+            <div class="faq-item reveal">
+                <button class="faq-q">What happens when I hit my scan limit?<i class="fas fa-plus faq-icon"></i></button>
+                <div class="faq-a">You'll see a clear message with a link to upgrade. Your existing scan history and results are never deleted. Scan counts reset on the 1st of each month at midnight UTC.</div>
+            </div>
+            <div class="faq-item reveal">
+                <button class="faq-q">Can I switch plans?<i class="fas fa-plus faq-icon"></i></button>
+                <div class="faq-a">Yes — upgrade or downgrade at any time from your billing dashboard. Upgrades take effect immediately. Downgrades take effect at the next billing date so you keep your current benefits until then.</div>
+            </div>
+            <div class="faq-item reveal">
+                <button class="faq-q">Is there a free trial for paid plans?<i class="fas fa-plus faq-icon"></i></button>
+                <div class="faq-a">The Free plan is your trial — use it for as long as you need with no credit card required. When you're ready for more scans or advanced features, upgrading takes under a minute.</div>
+            </div>
+            <div class="faq-item reveal">
+                <button class="faq-q">Do you offer refunds?<i class="fas fa-plus faq-icon"></i></button>
+                <div class="faq-a">We offer refunds within 7 days of your first payment if you're unsatisfied. Email support@mulikascans.com with your transaction reference and we'll process it within 2 business days.</div>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- CTA BANNER -->
-<section class="cta-banner">
-    <div class="cta-inner reveal">
-        <h2>Start scanning for free today</h2>
-        <p>Join hundreds of security professionals who trust MulikaScans to protect their web assets.</p>
-        <div class="cta-btns">
-            <a href="/register" class="cta-btn-primary"><i class="fas fa-rocket" style="margin-right:8px"></i>Get started free</a>
-            <a href="mailto:support@mulikascans.com" class="cta-btn-ghost">Talk to sales</a>
+<!-- CTA -->
+<section class="cta-section reveal">
+    <div class="wrap">
+        <h2>Start scanning in<br>under 60 seconds</h2>
+        <p>No credit card. No setup. Just a URL and results.</p>
+        <div class="cta-row">
+            {% if current_user %}
+            <a href="/scan" class="btn-dark"><i class="fas fa-search"></i> Run a scan</a>
+            <a href="/billing" class="btn-outline">Manage billing</a>
+            {% else %}
+            <a href="/register" class="btn-dark"><i class="fas fa-arrow-right"></i> Create free account</a>
+            <a href="/login"    class="btn-outline">Sign in</a>
+            {% endif %}
         </div>
     </div>
 </section>
 
 <!-- FOOTER -->
 <footer class="footer">
-    <div class="footer-logo">MulikaScans</div>
-    <p>© 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>. All rights reserved.</p>
-    <p><a href="mailto:support@mulikascans.com">support@mulikascans.com</a></p>
+    <div class="footer-top">
+        <div class="footer-brand">
+            <div class="footer-brand-name">MulikaScans</div>
+            <p>Professional web vulnerability scanning for developers, security teams, and organisations.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a href="/#features">Features</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/#how-it-works">How it works</a>
+        </div>
+        <div class="footer-col">
+            <h4>Account</h4>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/billing">Billing</a>
+            <a href="/profile">Profile</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="/contact">Contact</a>
+            <a href="mailto:support@mulikascans.com">Support</a>
+            <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 MulikaScans by <a href="http://iklwalabs.co.tz/" target="_blank" rel="noopener">IklwaLabs</a></span>
+        <span>A product by IklwaLabs</span>
+    </div>
 </footer>
 
 <!-- Downgrade modal -->
-<div class="modal-overlay" id="downgrade-modal">
-    <div class="modal-box">
-        <i class="fas fa-triangle-exclamation"></i>
-        <h3>Downgrade plan?</h3>
-        <p>Downgrading will reduce your scan limits and remove features at the end of your current billing period.</p>
-        <div class="modal-btns">
-            <button class="modal-btn-cancel" onclick="document.getElementById('downgrade-modal').classList.remove('open')">Keep Plan</button>
-            <a href="mailto:support@mulikascans.com" class="modal-btn-ok">Contact Support</a>
+<div id="downgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:40px;max-width:420px;width:90%;text-align:center;">
+        <div style="font-size:28px;margin-bottom:16px;">⬇</div>
+        <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px;">Downgrade plan?</h3>
+        <p style="font-size:13.5px;color:var(--muted);line-height:1.65;margin-bottom:24px;">Downgrading reduces your scan limits at the end of your current billing period. Contact support to arrange this.</p>
+        <div style="display:flex;gap:10px;justify-content:center;">
+            <button onclick="document.getElementById('downgrade-modal').style.display='none'" style="padding:9px 22px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--sub);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">Keep plan</button>
+            <a href="mailto:support@mulikascans.com?subject=Downgrade%20Request" style="padding:9px 22px;border-radius:7px;background:var(--text);color:var(--bg);font-size:13px;font-weight:600;text-decoration:none;">Contact support</a>
         </div>
     </div>
 </div>
 
 <script>
-// ── Billing toggle ──────────────────────────────────────────
-const toggle      = document.getElementById('billing-toggle');
-const track       = document.getElementById('toggle-track');
-const lblMonthly  = document.getElementById('lbl-monthly');
-const lblAnnual   = document.getElementById('lbl-annual');
+// ── Billing toggle ──────────────────────────────────────────────
+const togTrack = document.getElementById('tog-track');
+const lblM = document.getElementById('lbl-m');
+const lblA = document.getElementById('lbl-a');
+let isAnnual = false;
 
-toggle.addEventListener('change', function() {
-    const annual = this.checked;
-    track.classList.toggle('on', annual);
-    lblMonthly.classList.toggle('active', !annual);
-    lblAnnual.classList.toggle('active', annual);
-
-    document.querySelectorAll('.price-monthly').forEach(el => el.style.display = annual ? 'none' : '');
-    document.querySelectorAll('.price-annual').forEach(el  => el.style.display = annual ? '' : 'none');
-    document.querySelectorAll('.price-annual-note-el').forEach(el => el.style.display = annual ? '' : 'none');
-    document.querySelectorAll('.per-mo').forEach(el => el.style.display = annual ? 'none' : '');
-    document.querySelectorAll('.per-yr').forEach(el => el.style.display = annual ? '' : 'none');
-    document.querySelectorAll('.plan-cta').forEach(btn => btn.dataset.cycle = annual ? 'annual' : 'monthly');
+togTrack.addEventListener('click', function() {
+    isAnnual = !isAnnual;
+    this.classList.toggle('on', isAnnual);
+    lblM.classList.toggle('on', !isAnnual);
+    lblA.classList.toggle('on',  isAnnual);
+    document.querySelectorAll('.p-m').forEach(e  => e.style.display = isAnnual ? 'none' : '');
+    document.querySelectorAll('.p-a').forEach(e  => e.style.display = isAnnual ? '' : 'none');
+    document.querySelectorAll('.pp-m').forEach(e => e.style.display = isAnnual ? 'none' : '');
+    document.querySelectorAll('.pp-a').forEach(e => e.style.display = isAnnual ? '' : 'none');
+    document.querySelectorAll('.plan-cta').forEach(b => b.dataset.cycle = isAnnual ? 'annual' : 'monthly');
 });
 
-// click the visual track
-track.addEventListener('click', () => { toggle.click(); });
-
-// ── Checkout handler ────────────────────────────────────────
+// ── Checkout ────────────────────────────────────────────────────
 document.querySelectorAll('.plan-cta').forEach(btn => {
     btn.addEventListener('click', function() {
         const plan  = this.dataset.plan;
         const cycle = this.dataset.cycle || 'monthly';
 
-        // Is downgrade?
-        const isDowngrade = this.textContent.trim().toLowerCase().startsWith('downgrade');
-        if (isDowngrade) {
-            document.getElementById('downgrade-modal').classList.add('open');
+        if (this.textContent.trim().toLowerCase().startsWith('downgrade')) {
+            document.getElementById('downgrade-modal').style.display = 'flex';
             return;
         }
 
         {% if current_user %}
-        const origText = this.textContent;
-        this.textContent = 'Redirecting';
-        this.classList.add('btn-loading');
+        const orig = this.textContent;
+        this.textContent = 'Redirecting…';
+        this.classList.add('pb-loading');
         this.disabled = true;
-        const self = this;
+
         fetch('/api/v1/subscriptions/checkout', {
             method: 'POST',
             headers: {
@@ -965,16 +701,16 @@ document.querySelectorAll('.plan-cta').forEach(btn => {
                 window.location.href = data.checkout_url;
             } else {
                 alert(data.error || 'Could not start checkout. Please try again.');
-                self.disabled = false;
-                self.textContent = origText;
-                self.classList.remove('btn-loading');
+                this.textContent = orig;
+                this.classList.remove('pb-loading');
+                this.disabled = false;
             }
         })
         .catch(() => {
             alert('Network error. Please try again.');
-            self.disabled = false;
-            self.textContent = origText;
-            self.classList.remove('btn-loading');
+            this.textContent = orig;
+            this.classList.remove('pb-loading');
+            this.disabled = false;
         });
         {% else %}
         window.location.href = '/register';
@@ -982,60 +718,33 @@ document.querySelectorAll('.plan-cta').forEach(btn => {
     });
 });
 
-// ── Scroll reveal ───────────────────────────────────────────
-const revealObs = new IntersectionObserver((entries, obs) => {
-    entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-    });
-}, { threshold: 0.08 });
-document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
-
-// ── Animated counters ───────────────────────────────────────
-const counterObs = new IntersectionObserver((entries, obs) => {
-    entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        obs.unobserve(e.target);
-        const el     = e.target;
-        const target = +el.dataset.target;
-        const suffix = target === 99 ? '%' : (target >= 1000 ? '+' : '+');
-        const dur    = 1400;
-        const step   = 16;
-        const inc    = target / (dur / step);
-        let   cur    = 0;
-        const t = setInterval(() => {
-            cur += inc;
-            if (cur >= target) { cur = target; clearInterval(t); }
-            el.textContent = (target >= 1000 ? Math.round(cur).toLocaleString() : Math.round(cur)) + suffix;
-        }, step);
-    });
-}, { threshold: 0.5 });
-document.querySelectorAll('[data-target]').forEach(el => counterObs.observe(el));
-
-// ── FAQ accordion ───────────────────────────────────────────
-document.querySelectorAll('.faq-item').forEach(item => {
-    item.querySelector('.faq-q').addEventListener('click', () => {
+// ── FAQ accordion ───────────────────────────────────────────────
+document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const item = this.closest('.faq-item');
         const wasOpen = item.classList.contains('open');
         document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
         if (!wasOpen) item.classList.add('open');
     });
 });
 
-// ── Mobile nav ──────────────────────────────────────────────
-const hamburger  = document.getElementById('hamburger');
-const mobileMenu = document.getElementById('mobile-menu');
-hamburger.addEventListener('click', () => {
-    mobileMenu.classList.toggle('open');
-    hamburger.querySelector('i').className = mobileMenu.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
-});
-mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-    mobileMenu.classList.remove('open');
+// ── Mobile nav ──────────────────────────────────────────────────
+const hamburger = document.getElementById('hamburger');
+const mobMenu   = document.getElementById('mob-menu');
+function closeMob() {
+    mobMenu.classList.remove('open');
     hamburger.querySelector('i').className = 'fas fa-bars';
-}));
-
-// Close modal on overlay click
-document.getElementById('downgrade-modal').addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('open');
+}
+hamburger.addEventListener('click', function() {
+    mobMenu.classList.toggle('open');
+    this.querySelector('i').className = mobMenu.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
 });
+
+// ── Scroll reveal ───────────────────────────────────────────────
+const obs = new IntersectionObserver((entries, o) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); o.unobserve(e.target); } });
+}, { threshold: 0.07 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 </script>
 </body>
 </html>
